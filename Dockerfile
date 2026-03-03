@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y \
 
 # Copy package files and install production deps only
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev \
+RUN npm pkg delete scripts.prepare \
+    && npm ci --omit=dev \
     && npm cache clean --force
 
 # Remove build tools (no longer needed after native compilation)
