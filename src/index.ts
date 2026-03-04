@@ -16,6 +16,8 @@ import { join } from "path";
 import { ToolRegistry } from "./agent/tools/registry.js";
 import { registerAllTools } from "./agent/tools/register-all.js";
 import { loadEnhancedPlugins, type PluginModuleWithHooks } from "./agent/tools/plugin-loader.js";
+import type { HookName, AgentStartEvent, AgentStopEvent } from "./sdk/hooks/types.js";
+import { createHookRunner } from "./sdk/hooks/runner.js";
 import type { SDKDependencies } from "./sdk/index.js";
 import { getProviderMetadata, type SupportedProvider } from "./config/providers.js";
 import { readRawConfig, setNestedValue, writeRawConfig } from "./config/configurable-keys.js";
@@ -57,6 +59,9 @@ export class TeletonApp {
   private mcpConnections: McpConnection[] = [];
   private callbackHandlerRegistered = false;
   private lifecycle = new AgentLifecycle();
+  private hookRunner?: ReturnType<typeof createHookRunner>;
+  private startTime: number = 0;
+  private messagesProcessed: number = 0;
 
   private configPath: string;
 
@@ -250,7 +255,12 @@ ${blue}  ┌──────────────────────�
 
     // Load enhanced plugins from ~/.teleton/plugins/
     const builtinNames = this.modules.map((m) => m.name);
-    const externalModules = await loadEnhancedPlugins(this.config, builtinNames, this.sdkDeps);
+    const { modules: externalModules, hookRegistry } = await loadEnhancedPlugins(
+      this.config,
+      builtinNames,
+      this.sdkDeps,
+      getDatabase().getDb()
+    );
     let pluginToolCount = 0;
     const pluginNames: string[] = [];
     for (const mod of externalModules) {
@@ -472,6 +482,31 @@ ${blue}  ┌──────────────────────�
       log.info("🔌 Bot SDK: inline router installed");
     }
 
+    // Create hook runner if any plugins registered hooks
+    if (hookRegistry.hasAnyHooks()) {
+      const hookRunner = createHookRunner(hookRegistry, { logger: log });
+      this.agent.setHookRunner(hookRunner);
+      this.hookRunner = hookRunner;
+
+      const activeHooks: HookName[] = [
+        "tool:before",
+        "tool:after",
+        "tool:error",
+        "prompt:before",
+        "prompt:after",
+        "session:start",
+        "session:end",
+        "message:receive",
+        "response:before",
+        "response:after",
+        "response:error",
+        "agent:start",
+        "agent:stop",
+      ];
+      const active = activeHooks.filter((n) => hookRegistry.hasHooks(n));
+      log.info(`🪝 Hook runner created (${active.join(", ")})`);
+    }
+
     // Collect plugin event hooks and wire them up
     this.wirePluginEventHooks();
 
@@ -505,6 +540,29 @@ ${blue}  ┌──────────────────────�
     );
 
     log.info("Teleton Agent is running! Press Ctrl+C to stop.");
+
+    // Hook: agent:start
+    this.startTime = Date.now();
+    this.messagesProcessed = 0;
+    if (this.hookRunner) {
+      let version = "0.0.0";
+      try {
+        const { createRequire } = await import("module");
+        const req = createRequire(import.meta.url);
+        version = (req("../package.json") as { version: string }).version;
+      } catch {
+        /* ignore */
+      }
+      const agentStartEvent: AgentStartEvent = {
+        version,
+        provider: provider,
+        model: this.config.agent.model,
+        pluginCount: pluginNames.length,
+        toolCount: this.toolCount,
+        timestamp: Date.now(),
+      };
+      await this.hookRunner.runObservingHook("agent:start", agentStartEvent);
+    }
 
     // Initialize message debouncer with bypass logic
     this.debouncer = new MessageDebouncer(
@@ -624,6 +682,7 @@ ${blue}  ┌──────────────────────�
    * Handle a single message (extracted for debouncer callback)
    */
   private async handleSingleMessage(message: TelegramMessage): Promise<void> {
+    this.messagesProcessed++;
     try {
       // Check if this is a scheduled task (from self)
       const ownUserId = this.bridge.getOwnUserId();
@@ -956,6 +1015,21 @@ ${blue}  ┌──────────────────────�
    * Called by lifecycle.stop() — do NOT call directly.
    */
   private async stopAgent(): Promise<void> {
+    // Hook: agent:stop — fire BEFORE disconnecting anything
+    if (this.hookRunner) {
+      try {
+        const agentStopEvent: AgentStopEvent = {
+          reason: "manual",
+          uptimeMs: this.startTime > 0 ? Date.now() - this.startTime : 0,
+          messagesProcessed: this.messagesProcessed,
+          timestamp: Date.now(),
+        };
+        await this.hookRunner.runObservingHook("agent:stop", agentStopEvent);
+      } catch (e) {
+        log.error({ err: e }, "⚠️ agent:stop hook failed");
+      }
+    }
+
     // Stop plugin watcher first
     if (this.pluginWatcher) {
       try {

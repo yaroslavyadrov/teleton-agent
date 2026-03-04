@@ -62,6 +62,12 @@ import type {
   BeforeToolCallEvent,
   AfterToolCallEvent,
   BeforePromptBuildEvent,
+  MessageReceiveEvent,
+  ResponseBeforeEvent,
+  ResponseAfterEvent,
+  ResponseErrorEvent,
+  ToolErrorEvent,
+  PromptAfterEvent,
 } from "../sdk/hooks/types.js";
 
 const log = createLogger("Agent");
@@ -219,8 +225,38 @@ export class AgentRuntime {
     } = opts;
 
     const effectiveIsGroup = isGroup ?? false;
+    const processStartTime = Date.now();
 
     try {
+      // Hook: message:receive — plugins can block, mutate text, inject context
+      let effectiveMessage = userMessage;
+      let hookMessageContext = "";
+      if (this.hookRunner) {
+        const msgEvent: MessageReceiveEvent = {
+          chatId,
+          senderId: toolContext?.senderId ? String(toolContext.senderId) : chatId,
+          senderName: userName ?? "",
+          isGroup: effectiveIsGroup,
+          isReply: !!replyContext,
+          replyToMessageId: replyContext ? messageId : undefined,
+          messageId: messageId ?? 0,
+          timestamp: timestamp ?? Date.now(),
+          text: userMessage,
+          block: false,
+          blockReason: "",
+          additionalContext: "",
+        };
+        await this.hookRunner.runModifyingHook("message:receive", msgEvent);
+        if (msgEvent.block) {
+          log.info(`🚫 Message blocked by hook: ${msgEvent.blockReason || "no reason"}`);
+          return { content: "", toolCalls: [] };
+        }
+        effectiveMessage = sanitizeForContext(msgEvent.text);
+        if (msgEvent.additionalContext) {
+          hookMessageContext = sanitizeForContext(msgEvent.additionalContext);
+        }
+      }
+
       let session = getOrCreateSession(chatId);
       const now = timestamp ?? Date.now();
 
@@ -228,9 +264,9 @@ export class AgentRuntime {
       if (shouldResetSession(session, resetPolicy)) {
         log.info(`🔄 Auto-resetting session based on policy`);
 
-        // Hook: session_end (before reset)
+        // Hook: session:end (before reset)
         if (this.hookRunner) {
-          await this.hookRunner.runObservingHook("session_end", {
+          await this.hookRunner.runObservingHook("session:end", {
             sessionId: session.sessionId,
             chatId,
             messageCount: session.messageCount,
@@ -269,9 +305,9 @@ export class AgentRuntime {
         log.info(`🆕 Starting new session: ${session.sessionId}`);
       }
 
-      // Hook: session_start
+      // Hook: session:start
       if (this.hookRunner) {
-        await this.hookRunner.runObservingHook("session_start", {
+        await this.hookRunner.runObservingHook("session:start", {
           sessionId: session.sessionId,
           chatId,
           isResume: !isNewSession,
@@ -288,7 +324,7 @@ export class AgentRuntime {
         senderRank,
         timestamp: now,
         previousTimestamp,
-        body: userMessage,
+        body: effectiveMessage,
         isGroup: effectiveIsGroup,
         hasMedia,
         mediaType,
@@ -310,11 +346,11 @@ export class AgentRuntime {
 
       let relevantContext = "";
       let queryEmbedding: number[] | undefined;
-      const isNonTrivial = !isTrivialMessage(userMessage);
+      const isNonTrivial = !isTrivialMessage(effectiveMessage);
 
       if (this.embedder && isNonTrivial) {
         try {
-          queryEmbedding = await this.embedder.embedQuery(userMessage);
+          queryEmbedding = await this.embedder.embedQuery(effectiveMessage);
         } catch (error) {
           log.warn({ err: error }, "Embedding computation failed");
         }
@@ -323,7 +359,7 @@ export class AgentRuntime {
       if (this.contextBuilder && isNonTrivial) {
         try {
           const dbContext = await this.contextBuilder.buildContext({
-            query: userMessage,
+            query: effectiveMessage,
             chatId,
             includeAgentMemory: true,
             includeFeedHistory: true,
@@ -369,7 +405,7 @@ export class AgentRuntime {
         ? `You are in a Telegram conversation with chat ID: ${chatId}. Maintain conversation continuity.\n\n${statsContext}\n\n${relevantContext}`
         : `You are in a Telegram conversation with chat ID: ${chatId}. Maintain conversation continuity.\n\n${statsContext}`;
 
-      // Hook: before_prompt_build
+      // Hook: prompt:before
       let hookAdditionalContext = "";
       if (this.hookRunner) {
         const promptEvent: BeforePromptBuildEvent = {
@@ -378,7 +414,7 @@ export class AgentRuntime {
           isGroup: effectiveIsGroup,
           additionalContext: "",
         };
-        await this.hookRunner.runModifyingHook("before_prompt_build", promptEvent);
+        await this.hookRunner.runModifyingHook("prompt:before", promptEvent);
         // Sanitize hook context to prevent prompt injection (H1 remediation)
         hookAdditionalContext = sanitizeForContext(promptEvent.additionalContext);
       }
@@ -389,8 +425,10 @@ export class AgentRuntime {
         compactionConfig.memoryFlushEnabled &&
         context.messages.length > Math.floor((compactionConfig.maxMessages ?? 200) * 0.75);
 
-      const finalContext =
-        additionalContext + (hookAdditionalContext ? `\n\n${hookAdditionalContext}` : "");
+      const allHookContext = [hookAdditionalContext, hookMessageContext]
+        .filter(Boolean)
+        .join("\n\n");
+      const finalContext = additionalContext + (allHookContext ? `\n\n${allHookContext}` : "");
 
       const systemPrompt = buildSystemPrompt({
         soul: this.soul,
@@ -400,10 +438,24 @@ export class AgentRuntime {
         ownerName: this.config.telegram.owner_name,
         ownerUsername: this.config.telegram.owner_username,
         context: finalContext,
-        includeMemory: !isGroup,
-        includeStrategy: !isGroup,
+        includeMemory: !effectiveIsGroup,
+        includeStrategy: !effectiveIsGroup,
         memoryFlushWarning: needsMemoryFlush,
       });
+
+      // Hook: prompt:after — observing, analytics on prompt size
+      if (this.hookRunner) {
+        const promptAfterEvent: PromptAfterEvent = {
+          chatId,
+          sessionId: session.sessionId,
+          isGroup: effectiveIsGroup,
+          promptLength: systemPrompt.length,
+          sectionCount: (systemPrompt.match(/^#{1,3} /gm) || []).length,
+          ragContextLength: relevantContext.length,
+          hookContextLength: allHookContext.length,
+        };
+        await this.hookRunner.runObservingHook("prompt:after", promptAfterEvent);
+      }
 
       const userMsg: UserMessage = {
         role: "user",
@@ -441,7 +493,7 @@ export class AgentRuntime {
         const useRAG =
           toolIndex?.isIndexed &&
           this.config.tool_rag?.enabled !== false &&
-          !isTrivialMessage(userMessage) &&
+          !isTrivialMessage(effectiveMessage) &&
           !(
             providerMeta.toolLimit === null &&
             this.config.tool_rag?.skip_unlimited_providers !== false
@@ -449,7 +501,7 @@ export class AgentRuntime {
 
         if (useRAG && this.toolRegistry && queryEmbedding) {
           tools = await this.toolRegistry.getForContextWithRAG(
-            userMessage,
+            effectiveMessage,
             queryEmbedding,
             effectiveIsGroup,
             providerMeta.toolLimit,
@@ -499,6 +551,30 @@ export class AgentRuntime {
         const assistantMsg = response.message;
         if (assistantMsg.stopReason === "error") {
           const errorMsg = assistantMsg.errorMessage || "";
+
+          // Hook: response:error — fire on all LLM errors
+          if (this.hookRunner) {
+            const errorCode =
+              errorMsg.includes("429") || errorMsg.toLowerCase().includes("rate")
+                ? "RATE_LIMIT"
+                : isContextOverflowError(errorMsg)
+                  ? "CONTEXT_OVERFLOW"
+                  : errorMsg.includes("500") || errorMsg.includes("502") || errorMsg.includes("503")
+                    ? "PROVIDER_ERROR"
+                    : "UNKNOWN";
+            const responseErrorEvent: ResponseErrorEvent = {
+              chatId,
+              sessionId: session.sessionId,
+              isGroup: effectiveIsGroup,
+              error: errorMsg,
+              errorCode,
+              provider: provider,
+              model: this.config.agent.model,
+              retryCount: rateLimitRetries + serverErrorRetries,
+              durationMs: Date.now() - processStartTime,
+            };
+            await this.hookRunner.runObservingHook("response:error", responseErrorEvent);
+          }
 
           if (isContextOverflowError(errorMsg)) {
             overflowResets++;
@@ -613,7 +689,7 @@ export class AgentRuntime {
             isGroup: effectiveIsGroup,
           };
 
-          // Hook: before_tool_call
+          // Hook: tool:before
           let toolParams = block.arguments ?? {};
           let blocked = false;
           let blockReason = "";
@@ -621,18 +697,18 @@ export class AgentRuntime {
           if (this.hookRunner) {
             const beforeEvent: BeforeToolCallEvent = {
               toolName: block.name,
-              params: { ...toolParams },
+              params: structuredClone(toolParams),
               chatId,
               isGroup: effectiveIsGroup,
               block: false,
               blockReason: "",
             };
-            await this.hookRunner.runModifyingHook("before_tool_call", beforeEvent);
+            await this.hookRunner.runModifyingHook("tool:before", beforeEvent);
             if (beforeEvent.block) {
               blocked = true;
               blockReason = beforeEvent.blockReason || "Blocked by plugin hook";
             } else {
-              toolParams = beforeEvent.params;
+              toolParams = structuredClone(beforeEvent.params);
             }
           }
 
@@ -640,25 +716,62 @@ export class AgentRuntime {
 
           if (blocked) {
             result = { success: false, error: blockReason };
-          } else {
-            const startTime = Date.now();
-            result = await this.toolRegistry.execute(
-              { ...block, arguments: toolParams },
-              fullContext
-            );
-            const durationMs = Date.now() - startTime;
 
-            // Hook: after_tool_call
+            // Hook: tool:after fires even on blocks (improvement #5)
             if (this.hookRunner) {
               const afterEvent: AfterToolCallEvent = {
                 toolName: block.name,
-                params: toolParams,
+                params: structuredClone(toolParams),
+                result: { success: false, error: blockReason },
+                durationMs: 0,
+                chatId,
+                isGroup: effectiveIsGroup,
+                blocked: true,
+                blockReason,
+              };
+              await this.hookRunner.runObservingHook("tool:after", afterEvent);
+            }
+          } else {
+            const startTime = Date.now();
+            try {
+              result = await this.toolRegistry.execute(
+                { ...block, arguments: toolParams },
+                fullContext
+              );
+            } catch (execErr) {
+              const durationMs = Date.now() - startTime;
+              const errMsg = execErr instanceof Error ? execErr.message : String(execErr);
+              const errStack = execErr instanceof Error ? execErr.stack : undefined;
+              result = { success: false, error: errMsg };
+
+              // Hook: tool:error
+              if (this.hookRunner) {
+                const errorEvent: ToolErrorEvent = {
+                  toolName: block.name,
+                  params: structuredClone(toolParams),
+                  error: errMsg,
+                  // Note: stack traces are exposed to plugins for debugging — accepted tradeoff
+                  stack: errStack,
+                  chatId,
+                  isGroup: effectiveIsGroup,
+                  durationMs,
+                };
+                await this.hookRunner.runObservingHook("tool:error", errorEvent);
+              }
+            }
+            const durationMs = Date.now() - startTime;
+
+            // Hook: tool:after
+            if (this.hookRunner) {
+              const afterEvent: AfterToolCallEvent = {
+                toolName: block.name,
+                params: structuredClone(toolParams),
                 result: { success: result.success, data: result.data, error: result.error },
                 durationMs,
                 chatId,
                 isGroup: effectiveIsGroup,
               };
-              await this.hookRunner.runObservingHook("after_tool_call", afterEvent);
+              await this.hookRunner.runObservingHook("tool:after", afterEvent);
             }
           }
 
@@ -804,6 +917,49 @@ export class AgentRuntime {
       } else if (!content && accumulatedUsage.input === 0 && accumulatedUsage.output === 0) {
         log.warn("⚠️ Empty response with zero tokens - possible API issue");
         content = "I couldn't process your request. Please try again.";
+      }
+
+      // Hook: response:before — plugins can mutate or block the response text
+      let responseMetadata: Record<string, unknown> = {};
+      if (this.hookRunner) {
+        const responseBeforeEvent: ResponseBeforeEvent = {
+          chatId,
+          sessionId: session.sessionId,
+          isGroup: effectiveIsGroup,
+          originalText: content,
+          text: content,
+          block: false,
+          blockReason: "",
+          metadata: {},
+        };
+        await this.hookRunner.runModifyingHook("response:before", responseBeforeEvent);
+        if (responseBeforeEvent.block) {
+          log.info(
+            `🚫 Response blocked by hook: ${responseBeforeEvent.blockReason || "no reason"}`
+          );
+          content = "";
+        } else {
+          content = responseBeforeEvent.text;
+        }
+        responseMetadata = responseBeforeEvent.metadata;
+      }
+
+      // Hook: response:after — analytics, billing, feedback
+      if (this.hookRunner) {
+        const responseAfterEvent: ResponseAfterEvent = {
+          chatId,
+          sessionId: session.sessionId,
+          isGroup: effectiveIsGroup,
+          text: content,
+          durationMs: Date.now() - processStartTime,
+          toolsUsed: totalToolCalls.map((tc) => tc.name),
+          tokenUsage:
+            accumulatedUsage.input > 0 || accumulatedUsage.output > 0
+              ? { input: accumulatedUsage.input, output: accumulatedUsage.output }
+              : undefined,
+          metadata: responseMetadata,
+        };
+        await this.hookRunner.runObservingHook("response:after", responseAfterEvent);
       }
 
       return {

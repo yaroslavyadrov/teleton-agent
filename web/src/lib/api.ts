@@ -392,6 +392,23 @@ export const api = {
     return fetchAPI<APIResponse<PluginManifest[]>>('/plugins');
   },
 
+  async getPluginPriorities() {
+    return fetchAPI<APIResponse<Record<string, number>>>('/plugins/priorities');
+  },
+
+  async setPluginPriority(pluginName: string, priority: number) {
+    return fetchAPI<APIResponse<{ pluginName: string; priority: number }>>('/plugins/priorities', {
+      method: 'POST',
+      body: JSON.stringify({ pluginName, priority }),
+    });
+  },
+
+  async resetPluginPriority(pluginName: string) {
+    return fetchAPI<APIResponse<null>>(`/plugins/priorities/${encodeURIComponent(pluginName)}`, {
+      method: 'DELETE',
+    });
+  },
+
   async getToolRag() {
     return fetchAPI<APIResponse<ToolRagStatus>>('/tools/rag');
   },

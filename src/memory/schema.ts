@@ -281,6 +281,16 @@ export function ensureSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_exec_audit_user ON exec_audit(user_id);
 
     -- =====================================================
+    -- PLUGIN CONFIG (Plugin Priority Order)
+    -- =====================================================
+
+    CREATE TABLE IF NOT EXISTS plugin_config (
+      plugin_name TEXT PRIMARY KEY,
+      priority INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    -- =====================================================
     -- JOURNAL (Trading & Business Operations)
     -- =====================================================
     ${JOURNAL_SCHEMA}
@@ -332,7 +342,7 @@ export function setSchemaVersion(db: Database.Database, version: string): void {
   ).run(version);
 }
 
-export const CURRENT_SCHEMA_VERSION = "1.13.0";
+export const CURRENT_SCHEMA_VERSION = "1.14.0";
 
 export function runMigrations(db: Database.Database): void {
   const currentVersion = getSchemaVersion(db);
@@ -589,6 +599,23 @@ export function runMigrations(db: Database.Database): void {
       log.info("Migration 1.13.0 complete: Token usage columns added to sessions");
     } catch (error) {
       log.error({ err: error }, "Migration 1.13.0 failed");
+      throw error;
+    }
+  }
+
+  if (!currentVersion || versionLessThan(currentVersion, "1.14.0")) {
+    log.info("Running migration 1.14.0: Add plugin_config table for plugin priority");
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS plugin_config (
+          plugin_name TEXT PRIMARY KEY,
+          priority INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      log.info("Migration 1.14.0 complete: plugin_config table created");
+    } catch (error) {
+      log.error({ err: error }, "Migration 1.14.0 failed");
       throw error;
     }
   }

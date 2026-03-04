@@ -1547,6 +1547,190 @@ export interface StorageSDK {
   clear(): void;
 }
 
+// ─── Hook Event Types ────────────────────────────────────────────
+
+/** Event for tool:before hook — mutable params, block, blockReason */
+export interface BeforeToolCallEvent {
+  readonly toolName: string;
+  params: Record<string, unknown>;
+  readonly chatId: string;
+  readonly isGroup: boolean;
+  block: boolean;
+  blockReason: string;
+}
+
+/** Event for tool:after hook — all readonly */
+export interface AfterToolCallEvent {
+  readonly toolName: string;
+  readonly params: Record<string, unknown>;
+  readonly result: { success: boolean; data?: unknown; error?: string };
+  readonly durationMs: number;
+  readonly chatId: string;
+  readonly isGroup: boolean;
+  /** True if tool was blocked by tool:before hook */
+  readonly blocked?: boolean;
+  /** Reason the tool was blocked (if blocked) */
+  readonly blockReason?: string;
+}
+
+/** Event for prompt:before hook — mutable additionalContext */
+export interface BeforePromptBuildEvent {
+  readonly chatId: string;
+  readonly sessionId: string;
+  readonly isGroup: boolean;
+  additionalContext: string;
+}
+
+/** Event for session:start hook */
+export interface SessionStartEvent {
+  readonly sessionId: string;
+  readonly chatId: string;
+  readonly isResume: boolean;
+}
+
+/** Event for session:end hook */
+export interface SessionEndEvent {
+  readonly sessionId: string;
+  readonly chatId: string;
+  readonly messageCount: number;
+}
+
+// ─── New Hook Event Types (v1.1) ────────────────────────────────
+
+/** Event for message:receive hook — mutable text, block, additionalContext */
+export interface MessageReceiveEvent {
+  readonly chatId: string;
+  readonly senderId: string;
+  readonly senderName: string;
+  readonly isGroup: boolean;
+  readonly isReply: boolean;
+  readonly replyToMessageId?: number;
+  readonly messageId: number;
+  readonly timestamp: number;
+  /** Mutable — modify the message text before LLM processing */
+  text: string;
+  /** Mutable — set to true to silently drop the message */
+  block: boolean;
+  /** Mutable — reason for blocking (logged, not sent to user) */
+  blockReason: string;
+  /** Mutable — injected into the prompt (sanitized via sanitizeForContext) */
+  additionalContext: string;
+}
+
+/** Event for response:before hook — mutable text, block */
+export interface ResponseBeforeEvent {
+  readonly chatId: string;
+  readonly sessionId: string;
+  readonly isGroup: boolean;
+  /** Original text from the LLM (immutable, for reference) */
+  readonly originalText: string;
+  /** Mutable — the text that will be sent */
+  text: string;
+  /** Mutable — set to true to suppress sending */
+  block: boolean;
+  /** Mutable — reason for blocking */
+  blockReason: string;
+  /** Mutable — passed through to response:after */
+  metadata: Record<string, unknown>;
+}
+
+/** Event for response:after hook — all readonly */
+export interface ResponseAfterEvent {
+  readonly chatId: string;
+  readonly sessionId: string;
+  readonly isGroup: boolean;
+  /** Final text that was sent */
+  readonly text: string;
+  /** Total processing duration in ms */
+  readonly durationMs: number;
+  /** List of tool names called during this response */
+  readonly toolsUsed: string[];
+  /** Token usage for this response */
+  readonly tokenUsage?: {
+    input: number;
+    output: number;
+  };
+  /** Metadata passed from response:before */
+  readonly metadata: Record<string, unknown>;
+}
+
+/** Event for response:error hook — all readonly */
+export interface ResponseErrorEvent {
+  readonly chatId: string;
+  readonly sessionId: string;
+  readonly isGroup: boolean;
+  readonly error: string;
+  readonly errorCode?: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly retryCount: number;
+  readonly durationMs: number;
+}
+
+/** Event for tool:error hook — all readonly */
+export interface ToolErrorEvent {
+  readonly toolName: string;
+  readonly params: Record<string, unknown>;
+  readonly error: string;
+  readonly stack?: string;
+  readonly chatId: string;
+  readonly isGroup: boolean;
+  readonly durationMs: number;
+}
+
+/** Event for prompt:after hook — all readonly */
+export interface PromptAfterEvent {
+  readonly chatId: string;
+  readonly sessionId: string;
+  readonly isGroup: boolean;
+  /** Prompt length in characters */
+  readonly promptLength: number;
+  /** Number of sections in the prompt */
+  readonly sectionCount: number;
+  /** Length of RAG context injected */
+  readonly ragContextLength: number;
+  /** Length of hook context injected via prompt:before */
+  readonly hookContextLength: number;
+}
+
+/** Event for agent:start hook — all readonly */
+export interface AgentStartEvent {
+  readonly version: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly pluginCount: number;
+  readonly toolCount: number;
+  readonly timestamp: number;
+}
+
+/** Event for agent:stop hook — all readonly */
+export interface AgentStopEvent {
+  readonly reason: "manual" | "signal" | "error";
+  readonly uptimeMs: number;
+  readonly messagesProcessed: number;
+  readonly timestamp: number;
+}
+
+/** Maps hook names to their handler signatures */
+export interface HookHandlerMap {
+  "tool:before": (event: BeforeToolCallEvent) => void | Promise<void>;
+  "tool:after": (event: AfterToolCallEvent) => void | Promise<void>;
+  "tool:error": (event: ToolErrorEvent) => void | Promise<void>;
+  "prompt:before": (event: BeforePromptBuildEvent) => void | Promise<void>;
+  "prompt:after": (event: PromptAfterEvent) => void | Promise<void>;
+  "session:start": (event: SessionStartEvent) => void | Promise<void>;
+  "session:end": (event: SessionEndEvent) => void | Promise<void>;
+  "message:receive": (event: MessageReceiveEvent) => void | Promise<void>;
+  "response:before": (event: ResponseBeforeEvent) => void | Promise<void>;
+  "response:after": (event: ResponseAfterEvent) => void | Promise<void>;
+  "response:error": (event: ResponseErrorEvent) => void | Promise<void>;
+  "agent:start": (event: AgentStartEvent) => void | Promise<void>;
+  "agent:stop": (event: AgentStopEvent) => void | Promise<void>;
+}
+
+/** Available hook names */
+export type HookName = keyof HookHandlerMap;
+
 // ─── Plugin Event Types ─────────────────────────────────────────
 
 /** Event passed to plugin onMessage hooks */
@@ -1871,4 +2055,11 @@ export interface PluginSDK {
 
   /** Bot inline mode SDK (null if bot not available or plugin has no bot manifest) */
   readonly bot: BotSDK | null;
+
+  /** Register a typed hook handler for agent lifecycle events. */
+  on<K extends HookName>(
+    hookName: K,
+    handler: HookHandlerMap[K],
+    opts?: { priority?: number }
+  ): void;
 }

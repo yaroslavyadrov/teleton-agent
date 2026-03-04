@@ -16,6 +16,7 @@ import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
+import { getPluginPriorities } from "./plugin-config-store.js";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
@@ -38,6 +39,7 @@ import {
   type SDKDependencies,
 } from "../../sdk/index.js";
 import type { PluginSDK } from "../../sdk/index.js";
+import { HookRegistry } from "../../sdk/hooks/registry.js";
 import { createSecretsSDK } from "../../sdk/secrets.js";
 import type {
   SecretDeclaration,
@@ -80,7 +82,9 @@ export function adaptPlugin(
   entryName: string,
   config: Config,
   loadedModuleNames: string[],
-  sdkDeps: SDKDependencies
+  sdkDeps: SDKDependencies,
+  hookRegistry?: HookRegistry,
+  pluginPriorities?: Map<string, number>
 ): PluginModuleWithHooks {
   let manifest: PluginManifest | null = null;
 
@@ -121,6 +125,7 @@ export function adaptPlugin(
 
   const pluginName = manifest?.name ?? entryName.replace(/\.js$/, "");
   const pluginVersion = manifest?.version ?? "0.0.0";
+  const globalPriority = pluginPriorities?.get(pluginName) ?? 0;
 
   if (manifest?.dependencies) {
     for (const dep of manifest.dependencies) {
@@ -234,6 +239,9 @@ export function adaptPlugin(
             sanitizedConfig,
             pluginConfig,
             botManifest: manifest?.bot,
+            hookRegistry,
+            declaredHooks: manifest?.hooks,
+            globalPriority,
           });
           toolDefs = raw.tools(sdk);
         } else if (Array.isArray(raw.tools)) {
@@ -354,18 +362,35 @@ export async function ensurePluginDeps(pluginDir: string, pluginEntry: string): 
 
 // ─── Initial Plugin Loading ─────────────────────────────────────────
 
+export interface LoadEnhancedPluginsResult {
+  modules: PluginModuleWithHooks[];
+  hookRegistry: HookRegistry;
+}
+
 export async function loadEnhancedPlugins(
   config: Config,
   loadedModuleNames: string[],
-  sdkDeps: SDKDependencies
-): Promise<PluginModuleWithHooks[]> {
+  sdkDeps: SDKDependencies,
+  db?: import("better-sqlite3").Database
+): Promise<LoadEnhancedPluginsResult> {
+  const hookRegistry = new HookRegistry();
   const pluginsDir = WORKSPACE_PATHS.PLUGINS_DIR;
 
   if (!existsSync(pluginsDir)) {
-    return [];
+    return { modules: [], hookRegistry };
   }
 
-  const entries = readdirSync(pluginsDir);
+  // Read plugin priorities from DB (if available)
+  let pluginPriorities = new Map<string, number>();
+  if (db) {
+    try {
+      pluginPriorities = getPluginPriorities(db);
+    } catch {
+      // Table may not exist yet on first run before migration — ignore
+    }
+  }
+
+  const entries = readdirSync(pluginsDir).sort(); // deterministic cross-OS
   const modules: PluginModuleWithHooks[] = [];
   const loadedNames = new Set<string>();
 
@@ -430,7 +455,15 @@ export async function loadEnhancedPlugins(
         continue;
       }
 
-      const adapted = adaptPlugin(mod, entry, config, loadedModuleNames, sdkDeps);
+      const adapted = adaptPlugin(
+        mod,
+        entry,
+        config,
+        loadedModuleNames,
+        sdkDeps,
+        hookRegistry,
+        pluginPriorities
+      );
 
       if (loadedNames.has(adapted.name)) {
         log.warn(`Plugin "${adapted.name}" already loaded, skipping duplicate from "${entry}"`);
@@ -444,5 +477,5 @@ export async function loadEnhancedPlugins(
     }
   }
 
-  return modules;
+  return { modules, hookRegistry };
 }

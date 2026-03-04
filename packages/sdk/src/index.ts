@@ -117,6 +117,23 @@ export type {
   BotManifest,
   BotKeyboard,
   BotSDK,
+  // Hook types
+  HookName,
+  HookHandlerMap,
+  BeforeToolCallEvent,
+  AfterToolCallEvent,
+  BeforePromptBuildEvent,
+  SessionStartEvent,
+  SessionEndEvent,
+  // New hook types (v1.1)
+  MessageReceiveEvent,
+  ResponseBeforeEvent,
+  ResponseAfterEvent,
+  ResponseErrorEvent,
+  ToolErrorEvent,
+  PromptAfterEvent,
+  AgentStartEvent,
+  AgentStopEvent,
 } from "./types.js";
 
 // ─── Errors ──────────────────────────────────────────────────────

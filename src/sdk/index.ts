@@ -1,7 +1,14 @@
 import type { TelegramBridge } from "../telegram/bridge.js";
 import type Database from "better-sqlite3";
-import type { PluginSDK, PluginLogger, BotManifest } from "@teleton-agent/sdk";
+import type {
+  PluginSDK,
+  PluginLogger,
+  BotManifest,
+  HookName,
+  HookHandlerMap,
+} from "@teleton-agent/sdk";
 import { SDK_VERSION } from "@teleton-agent/sdk";
+import type { HookRegistry } from "./hooks/registry.js";
 import { createTonSDK } from "./ton.js";
 import { createTelegramSDK } from "./telegram.js";
 import { createSecretsSDK } from "./secrets.js";
@@ -86,6 +93,21 @@ export type {
   BotManifest,
   BotKeyboard,
   BotSDK,
+  HookName,
+  HookHandlerMap,
+  BeforeToolCallEvent,
+  AfterToolCallEvent,
+  BeforePromptBuildEvent,
+  SessionStartEvent,
+  SessionEndEvent,
+  MessageReceiveEvent,
+  ResponseBeforeEvent,
+  ResponseAfterEvent,
+  ResponseErrorEvent,
+  ToolErrorEvent,
+  PromptAfterEvent,
+  AgentStartEvent,
+  AgentStopEvent,
 } from "@teleton-agent/sdk";
 
 export { PluginSDKError, type SDKErrorCode, SDK_VERSION } from "@teleton-agent/sdk";
@@ -109,6 +131,12 @@ export interface CreatePluginSDKOptions {
   pluginConfig: Record<string, unknown>;
   /** Bot manifest from plugin (if plugin declares bot capabilities) */
   botManifest?: BotManifest;
+  /** Hook registry for sdk.on() support */
+  hookRegistry?: HookRegistry;
+  /** Declared hooks from manifest (if present, enforces registration) */
+  declaredHooks?: Array<{ name: string; priority?: number; description?: string }>;
+  /** Plugin-level global priority (from plugin_config DB table). Default 0. */
+  globalPriority?: number;
 }
 
 /** Block ATTACH/DETACH to prevent cross-plugin DB access */
@@ -193,6 +221,41 @@ export function createPluginSDK(deps: SDKDependencies, opts: CreatePluginSDKOpti
       // Only cache non-null — retry on next access if deps aren't ready yet
       if (result) cachedBot = result;
       return result;
+    },
+    on<K extends HookName>(
+      hookName: K,
+      handler: HookHandlerMap[K],
+      onOpts?: { priority?: number }
+    ): void {
+      if (!opts.hookRegistry) {
+        log.warn(`Hook registration unavailable — sdk.on() ignored`);
+        return;
+      }
+      // Enforce manifest declarations: if hooks[] is declared, only allow listed hooks
+      if (opts.declaredHooks) {
+        const declared = opts.declaredHooks.some((h) => h.name === hookName);
+        if (!declared) {
+          log.warn(`Hook "${hookName}" not declared in manifest — registration rejected`);
+          return;
+        }
+      }
+      const rawPriority = Number(onOpts?.priority) || 0;
+      const clampedPriority = Math.max(-1000, Math.min(1000, rawPriority));
+      if (rawPriority !== clampedPriority) {
+        log.debug(`Hook "${hookName}" priority ${rawPriority} clamped to ${clampedPriority}`);
+      }
+      const registered = opts.hookRegistry.register({
+        pluginId: opts.pluginName,
+        hookName,
+        handler,
+        priority: clampedPriority,
+        globalPriority: opts.globalPriority ?? 0,
+      });
+      if (!registered) {
+        log.warn(
+          `Hook registration limit reached for plugin "${opts.pluginName}" — "${hookName}" rejected`
+        );
+      }
     },
   };
 

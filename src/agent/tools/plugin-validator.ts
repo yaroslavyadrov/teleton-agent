@@ -49,6 +49,15 @@ const ManifestSchema = z.object({
         .optional(),
     })
     .optional(),
+  hooks: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(64),
+        priority: z.number().optional(),
+        description: z.string().max(256).optional(),
+      })
+    )
+    .optional(),
 });
 
 export type PluginManifest = z.infer<typeof ManifestSchema>;
