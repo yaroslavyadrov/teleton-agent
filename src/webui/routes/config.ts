@@ -18,7 +18,6 @@ import {
 import { setTonapiKey } from "../../constants/api-endpoints.js";
 import { setToncenterApiKey, invalidateEndpointCache } from "../../ton/endpoint.js";
 import { invalidateTonClientCache } from "../../ton/wallet-service.js";
-
 /** Side-effects to run when specific config keys change at runtime. */
 const CONFIG_SIDE_EFFECTS: Record<string, (value: string | undefined) => void> = {
   tonapi_key: (v) => setTonapiKey(v),
