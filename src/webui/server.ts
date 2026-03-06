@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { bodyLimit } from "hono/body-limit";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
+import type { Server as HttpServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -413,6 +414,7 @@ export class WebUIServer {
   async stop(): Promise<void> {
     if (this.server) {
       return new Promise((resolve) => {
+        (this.server as HttpServer).closeAllConnections();
         this.server?.close(() => {
           logInterceptor.uninstall();
           log.info("WebUI server stopped");

@@ -128,8 +128,7 @@ export class TelegramUserClient {
 
           // Detect Fragment SMS for anonymous numbers (+888)
           if (sendResult.type instanceof Api.auth.SentCodeTypeFragmentSms) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS Layer 222 SentCodeTypeFragmentSms.url
-            const url = (sendResult.type as any).url;
+            const url = sendResult.type.url;
             if (url) {
               console.log(`\n  Anonymous number — open this URL to get your code:\n  ${url}\n`);
             }
@@ -259,11 +258,9 @@ export class TelegramUserClient {
     this.client.addEventHandler(async (update) => {
       if (
         (update instanceof Api.UpdateNewMessage || update instanceof Api.UpdateNewChannelMessage) &&
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS update.message lacks proper typing
-        (update as any).message instanceof Api.MessageService
+        update.message instanceof Api.MessageService
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS update.message lacks proper typing
-        await handler((update as any).message as Api.MessageService);
+        await handler(update.message as Api.MessageService);
       }
     });
   }
@@ -320,8 +317,7 @@ export class TelegramUserClient {
       parseMode === "html" ? markdownToTelegramHtml(options.message) : options.message;
 
     return withFloodRetry(() =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS sendMessage accepts string | Entity
-      this.client.sendMessage(entity as any, {
+      this.client.sendMessage(entity, {
         message: formattedMessage,
         replyTo: options.replyTo,
         silent: options.silent,

@@ -43,6 +43,7 @@ import {
 import { Address as TonAddress, beginCell, SendMode, storeMessage } from "@ton/core";
 import { withTxLock } from "../ton/tx-lock.js";
 import { formatTransactions } from "../ton/format-transactions.js";
+import { isHttpError } from "../utils/errors.js";
 
 /** Format a raw BigInt token balance to a human-readable string. */
 function formatTokenBalance(rawBalance: bigint, decimals: number): string {
@@ -464,10 +465,9 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
               return seq;
             } catch (err) {
               lastErr = err;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTTP error shape varies across TON client libraries
-              const status = (err as any)?.status || (err as any)?.response?.status;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTTP error response data is untyped
-              const respData = (err as any)?.response?.data;
+              const httpErr = isHttpError(err) ? err : undefined;
+              const status = httpErr?.status || httpErr?.response?.status;
+              const respData = httpErr?.response?.data;
               if (status === 429 || (status && status >= 500)) {
                 invalidateTonClientCache();
                 if (attempt < MAX_SEND_ATTEMPTS) {
@@ -487,8 +487,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         return { success: true, seqno };
       } catch (err) {
         // Invalidate node cache on 429/5xx so next attempt picks a fresh node
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTTP error shape varies across TON client libraries
-        const status = (err as any)?.status || (err as any)?.response?.status;
+        const outerHttpErr = isHttpError(err) ? err : undefined;
+        const status = outerHttpErr?.status || outerHttpErr?.response?.status;
         if (status === 429 || (status && status >= 500)) {
           invalidateTonClientCache();
         }

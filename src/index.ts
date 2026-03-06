@@ -62,6 +62,7 @@ export class TeletonApp {
   private pluginWatcher: PluginWatcher | null = null;
   private mcpConnections: McpConnection[] = [];
   private callbackHandlerRegistered = false;
+  private messageHandlersRegistered = false;
   private lifecycle = new AgentLifecycle();
   private hookRunner?: ReturnType<typeof createHookRunner>;
   private userHookEvaluator: UserHookEvaluator | null = null;
@@ -607,25 +608,28 @@ ${blue}  ┌──────────────────────�
       }
     );
 
-    // Register event handler for new messages (with debouncing)
-    this.bridge.onNewMessage(async (message) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- debouncer always initialized before handlers register
-        await this.debouncer!.enqueue(message);
-      } catch (error) {
-        log.error({ err: error }, "Error enqueueing message");
-      }
-    });
+    // Register GramJS event handlers ONCE (survive agent restart via WebUI)
+    if (!this.messageHandlersRegistered) {
+      this.bridge.onNewMessage(async (message) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- debouncer always initialized before handlers register
+          await this.debouncer!.enqueue(message);
+        } catch (error) {
+          log.error({ err: error }, "Error enqueueing message");
+        }
+      });
 
-    // Register event handler for gift service messages (offers, gifts received)
-    this.bridge.onServiceMessage(async (message) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- debouncer always initialized before handlers register
-        await this.debouncer!.enqueue(message);
-      } catch (error) {
-        log.error({ err: error }, "Error enqueueing service message");
-      }
-    });
+      this.bridge.onServiceMessage(async (message) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- debouncer always initialized before handlers register
+          await this.debouncer!.enqueue(message);
+        } catch (error) {
+          log.error({ err: error }, "Error enqueueing service message");
+        }
+      });
+
+      this.messageHandlersRegistered = true;
+    }
   }
 
   /**

@@ -125,7 +125,7 @@ export function createSetupRoutes(): Hono {
   app.get("/detect-claude-code-key", (c) => {
     try {
       const key = getClaudeCodeApiKey();
-      const masked = key.slice(0, 12) + "****" + key.slice(-4);
+      const masked = maskKey(key);
       return c.json({
         success: true,
         data: {
