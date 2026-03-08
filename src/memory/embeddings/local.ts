@@ -25,6 +25,9 @@ function getExtractor(model: string): Promise<FeatureExtractionPipeline> {
       dtype: "fp32",
       // Explicit cache_dir to avoid any env race condition
       cache_dir: modelCacheDir,
+      // Prevent pthread_setaffinity_np EINVAL on VPS/containers with restricted CPU sets.
+      // ONNX Runtime skips thread affinity when thread counts are explicit.
+      session_options: { intraOpNumThreads: 1, interOpNumThreads: 1 },
     })
       .then((ext) => {
         log.info(`Local embedding model ready`);
