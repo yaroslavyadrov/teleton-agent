@@ -21,19 +21,19 @@
 
 <table>
 <tr>
-<td align="center" width="33%"><br><b>Full Telegram Access</b><br>Real user via MTProto,<br>not a bot<br><br></td>
-<td align="center" width="33%"><br><b>Agentic Loop</b><br>Think, act, observe, repeat<br>until shit gets done<br><br></td>
-<td align="center" width="33%"><br><b>15 LLM Providers</b><br>Anthropic, OpenAI, Google, xAI, Groq, and more<br><br></td>
+<td align="center" width="33%"><br><b><ins>Full Telegram Access</ins></b><br>Real user via MTProto,<br>not a bot<br><br></td>
+<td align="center" width="33%"><br><b><ins>Agentic Loop</ins></b><br>Think, act, observe, repeat<br>until shit gets done<br><br></td>
+<td align="center" width="33%"><br><b><ins>15 LLM Providers</ins></b><br>Anthropic, OpenAI, Google, xAI, Groq, and more<br><br></td>
 </tr>
 <tr>
-<td align="center"><br><b>TON Blockchain</b><br>Wallet, jettons, DEX swaps, DNS, NFTs<br><br></td>
-<td align="center"><br><b>Persistent Memory</b><br>Hybrid RAG, vector + keyword, auto-compaction<br><br></td>
-<td align="center"><br><b>125+ Built-in Tools</b><br>Messaging, media, crypto, DEX, DNS, files<br><br></td>
+<td align="center"><br><b><ins>TON Blockchain</ins></b><br>Wallet, jettons, DEX swaps, DNS, NFTs<br><br></td>
+<td align="center"><br><b><ins>Persistent Memory</ins></b><br>Hybrid RAG, vector + keyword, auto-compaction<br><br></td>
+<td align="center"><br><b><ins>125+ Built-in Tools</ins></b><br>Messaging, media, crypto, DEX, DNS, files<br><br></td>
 </tr>
 <tr>
-<td align="center"><br><b>Plugin SDK</b><br>Custom tools, isolated DBs, secrets, hooks<br><br></td>
-<td align="center"><br><b>MCP Client</b><br>Connect any MCP tool server<br><br></td>
-<td align="center"><br><b>Secure by Design</b><br>Sandbox, plugin isolation, prompt defense<br><br></td>
+<td align="center"><br><b><ins>Plugin SDK</ins></b><br>Custom tools, isolated DBs, secrets, hooks<br><br></td>
+<td align="center"><br><b><ins>MCP Client</ins></b><br>Connect any MCP tool server<br><br></td>
+<td align="center"><br><b><ins>Secure by Design</ins></b><br>Sandbox, plugin isolation, prompt defense<br><br></td>
 </tr>
 </table>
 
