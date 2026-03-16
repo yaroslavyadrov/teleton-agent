@@ -102,6 +102,34 @@ export interface AgentResponse {
   }>;
 }
 
+/** Compact summary of tool params for the iteration log line. */
+function summarizeToolParams(
+  toolName: string,
+  params: Record<string, unknown>
+): string {
+  const MAX = 60;
+  let hint = "";
+
+  if (toolName === "exec_run" && typeof params.command === "string") {
+    hint = params.command;
+  } else if (toolName === "web_fetch" && typeof params.url === "string") {
+    hint = params.url;
+  } else if (
+    toolName.startsWith("telegram_") &&
+    typeof params.message === "string"
+  ) {
+    hint = params.message;
+  } else if (typeof params.query === "string") {
+    hint = params.query;
+  } else if (typeof params.section === "string") {
+    hint = params.section;
+  }
+
+  if (!hint) return "";
+  if (hint.length > MAX) hint = hint.slice(0, MAX) + "…";
+  return `(${hint})`;
+}
+
 export class AgentRuntime {
   private config: Config;
   private soul: string;
@@ -452,6 +480,7 @@ export class AgentRuntime {
       );
       if (preemptiveCompaction) {
         log.info(`🗜️  Preemptive compaction triggered, reloading session...`);
+        updateSession(chatId, { sessionId: preemptiveCompaction });
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- session guaranteed to exist after compaction
         session = getSession(chatId)!;
         context = loadContextFromTranscript(session.sessionId);
@@ -788,8 +817,9 @@ export class AgentRuntime {
             await this.hookRunner.runObservingHook("tool:after", afterEvent);
           }
 
+          const toolHint = summarizeToolParams(block.name, plan.params);
           log.debug(`${block.name}: ${exec.result.success ? "✓" : "✗"} ${exec.result.error || ""}`);
-          iterationToolNames.push(`${block.name} ${exec.result.success ? "✓" : "✗"}`);
+          iterationToolNames.push(`${block.name}${toolHint} ${exec.result.success ? "✓" : "✗"}`);
 
           totalToolCalls.push({
             name: block.name,
