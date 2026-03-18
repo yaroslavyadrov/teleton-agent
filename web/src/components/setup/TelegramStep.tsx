@@ -61,7 +61,7 @@ export function TelegramStep({ data, onChange }: StepProps) {
         <div style={{
           display: 'flex',
           gap: '4px',
-          background: 'var(--surface)',
+          background: 'var(--bg-glass)',
           borderRadius: '8px',
           padding: '4px',
         }}>

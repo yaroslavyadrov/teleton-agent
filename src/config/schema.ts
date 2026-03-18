@@ -225,7 +225,7 @@ export const McpConfigSchema = _McpObject.default(_McpObject.parse({}));
 
 const _ToolRagObject = z.object({
   enabled: z.boolean().default(true).describe("Enable semantic tool retrieval (Tool RAG)"),
-  top_k: z.number().default(25).describe("Max tools to retrieve per LLM call"),
+  top_k: z.number().default(35).describe("Max tools to retrieve per LLM call"),
   always_include: z
     .array(z.string())
     .default([
@@ -235,7 +235,6 @@ const _ToolRagObject = z.object({
       "telegram_send_document",
       "journal_*",
       "workspace_*",
-      "web_*",
     ])
     .describe("Tool name patterns always included (prefix glob with *)"),
   skip_unlimited_providers: z
@@ -286,13 +285,11 @@ const _HeartbeatObject = z.object({
   interval_ms: z
     .number()
     .min(60_000)
-    .default(1_800_000)
-    .describe("Heartbeat interval in milliseconds (min 60s, default 30min)"),
+    .default(3_600_000)
+    .describe("Heartbeat interval in milliseconds (min 60s, default 60min)"),
   prompt: z
     .string()
-    .default(
-      "Read HEARTBEAT.md if it exists. Follow it strictly. If nothing needs attention, reply NO_ACTION."
-    )
+    .default("Execute your HEARTBEAT.md checklist now. Work through each item using tool calls.")
     .describe("Prompt sent to agent on each heartbeat tick"),
   self_configurable: z
     .boolean()

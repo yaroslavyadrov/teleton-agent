@@ -1013,9 +1013,8 @@ async function runInteractiveOnboarding(
     ton_proxy: { enabled: false, port: 8080 },
     heartbeat: {
       enabled: true,
-      interval_ms: 1_800_000,
-      prompt:
-        "Read HEARTBEAT.md if it exists. Follow it strictly. If nothing needs attention, reply NO_ACTION.",
+      interval_ms: 3_600_000,
+      prompt: "Execute your HEARTBEAT.md checklist now. Work through each item using tool calls.",
       self_configurable: false,
     },
     plugins: {},
@@ -1200,9 +1199,8 @@ async function runNonInteractiveOnboarding(
     ton_proxy: { enabled: false, port: 8080 },
     heartbeat: {
       enabled: true,
-      interval_ms: 1_800_000,
-      prompt:
-        "Read HEARTBEAT.md if it exists. Follow it strictly. If nothing needs attention, reply NO_ACTION.",
+      interval_ms: 3_600_000,
+      prompt: "Execute your HEARTBEAT.md checklist now. Work through each item using tool calls.",
       self_configurable: false,
     },
     mcp: { servers: {} },

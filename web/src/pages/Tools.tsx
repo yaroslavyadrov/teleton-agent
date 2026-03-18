@@ -121,7 +121,7 @@ export function Tools() {
           <span style={{ color: 'var(--green)', fontWeight: 600 }}>{enabledCount}</span> enabled
         </span>
         <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-          <span style={{ color: 'var(--text)', fontWeight: 600 }}>{builtInCount - enabledCount}</span> disabled
+          <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{builtInCount - enabledCount}</span> disabled
         </span>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -135,10 +135,10 @@ export function Tools() {
               style={{
                 padding: '4px 24px 4px 12px',
                 fontSize: '13px',
-                border: '1px solid var(--separator)',
+                border: '1px solid var(--border)',
                 borderRadius: '14px',
                 backgroundColor: 'transparent',
-                color: 'var(--text)',
+                color: 'var(--text-primary)',
                 width: '180px',
                 outline: 'none',
               }}
@@ -170,7 +170,7 @@ export function Tools() {
             </span>
           )}
           <button
-            style={{ padding: '4px 12px', fontSize: '12px', opacity: 0.7 }}
+            className="btn-ghost btn-sm"
             onClick={loadTools}
           >
             Refresh
@@ -187,7 +187,7 @@ export function Tools() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ textAlign: 'left', padding: '8px 14px' }}>Module</th>
                 <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Tools</th>
                 <th style={{ textAlign: 'center', padding: '8px 10px', width: 70 }}>Enabled</th>
@@ -215,7 +215,7 @@ export function Tools() {
                       role="button"
                       style={{
                         cursor: 'pointer',
-                        borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                        borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                         backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                       }}
                       className="file-row"
@@ -235,7 +235,7 @@ export function Tools() {
                         <span className="badge count">{module.toolCount}</span>
                       </td>
                       <td style={{ textAlign: 'center', padding: '8px 10px' }}>
-                        <span style={{ fontSize: '12px', color: enabledInModule === module.toolCount ? 'var(--green)' : enabledInModule === 0 ? 'var(--text-secondary)' : 'var(--text)' }}>
+                        <span style={{ fontSize: '12px', color: enabledInModule === module.toolCount ? 'var(--green)' : enabledInModule === 0 ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
                           {enabledInModule}/{module.toolCount}
                         </span>
                       </td>
@@ -262,7 +262,7 @@ export function Tools() {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr key={`${module.name}-detail`} style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                      <tr key={`${module.name}-detail`} style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                         <td colSpan={4} style={{ padding: '0 14px 14px 14px' }}>
                           <div style={{ display: 'grid', gap: '6px', paddingTop: '6px' }}>
                             {module.tools.map((tool) => (

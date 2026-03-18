@@ -326,7 +326,7 @@ export function Config() {
                         display: 'inline-block',
                         width: 14,
                         height: 14,
-                        border: '2px solid var(--separator)',
+                        border: '2px solid var(--border)',
                         borderTopColor: 'var(--accent)',
                         borderRadius: '50%',
                         animation: 'spin 0.8s linear infinite',
@@ -335,7 +335,7 @@ export function Config() {
                     </span>
                   )}
                   {!proxyLoading && proxyStatus?.running && (
-                    <span style={{ fontSize: '12px', color: 'var(--green, #22c55e)' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--green)' }}>
                       Running (PID {proxyStatus.pid})
                     </span>
                   )}
@@ -478,7 +478,7 @@ export function Config() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text)' }}>
+                <label style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                   Top-K <InfoTip text="Number of most relevant tools to send per message" />
                 </label>
                 <Select
@@ -489,7 +489,7 @@ export function Config() {
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text)', cursor: 'pointer' }} htmlFor="skip-unlimited">
+                <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }} htmlFor="skip-unlimited">
                   Skip Unlimited <InfoTip text="Skip RAG filtering for providers with no tool limit" />
                 </label>
                 <label className="toggle">
@@ -505,7 +505,7 @@ export function Config() {
               </div>
             </div>
             <div style={{ marginTop: '12px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text)', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '13px', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
                 Always Include (glob patterns) <InfoTip text="Tool name patterns that are always included regardless of RAG scoring" />
               </label>
               <ArrayInput

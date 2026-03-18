@@ -250,7 +250,7 @@ export function Mcp() {
                     fontSize: '11px',
                     padding: '1px 6px',
                     borderRadius: '3px',
-                    background: 'var(--surface)',
+                    background: 'var(--bg-glass)',
                     color: 'var(--text-secondary)',
                   }}>
                     {server.type}
@@ -260,7 +260,7 @@ export function Mcp() {
                       fontSize: '11px',
                       padding: '1px 6px',
                       borderRadius: '3px',
-                      background: 'var(--surface)',
+                      background: 'var(--bg-glass)',
                       color: 'var(--text-secondary)',
                     }}>
                       {server.scope}
@@ -314,7 +314,7 @@ export function Mcp() {
                         fontSize: '11px',
                         padding: '1px 6px',
                         borderRadius: '3px',
-                        background: 'var(--surface)',
+                        background: 'var(--bg-glass)',
                         color: 'var(--text-secondary)',
                         fontFamily: 'monospace',
                       }}
@@ -350,7 +350,7 @@ export function Mcp() {
                             fontSize: '11px',
                             padding: '2px 6px',
                             borderRadius: '3px',
-                            background: 'var(--surface)',
+                            background: 'var(--bg-glass)',
                             color: 'var(--text-secondary)',
                           }}
                         >

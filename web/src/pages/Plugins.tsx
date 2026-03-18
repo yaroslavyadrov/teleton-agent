@@ -348,7 +348,7 @@ export function Plugins() {
               <span style={{ color: 'var(--green)', fontWeight: 600 }}>{installedEnabledCount}</span> enabled
             </span>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              <span style={{ color: 'var(--text)', fontWeight: 600 }}>{installedToolCount}</span> tools
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{installedToolCount}</span> tools
             </span>
           </>
         )}
@@ -364,10 +364,10 @@ export function Plugins() {
               style={{
                 padding: '4px 24px 4px 12px',
                 fontSize: '13px',
-                border: '1px solid var(--separator)',
+                border: '1px solid var(--border)',
                 borderRadius: '14px',
                 backgroundColor: 'transparent',
-                color: 'var(--text)',
+                color: 'var(--text-primary)',
                 width: '180px',
                 outline: 'none',
               }}
@@ -456,7 +456,7 @@ export function Plugins() {
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
                   <th style={{ textAlign: 'left', padding: '8px 14px' }}>Plugin</th>
                   <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Tools</th>
                   <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Version</th>
@@ -487,7 +487,7 @@ export function Plugins() {
                         role="button"
                         style={{
                           cursor: 'pointer',
-                          borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                          borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                           backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                         }}
                         className="file-row"
@@ -528,7 +528,7 @@ export function Plugins() {
                         <td style={{ textAlign: 'center', padding: '8px 10px' }} onClick={(e) => e.stopPropagation()}>
                           {(() => {
                             const prio = priorities[plugin.name] ?? 0;
-                            const color = prio < 0 ? 'var(--red)' : prio > 0 ? 'var(--blue, #6ea8fe)' : 'var(--text-secondary)';
+                            const color = prio < 0 ? 'var(--red)' : prio > 0 ? 'var(--accent-soft)' : 'var(--text-secondary)';
                             return (
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 <input
@@ -544,7 +544,7 @@ export function Plugins() {
                                     padding: '2px 4px',
                                     fontSize: '12px',
                                     textAlign: 'center',
-                                    border: '1px solid var(--separator)',
+                                    border: '1px solid var(--border)',
                                     borderRadius: '4px',
                                     backgroundColor: 'transparent',
                                     color,
@@ -606,7 +606,7 @@ export function Plugins() {
                         </td>
                       </tr>
                       {isExpanded && (
-                        <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                        <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                           <td colSpan={5} style={{ padding: '0 14px 14px 14px' }}>
                             {/* Tool rows */}
                             {module && module.tools.length > 0 && (
@@ -618,7 +618,7 @@ export function Plugins() {
                             )}
 
                             {/* Actions row */}
-                            <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--separator)' }}>
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
                               {hasSecrets && marketEntry && (
                                 <button
                                   className="btn-ghost btn-sm"
@@ -776,7 +776,7 @@ export function Plugins() {
             return (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
                     <th style={{ textAlign: 'left', padding: '8px 14px' }}>Plugin</th>
                     <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Tools</th>
                     <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Version</th>
@@ -799,7 +799,7 @@ export function Plugins() {
                           role="button"
                           style={{
                             cursor: 'pointer',
-                            borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                            borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                             backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                           }}
                           className="file-row"
@@ -845,7 +845,7 @@ export function Plugins() {
                           </td>
                         </tr>
                         {isExpanded && (
-                          <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                          <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                             <td colSpan={5} style={{ padding: '0 14px 14px 14px' }}>
                               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px 12px', fontSize: '12px', padding: '8px 0' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>Author</span>
@@ -857,7 +857,7 @@ export function Plugins() {
                                     <span style={{ color: 'var(--text-secondary)' }}>Tags</span>
                                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                       {plugin.tags.map((t) => (
-                                        <span key={t} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'var(--surface)', color: 'var(--text-tertiary)' }}>
+                                        <span key={t} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'var(--bg-glass)', color: 'var(--text-tertiary)' }}>
                                           {t}
                                         </span>
                                       ))}

@@ -292,10 +292,11 @@ You have been woken by your periodic heartbeat timer.
 
 ${heartbeatContent}
 
-Follow HEARTBEAT.md strictly. Do not infer tasks from prior conversations.
+IMPORTANT: You MUST execute the checklist above step by step using tool calls. Do not skip steps.
+Work through each item, make tool calls, and take action where needed.
 You can modify HEARTBEAT.md with \`workspace_write\` to update your own task checklist.
-If nothing needs attention, reply with exactly: NO_ACTION
-Do NOT include NO_ACTION alongside other content — it must be your entire response when nothing is needed.`);
+Only after completing all checklist items: if truly nothing required action, reply with exactly: NO_ACTION
+Do NOT reply NO_ACTION without first executing the checklist.`);
   }
 
   parts.push(

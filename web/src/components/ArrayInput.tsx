@@ -170,13 +170,13 @@ export function ArrayInput({ value, onChange, validate, placeholder, disabled }:
                 alignItems: 'center',
                 gap: '4px',
                 padding: '3px 8px',
-                background: 'var(--surface)',
-                border: '1px solid var(--glass-border)',
+                background: 'var(--bg-glass)',
+                border: '1px solid var(--border-glass)',
                 color: 'var(--text-secondary)',
                 borderRadius: '6px',
                 fontSize: 'var(--font-sm)',
                 lineHeight: '1.4',
-                outline: focusedChip === idx ? '2px solid var(--accent)' : 'none',
+                outline: focusedChip === idx ? '2px solid var(--border-strong)' : 'none',
                 outlineOffset: focusedChip === idx ? '1px' : undefined,
                 cursor: 'default',
               }}
@@ -221,17 +221,17 @@ export function ArrayInput({ value, onChange, validate, placeholder, disabled }:
           aria-invalid={error ? true : undefined}
           style={{
             flex: 1,
-            background: 'var(--surface)',
-            border: '1px solid var(--glass-border)',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border-glass)',
             borderRadius: '6px',
-            color: 'var(--text)',
+            color: 'var(--text-primary)',
             fontSize: 'var(--font-sm)',
             padding: '5px 10px',
             outline: 'none',
             fontFamily: 'var(--font-mono)',
           }}
-          onFocus={e => { e.target.style.borderColor = 'var(--glass-border-strong)'; }}
-          onBlur={e => { e.target.style.borderColor = 'var(--glass-border)'; }}
+          onFocus={e => { e.target.style.borderColor = 'var(--border-strong)'; }}
+          onBlur={e => { e.target.style.borderColor = 'var(--border-glass)'; }}
         />
         <button
           type="button"

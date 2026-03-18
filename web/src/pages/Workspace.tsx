@@ -237,7 +237,7 @@ export function Workspace() {
                 style={{
                   cursor: isLast ? 'default' : 'pointer',
                   fontWeight: isLast ? 'bold' : 'normal',
-                  color: isLast ? 'var(--text)' : 'var(--accent)',
+                  color: isLast ? 'var(--text-primary)' : 'var(--accent)',
                 }}
               >
                 {seg}
@@ -248,13 +248,13 @@ export function Workspace() {
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
           <button
-            style={{ padding: '3px 10px', fontSize: '12px' }}
+            className="btn-ghost btn-sm"
             onClick={() => { setDialog({ type: 'newFile' }); setDialogInput(''); }}
           >
             + File
           </button>
           <button
-            style={{ padding: '3px 10px', fontSize: '12px' }}
+            className="btn-ghost btn-sm"
             onClick={() => { setDialog({ type: 'newFolder' }); setDialogInput(''); }}
           >
             + Folder
@@ -300,7 +300,7 @@ export function Workspace() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ textAlign: 'left', padding: '8px 14px' }}>Name</th>
                 <th style={{ textAlign: 'right', padding: '8px 14px', width: '80px' }}>Size</th>
                 <th style={{ textAlign: 'right', padding: '8px 14px', width: '140px' }}>Modified</th>
@@ -319,7 +319,7 @@ export function Workspace() {
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const parts = currentPath.split('/'); parts.pop(); navigateTo(parts.join('/')); } }}
                   tabIndex={0}
                   role="button"
-                  style={{ cursor: 'pointer', borderBottom: '1px solid var(--separator)' }}
+                  style={{ cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
                   className="file-row"
                 >
                   <td style={{ padding: '6px 14px' }}>
@@ -341,7 +341,7 @@ export function Workspace() {
                       role="button"
                       style={{
                         cursor: 'pointer',
-                        borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                        borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                         backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                       }}
                       className="file-row"
@@ -380,7 +380,7 @@ export function Workspace() {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                         <td colSpan={4} style={{ padding: '0 14px 14px 14px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600 }}>
@@ -422,10 +422,10 @@ export function Workspace() {
                                 fontFamily: 'monospace',
                                 fontSize: '13px',
                                 padding: '10px',
-                                border: '1px solid var(--separator)',
+                                border: '1px solid var(--border)',
                                 borderRadius: '4px',
-                                backgroundColor: 'var(--surface)',
-                                color: 'var(--text)',
+                                backgroundColor: 'var(--bg-glass)',
+                                color: 'var(--text-primary)',
                                 resize: 'vertical',
                                 tabSize: 2,
                               }}

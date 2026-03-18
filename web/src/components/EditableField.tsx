@@ -127,10 +127,10 @@ export function EditableField({
         style={{
           padding: '4px 8px',
           fontSize: 13,
-          border: '1px solid var(--separator)',
+          border: '1px solid var(--border)',
           borderRadius: 4,
-          background: 'var(--surface)',
-          color: 'var(--text)',
+          background: 'var(--bg-glass)',
+          color: 'var(--text-primary)',
           cursor: 'pointer',
           lineHeight: 1,
         }}
@@ -156,10 +156,10 @@ export function EditableField({
         flex: 1,
         padding: '6px 10px',
         fontSize: 14,
-        border: '1px solid var(--separator)',
+        border: '1px solid var(--border)',
         borderRadius: 4,
-        background: 'var(--surface)',
-        color: 'var(--text)',
+        background: 'var(--bg-glass)',
+        color: 'var(--text-primary)',
         minWidth: 0,
       }}
     />

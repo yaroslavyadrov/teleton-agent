@@ -133,7 +133,7 @@ export function WalletStep({ data, onChange }: StepProps) {
             <div className="card" style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Wallet Address</div>
               <div className="form-row" style={{ alignItems: 'center' }}>
-                <span className="mono" style={{ fontWeight: 600, fontSize: '14px', wordBreak: 'break-all', color: 'var(--text)' }}>
+                <span className="mono" style={{ fontWeight: 600, fontSize: '14px', wordBreak: 'break-all', color: 'var(--text-primary)' }}>
                   {data.walletAddress}
                 </span>
                 <CopyButton text={data.walletAddress} />
@@ -160,7 +160,7 @@ export function WalletStep({ data, onChange }: StepProps) {
           </div>
 
           <div className="form-group" style={{ marginTop: '16px' }}>
-            <label className="label-inline" style={{ color: 'var(--text)' }}>
+            <label className="label-inline" style={{ color: 'var(--text-primary)' }}>
               <input
                 type="checkbox"
                 checked={data.mnemonicSaved}

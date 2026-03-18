@@ -32,7 +32,7 @@ export function ExecSettingsPanel({ getLocal, saveConfig }: ExecSettingsPanelPro
 
       {isYolo && (
         <>
-          <div style={{ width: 1, height: 18, background: 'var(--separator)' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
               Scope
@@ -45,7 +45,7 @@ export function ExecSettingsPanel({ getLocal, saveConfig }: ExecSettingsPanelPro
               onChange={(v) => saveConfig('capabilities.exec.scope', v)}
             />
           </div>
-          <div style={{ width: 1, height: 18, background: 'var(--separator)' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
           <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-tertiary)' }}>
             Full system access enabled
           </span>

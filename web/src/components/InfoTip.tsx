@@ -53,7 +53,7 @@ export function InfoTip({ text }: InfoTipProps) {
         style={{
           cursor: 'help',
           display: 'inline-flex',
-          color: visible ? 'var(--text)' : 'var(--text-secondary)',
+          color: visible ? 'var(--text-primary)' : 'var(--text-secondary)',
           transition: 'color 0.15s',
           outline: 'none',
         }}
@@ -79,13 +79,10 @@ export function InfoTip({ text }: InfoTipProps) {
           maxWidth: '250px',
           minWidth: '64px',
           padding: '6px 12px',
-          background: TOOLTIP_BG,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--glass-border)',
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border)',
           borderRadius: '6px',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)',
-          color: '#ffffff',
+          color: 'var(--text-primary)',
           fontSize: 'var(--font-sm)',
           fontWeight: 400,
           lineHeight: '1.4',
@@ -110,8 +107,8 @@ export function InfoTip({ text }: InfoTipProps) {
             width: '8px',
             height: '8px',
             background: TOOLTIP_BG,
-            borderRight: '1px solid var(--glass-border)',
-            borderBottom: '1px solid var(--glass-border)',
+            borderRight: '1px solid var(--border-glass)',
+            borderBottom: '1px solid var(--border-glass)',
           }}
         />
       </span>

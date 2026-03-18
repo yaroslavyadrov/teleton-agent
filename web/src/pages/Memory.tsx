@@ -71,7 +71,7 @@ export function Memory() {
 
       <div className="card" style={{ padding: 0 }}>
         {/* Search + refresh bar */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 14px', borderBottom: '1px solid var(--separator)' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
           <input
             type="text"
             value={filter}
@@ -82,7 +82,7 @@ export function Memory() {
           <button
             onClick={loadSources}
             disabled={loading}
-            style={{ padding: '4px 12px', fontSize: '12px', opacity: 0.7 }}
+            className="btn-ghost btn-sm"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -105,7 +105,7 @@ export function Memory() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ textAlign: 'left', padding: '8px 14px' }}>Source</th>
                 <th style={{ textAlign: 'right', padding: '8px 14px', width: '80px' }}>Chunks</th>
                 <th style={{ textAlign: 'right', padding: '8px 14px', width: '140px' }}>Last Updated</th>
@@ -123,7 +123,7 @@ export function Memory() {
                       role="button"
                       style={{
                         cursor: 'pointer',
-                        borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                        borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                         backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                       }}
                       className="file-row"
@@ -142,7 +142,7 @@ export function Memory() {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                         <td colSpan={3} style={{ padding: '0 14px 14px 14px' }}>
                           {chunksLoading ? (
                             <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>Loading chunks...</div>
@@ -155,9 +155,9 @@ export function Memory() {
                                   key={chunk.id}
                                   style={{
                                     padding: '10px 12px',
-                                    border: '1px solid var(--separator)',
+                                    border: '1px solid var(--border)',
                                     borderRadius: '4px',
-                                    backgroundColor: 'var(--surface)',
+                                    backgroundColor: 'var(--bg-glass)',
                                   }}
                                 >
                                   <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -177,7 +177,7 @@ export function Memory() {
                                     minHeight: '60px',
                                     overflow: 'auto',
                                     resize: 'vertical',
-                                    color: 'var(--text)',
+                                    color: 'var(--text-primary)',
                                   }}>
                                     {chunk.text}
                                   </pre>

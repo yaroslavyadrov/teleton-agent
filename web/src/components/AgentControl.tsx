@@ -12,9 +12,9 @@ function jitter(ms: number): number {
 
 const STATE_CONFIG: Record<AgentState | 'error', { dot: string; label: string; pulse: boolean }> = {
   stopped:  { dot: 'var(--text-tertiary)', label: 'Stopped',     pulse: false },
-  starting: { dot: '#FFD60A',              label: 'Starting...',  pulse: true },
+  starting: { dot: 'var(--warning)',        label: 'Starting...',  pulse: true },
   running:  { dot: 'var(--green)',         label: 'Running',      pulse: true },
-  stopping: { dot: '#FF9F0A',             label: 'Stopping...',  pulse: true },
+  stopping: { dot: 'var(--warning)',       label: 'Stopping...',  pulse: true },
   error:    { dot: 'var(--red)',           label: 'Error',        pulse: false },
 };
 
@@ -111,9 +111,9 @@ export function AgentControl() {
   const showStop = displayState === 'running';
 
   return (
-    <div style={{ padding: '0 12px', marginBottom: '8px' }}>
+    <div style={{ padding: 0, marginBottom: 0 }}>
       {/* Status badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
         <span
           style={{
             display: 'inline-block',
@@ -121,11 +121,10 @@ export function AgentControl() {
             height: '8px',
             borderRadius: '50%',
             backgroundColor: config.dot,
-            animation: config.pulse ? 'agent-pulse 2s ease-in-out infinite' : 'none',
             flexShrink: 0,
           }}
         />
-        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.1px' }}>
           {config.label}
         </span>
       </div>
@@ -212,13 +211,6 @@ export function AgentControl() {
         document.body
       )}
 
-      {/* Pulse animation */}
-      <style>{`
-        @keyframes agent-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-      `}</style>
     </div>
   );
 }

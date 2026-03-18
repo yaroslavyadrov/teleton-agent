@@ -1,5 +1,4 @@
 import {
-  appendFileSync,
   readFileSync,
   existsSync,
   mkdirSync,
@@ -8,6 +7,7 @@ import {
   readdirSync,
   statSync,
 } from "fs";
+import { appendFile } from "fs/promises";
 import { join } from "path";
 import type { Message, AssistantMessage } from "@mariozechner/pi-ai";
 import { TELETON_ROOT } from "../workspace/paths.js";
@@ -38,13 +38,12 @@ export function appendToTranscript(sessionId: string, message: Message | Assista
   const transcriptPath = getTranscriptPath(sessionId);
   const line = JSON.stringify(message) + "\n";
 
-  try {
-    appendFileSync(transcriptPath, line, { encoding: "utf-8", mode: 0o600 });
-  } catch (error) {
+  // Fire-and-forget async write — does not block the event loop
+  appendFile(transcriptPath, line, { encoding: "utf-8", mode: 0o600 }).catch((error) => {
     log.error({ err: error }, `Failed to append to transcript ${sessionId}`);
-  }
+  });
 
-  // Update in-memory cache (append without re-sanitizing the whole array)
+  // Update in-memory cache immediately (callers read from cache, not disk)
   const cached = transcriptCache.get(sessionId);
   if (cached) {
     cached.push(message);

@@ -125,7 +125,7 @@ export function TelegramSettingsPanel({
 
         {/* ── Behavior (toggles, immediate-save) ────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <label style={{ fontSize: '13px', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="require-mention">
+          <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="require-mention">
             Require Mention
             <InfoTip text="Require @mention in groups to respond" />
           </label>
@@ -142,7 +142,7 @@ export function TelegramSettingsPanel({
         </div>
         {extended && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <label style={{ fontSize: '13px', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="typing-sim">
+            <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="typing-sim">
               Typing Simulation
               <InfoTip text="Simulate typing indicator before sending replies" />
             </label>

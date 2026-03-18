@@ -140,7 +140,7 @@ export function ProviderStep({ data, onChange }: StepProps) {
           )}
           {!ccDetecting && ccDetection?.found && (
             <div className="info-panel">
-              <div style={{ marginBottom: '4px', color: 'var(--color-success, #4caf50)' }}>
+              <div style={{ marginBottom: '4px', color: 'var(--green)' }}>
                 <strong>Credentials auto-detected from Claude Code</strong>
               </div>
               <code style={{ fontSize: '0.85em', opacity: 0.8 }}>{ccDetection.maskedKey}</code>
@@ -150,7 +150,7 @@ export function ProviderStep({ data, onChange }: StepProps) {
             </div>
           )}
           {!ccDetecting && ccDetection && !ccDetection.found && !ccShowFallback && (
-            <div className="info-panel" style={{ borderColor: 'var(--color-warning, #ff9800)' }}>
+            <div className="info-panel" style={{ borderColor: 'var(--warning)' }}>
               <div style={{ marginBottom: '8px' }}>
                 Claude Code credentials not found. Make sure Claude Code is installed and authenticated
                 (<code>claude login</code>).

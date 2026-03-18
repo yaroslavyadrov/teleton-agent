@@ -290,8 +290,8 @@ Periodic heartbeat timer that triggers the agent to check for pending tasks.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `heartbeat.enabled` | `boolean` | `true` | Enable the periodic heartbeat timer. |
-| `heartbeat.interval_ms` | `number` | `1800000` | Heartbeat interval in milliseconds. Minimum `60000` (60 seconds), default `1800000` (30 minutes). |
-| `heartbeat.prompt` | `string` | `"Read HEARTBEAT.md if it exists. Follow it strictly. If nothing needs attention, reply NO_ACTION."` | Prompt sent to the agent on each heartbeat tick. |
+| `heartbeat.interval_ms` | `number` | `3600000` | Heartbeat interval in milliseconds. Minimum `60000` (60 seconds), default `3600000` (60 minutes). |
+| `heartbeat.prompt` | `string` | `"Execute your HEARTBEAT.md checklist now. Work through each item using tool calls."` | Prompt sent to the agent on each heartbeat tick. |
 | `heartbeat.self_configurable` | `boolean` | `false` | Allow the agent to modify heartbeat config at runtime via `config_set`. |
 
 ### Example
@@ -299,8 +299,8 @@ Periodic heartbeat timer that triggers the agent to check for pending tasks.
 ```yaml
 heartbeat:
   enabled: true
-  interval_ms: 1800000
-  prompt: "Read HEARTBEAT.md if it exists. Follow it strictly. If nothing needs attention, reply NO_ACTION."
+  interval_ms: 3600000
+  prompt: "Execute your HEARTBEAT.md checklist now. Work through each item using tool calls."
   self_configurable: false
 ```
 
@@ -698,11 +698,11 @@ logging:
 
 heartbeat:
   enabled: true
-  interval_ms: 1800000
+  interval_ms: 3600000
 
 tool_rag:
   enabled: true
-  top_k: 25
+  top_k: 35
 
 dev:
   hot_reload: false

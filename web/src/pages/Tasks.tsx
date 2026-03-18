@@ -5,11 +5,11 @@ type TaskStatus = TaskData['status'];
 type Task = TaskData;
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  pending: '#f0ad4e',
-  in_progress: '#5bc0de',
-  done: '#5cb85c',
-  failed: '#d9534f',
-  cancelled: '#777',
+  pending: 'var(--warning)',
+  in_progress: 'var(--accent)',
+  done: 'var(--green)',
+  failed: 'var(--red)',
+  cancelled: 'var(--text-secondary)',
 };
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -30,7 +30,7 @@ function StatusBadge({ status }: { status: TaskStatus }) {
         borderRadius: '10px',
         fontSize: '11px',
         fontWeight: 600,
-        color: '#fff',
+        color: 'var(--text-on-accent)',
         backgroundColor: STATUS_COLORS[status],
       }}
     >
@@ -195,7 +195,7 @@ export function Tasks() {
           style={{
             cursor: 'pointer',
             fontWeight: filter === '' ? 'bold' : 'normal',
-            color: filter === '' ? 'var(--text)' : 'var(--text-secondary)',
+            color: filter === '' ? 'var(--text-primary)' : 'var(--text-secondary)',
             fontSize: '13px',
           }}
         >
@@ -227,10 +227,10 @@ export function Tasks() {
               style={{
                 padding: '4px 24px 4px 12px',
                 fontSize: '13px',
-                border: '1px solid var(--separator)',
+                border: '1px solid var(--border)',
                 borderRadius: '14px',
                 backgroundColor: 'transparent',
-                color: 'var(--text)',
+                color: 'var(--text-primary)',
                 width: '180px',
                 outline: 'none',
               }}
@@ -303,7 +303,7 @@ export function Tasks() {
           </div>
         )}
         <button
-          style={{ padding: '4px 12px', fontSize: '12px', opacity: 0.7 }}
+          className="btn-ghost btn-sm"
           onClick={loadTasks}
         >
           Refresh
@@ -347,7 +347,7 @@ export function Tasks() {
             <thead>
               <tr
                 style={{
-                  borderBottom: '1px solid var(--separator)',
+                  borderBottom: '1px solid var(--border)',
                   color: 'var(--text-secondary)',
                   fontSize: '11px',
                   textTransform: 'uppercase',
@@ -373,7 +373,7 @@ export function Tasks() {
                       role="button"
                       style={{
                         cursor: 'pointer',
-                        borderBottom: isExpanded ? 'none' : '1px solid var(--separator)',
+                        borderBottom: isExpanded ? 'none' : '1px solid var(--border)',
                         backgroundColor: isExpanded ? 'rgba(255,255,255,0.03)' : undefined,
                       }}
                       className="file-row"
@@ -418,7 +418,7 @@ export function Tasks() {
                       </td>
                     </tr>
                     {isExpanded && selected && (
-                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--separator)' }}>
+                      <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
                         <td colSpan={6} style={{ padding: '0 14px 14px 14px', overflow: 'hidden' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '6px 12px', fontSize: '13px', padding: '10px 0' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>ID</span>
@@ -499,7 +499,7 @@ export function Tasks() {
 
                           {selected.result && (
                             <div style={{ marginTop: '12px' }}>
-                              <div style={{ fontSize: '12px', color: '#5cb85c', marginBottom: '4px' }}>Result</div>
+                              <div style={{ fontSize: '12px', color: 'var(--green)', marginBottom: '4px' }}>Result</div>
                               <pre
                                 style={{
                                   padding: '8px',
@@ -520,17 +520,17 @@ export function Tasks() {
 
                           {selected.error && (
                             <div style={{ marginTop: '12px' }}>
-                              <div style={{ fontSize: '12px', color: '#d9534f', marginBottom: '4px' }}>Error</div>
+                              <div style={{ fontSize: '12px', color: 'var(--red)', marginBottom: '4px' }}>Error</div>
                               <pre
                                 style={{
                                   padding: '8px',
                                   borderRadius: '4px',
-                                  backgroundColor: 'rgba(100,0,0,0.15)',
+                                  backgroundColor: 'var(--red-dim)',
                                   fontSize: '11px',
                                   overflow: 'auto',
                                   maxHeight: '150px',
                                   margin: 0,
-                                  color: '#f99',
+                                  color: 'var(--red)',
                                 }}
                               >
                                 {selected.error}

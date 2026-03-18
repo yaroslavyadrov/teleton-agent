@@ -193,7 +193,7 @@ export function Hooks() {
             flexWrap: 'wrap',
             gap: '6px',
             padding: '8px',
-            border: '1px solid var(--separator)',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
             minHeight: '36px',
             alignItems: 'center',
@@ -207,8 +207,8 @@ export function Hooks() {
                   gap: '4px',
                   padding: '2px 8px',
                   borderRadius: '12px',
-                  background: 'rgba(110,168,254,0.12)',
-                  color: 'var(--text)',
+                  background: 'var(--accent-subtle)',
+                  color: 'var(--text-primary)',
                   fontSize: '13px',
                 }}
               >
@@ -221,8 +221,10 @@ export function Hooks() {
                     cursor: 'pointer',
                     padding: '0 2px',
                     color: 'var(--text-secondary)',
-                    fontSize: '14px',
+                    fontSize: '12px',
                     lineHeight: 1,
+                    height: 'auto',
+                    borderRadius: 0,
                   }}
                 >
                   &#x2715;
@@ -244,7 +246,7 @@ export function Hooks() {
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: 'var(--text)',
+                color: 'var(--text-primary)',
                 fontSize: '13px',
                 flex: 1,
                 minWidth: '100px',
@@ -362,6 +364,8 @@ export function Hooks() {
                           color: 'var(--red)',
                           opacity: 0.5,
                           transition: 'opacity 0.15s',
+                          height: 'auto',
+                          borderRadius: 0,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }}
@@ -379,7 +383,7 @@ export function Hooks() {
         {/* New trigger form */}
         <div style={{
           padding: '12px',
-          border: '1px solid var(--separator)',
+          border: '1px solid var(--border)',
           borderRadius: '8px',
           background: 'rgba(255,255,255,0.02)',
         }}>
