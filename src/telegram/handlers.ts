@@ -90,7 +90,9 @@ class ChatQueue {
       this.activeTasks++;
       return;
     }
-    log.warn(`Backpressure: chat ${chatId} queued (${this.activeTasks}/${this.maxConcurrent} active)`);
+    log.warn(
+      `Backpressure: chat ${chatId} queued (${this.activeTasks}/${this.maxConcurrent} active)`
+    );
     return new Promise<void>((resolve) => {
       this.waitQueue.push(() => {
         this.activeTasks++;
@@ -361,7 +363,10 @@ export class MessageHandler {
             : message.chatId;
         log.info({ requestId }, `⏭️  Group ${chatShort} msg:${message.id} (not mentioned)`);
       } else {
-        log.debug({ requestId }, `Skipping message ${message.id} from ${message.senderId}: ${context.reason}`);
+        log.debug(
+          { requestId },
+          `Skipping message ${message.id} from ${message.senderId}: ${context.reason}`
+        );
       }
       return;
     }
@@ -384,7 +389,10 @@ export class MessageHandler {
         // (GramJS may fire duplicate NewMessage events during reconnection)
         const postQueueOffset = readOffset(message.chatId) ?? 0;
         if (message.id <= postQueueOffset) {
-          log.debug({ requestId }, `Skipping message ${message.id} (already processed after queue wait)`);
+          log.debug(
+            { requestId },
+            `Skipping message ${message.id} (already processed after queue wait)`
+          );
           return;
         }
 
