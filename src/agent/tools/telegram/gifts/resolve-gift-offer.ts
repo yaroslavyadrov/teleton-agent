@@ -44,13 +44,9 @@ export const telegramResolveGiftOfferExecutor: ToolExecutor<ResolveGiftOfferPara
     const { offerMsgId, decline } = params;
     const gramJsClient = context.bridge.getClient().getClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const invokeParams: any = { offerMsgId };
-    if (decline) {
-      invokeParams.decline = true;
-    }
-
-    await gramJsClient.invoke(new Api.payments.ResolveStarGiftOffer(invokeParams));
+    await gramJsClient.invoke(
+      new Api.payments.ResolveStarGiftOffer({ offerMsgId, decline: decline || undefined })
+    );
 
     const action = decline ? "declined" : "accepted";
     log.info(`resolve_gift_offer: msgId=${offerMsgId} action=${action}`);
@@ -63,11 +59,10 @@ export const telegramResolveGiftOfferExecutor: ToolExecutor<ResolveGiftOfferPara
         message: `Offer ${action} successfully.`,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorMsg = getErrorMessage(error);
 
-    if (error.errorMessage === "STARGIFT_NOT_FOUND" || errorMsg.includes("STARGIFT_NOT_FOUND")) {
+    if (errorMsg.includes("STARGIFT_NOT_FOUND")) {
       return {
         success: false,
         error: "Offer not found. It may have expired or already been resolved.",

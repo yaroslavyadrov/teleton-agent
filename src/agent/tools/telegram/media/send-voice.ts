@@ -183,11 +183,10 @@ export const telegramSendVoiceExecutor: ToolExecutor<SendVoiceParams> = async (
     const gramJsClient = context.bridge.getClient().getClient();
 
     // Send voice message using GramJS sendFile with voice attributes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const attrs: any = {
+    const attrs: ConstructorParameters<typeof Api.DocumentAttributeAudio>[0] = {
       voice: true,
+      duration: duration ?? 0,
     };
-    if (duration !== undefined) attrs.duration = duration;
     if (waveform) attrs.waveform = Buffer.from(waveform);
 
     const result = await gramJsClient.sendFile(chatId, {
@@ -198,8 +197,7 @@ export const telegramSendVoiceExecutor: ToolExecutor<SendVoiceParams> = async (
     });
 
     // Build response
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const responseData: any = {
+    const responseData: Record<string, unknown> = {
       messageId: result.id,
       date: result.date,
     };
@@ -209,9 +207,9 @@ export const telegramSendVoiceExecutor: ToolExecutor<SendVoiceParams> = async (
       responseData.provider = usedProvider;
       responseData.voice = usedVoice;
       responseData.textLength = text.length;
-      responseData.message = `🎙️ Voice message sent (TTS: ${usedProvider})`;
+      responseData.message = `Voice message sent (TTS: ${usedProvider})`;
     } else {
-      responseData.message = `🎙️ Voice message sent`;
+      responseData.message = `Voice message sent`;
     }
 
     return {

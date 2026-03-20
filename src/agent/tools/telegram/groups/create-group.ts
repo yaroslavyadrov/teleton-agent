@@ -51,8 +51,8 @@ export const telegramCreateGroupExecutor: ToolExecutor<CreateGroupParams> = asyn
             })
           );
         }
-      } catch (e) {
-        log.warn({ err: e }, `Could not resolve user ${user}`);
+      } catch (innerError: unknown) {
+        log.warn({ err: innerError }, `Could not resolve user ${user}`);
       }
     }
 
@@ -96,7 +96,7 @@ export const telegramCreateGroupExecutor: ToolExecutor<CreateGroupParams> = asyn
         message: `👥 Group "${title}" created with ${userEntities.length} members`,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error in telegram_create_group");
     return {
       success: false,

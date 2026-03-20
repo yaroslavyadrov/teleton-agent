@@ -359,7 +359,7 @@ export function pruneOldSessions(maxAgeDays: number = 30): number {
 
     const pruned = result.changes;
     if (pruned > 0) {
-      log.info(`🗑️ Pruned ${pruned} session(s) older than ${maxAgeDays} days`);
+      log.info(`Pruned ${pruned} session(s) older than ${maxAgeDays} days`);
     }
     return pruned;
   } catch (error) {

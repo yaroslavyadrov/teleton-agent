@@ -229,7 +229,7 @@ export class AgentRuntime {
         };
         await this.hookRunner.runModifyingHook("message:receive", msgEvent);
         if (msgEvent.block) {
-          log.info(`🚫 Message blocked by hook: ${msgEvent.blockReason || "no reason"}`);
+          log.info(`Message blocked by hook: ${msgEvent.blockReason || "no reason"}`);
           return { content: "", toolCalls: [] };
         }
         effectiveMessage = sanitizeForContext(msgEvent.text);
@@ -243,7 +243,7 @@ export class AgentRuntime {
 
       const resetPolicy = this.config.agent.session_reset_policy;
       if (shouldResetSession(session, resetPolicy)) {
-        log.info(`🔄 Auto-resetting session based on policy`);
+        log.info(`Auto-resetting session based on policy`);
 
         // Hook: session:end (before reset)
         if (this.hookRunner) {
@@ -256,7 +256,7 @@ export class AgentRuntime {
 
         if (transcriptExists(session.sessionId)) {
           try {
-            log.info(`💾 Saving memory before daily reset...`);
+            log.info(`Saving memory before daily reset...`);
             const oldContext = loadContextFromTranscript(session.sessionId);
 
             await saveSessionMemory({
@@ -269,9 +269,9 @@ export class AgentRuntime {
               utilityModel: this.config.agent.utility_model,
             });
 
-            log.info(`✅ Memory saved before reset`);
+            log.info(`Memory saved before reset`);
           } catch (error) {
-            log.warn({ err: error }, `⚠️ Failed to save memory before reset`);
+            log.warn({ err: error }, `Failed to save memory before reset`);
           }
         }
 
@@ -281,9 +281,9 @@ export class AgentRuntime {
       let context: Context = loadContextFromTranscript(session.sessionId);
       const isNewSession = context.messages.length === 0;
       if (!isNewSession) {
-        log.info(`📖 Loading existing session: ${session.sessionId}`);
+        log.info(`Loading existing session: ${session.sessionId}`);
       } else {
-        log.info(`🆕 Starting new session: ${session.sessionId}`);
+        log.info(`Starting new session: ${session.sessionId}`);
       }
 
       // Hook: session:start — fire concurrently with message formatting + embedding
@@ -317,15 +317,15 @@ export class AgentRuntime {
 
       if (pendingContext) {
         formattedMessage = `${pendingContext}\n\n${formattedMessage}`;
-        log.debug(`📋 Including ${pendingContext.split("\n").length - 1} pending messages`);
+        log.debug(`Including ${pendingContext.split("\n").length - 1} pending messages`);
       }
 
-      log.debug(`📨 Formatted message: ${formattedMessage.substring(0, 100)}...`);
+      log.debug(`Formatted message: ${formattedMessage.substring(0, 100)}...`);
 
       const preview = formattedMessage.slice(0, 50).replace(/\n/g, " ");
       const who = senderUsername ? `@${senderUsername}` : userName;
       const msgType = isGroup ? `Group ${chatId} ${who}` : `DM ${who}`;
-      log.info(`📨 ${msgType}: "${preview}${formattedMessage.length > 50 ? "..." : ""}"`);
+      log.info(`${msgType}: "${preview}${formattedMessage.length > 50 ? "..." : ""}"`);
 
       let relevantContext = "";
       const isNonTrivial = !isTrivialMessage(effectiveMessage);
@@ -490,7 +490,7 @@ export class AgentRuntime {
         this.config.agent.utility_model
       );
       if (preemptiveCompaction) {
-        log.info(`🗜️  Preemptive compaction triggered, reloading session...`);
+        log.info(`Preemptive compaction triggered, reloading session...`);
         updateSession(chatId, { sessionId: preemptiveCompaction });
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- session guaranteed to exist after compaction
         session = getSession(chatId)!;
@@ -526,7 +526,7 @@ export class AgentRuntime {
             chatId,
             isAdmin
           );
-          log.info(`🔍 Tool RAG: ${tools.length}/${this.toolRegistry.count} tools selected`);
+          log.info(`Tool RAG: ${tools.length}/${this.toolRegistry.count} tools selected`);
         } else {
           tools = this.toolRegistry?.getForContext(
             effectiveIsGroup,
@@ -562,7 +562,7 @@ export class AgentRuntime {
 
       while (iteration < maxIterations) {
         iteration++;
-        log.debug(`🔄 Agentic iteration ${iteration}/${maxIterations}`);
+        log.debug(`Agentic iteration ${iteration}/${maxIterations}`);
 
         // Track where current iteration starts so masking won't truncate its results
         const iterationStartIndex = context.messages.length;
@@ -616,40 +616,40 @@ export class AgentRuntime {
                 "Context overflow persists after session reset. Message may be too large for the model's context window."
               );
             }
-            log.error(`🚨 Context overflow detected: ${errorMsg}`);
+            log.error(`Context overflow detected: ${errorMsg}`);
 
-            log.info(`💾 Saving session memory before reset...`);
+            log.info(`Saving session memory before reset...`);
             const summary = extractContextSummary(context, CONTEXT_OVERFLOW_SUMMARY_MESSAGES);
             appendToDailyLog(summary);
-            log.info(`✅ Memory saved to daily log`);
+            log.info(`Memory saved to daily log`);
 
             const archived = archiveTranscript(session.sessionId);
             if (!archived) {
               log.error(
-                `⚠️  Failed to archive transcript ${session.sessionId}, proceeding with reset anyway`
+                `Failed to archive transcript ${session.sessionId}, proceeding with reset anyway`
               );
             }
 
-            log.info(`🔄 Resetting session due to context overflow...`);
+            log.info(`Resetting session due to context overflow...`);
             session = resetSession(chatId);
 
             context = { messages: [userMsg] };
 
             appendToTranscript(session.sessionId, userMsg);
 
-            log.info(`🔄 Retrying with fresh context...`);
+            log.info(`Retrying with fresh context...`);
             continue;
           } else if (errorMsg.toLowerCase().includes("rate") || errorMsg.includes("429")) {
             rateLimitRetries++;
             if (rateLimitRetries <= RATE_LIMIT_MAX_RETRIES) {
               const delay = 1000 * Math.pow(2, rateLimitRetries - 1);
               log.warn(
-                `🚫 Rate limited, retrying in ${delay}ms (attempt ${rateLimitRetries}/${RATE_LIMIT_MAX_RETRIES})...`
+                `Rate limited, retrying in ${delay}ms (attempt ${rateLimitRetries}/${RATE_LIMIT_MAX_RETRIES})...`
               );
               await new Promise((r) => setTimeout(r, delay));
               continue;
             }
-            log.error(`🚫 Rate limited after ${RATE_LIMIT_MAX_RETRIES} retries: ${errorMsg}`);
+            log.error(`Rate limited after ${RATE_LIMIT_MAX_RETRIES} retries: ${errorMsg}`);
             throw new Error(
               `API rate limited after ${RATE_LIMIT_MAX_RETRIES} retries. Please try again later.`
             );
@@ -666,17 +666,17 @@ export class AgentRuntime {
             if (serverErrorRetries <= SERVER_ERROR_MAX_RETRIES) {
               const delay = 2000 * Math.pow(2, serverErrorRetries - 1);
               log.warn(
-                `🔄 Server error, retrying in ${delay}ms (attempt ${serverErrorRetries}/${SERVER_ERROR_MAX_RETRIES})...`
+                `Server error, retrying in ${delay}ms (attempt ${serverErrorRetries}/${SERVER_ERROR_MAX_RETRIES})...`
               );
               await new Promise((r) => setTimeout(r, delay));
               continue;
             }
-            log.error(`🚨 Server error after ${SERVER_ERROR_MAX_RETRIES} retries: ${errorMsg}`);
+            log.error(`Server error after ${SERVER_ERROR_MAX_RETRIES} retries: ${errorMsg}`);
             throw new Error(
               `API server error after ${SERVER_ERROR_MAX_RETRIES} retries. The provider may be experiencing issues.`
             );
           } else {
-            log.error(`🚨 API error: ${errorMsg}`);
+            log.error(`API error: ${errorMsg}`);
             throw new Error(`API error: ${errorMsg || "Unknown error"}`);
           }
         }
@@ -698,17 +698,17 @@ export class AgentRuntime {
         const toolCalls = response.message.content.filter((block) => block.type === "toolCall");
 
         if (toolCalls.length === 0) {
-          log.info(`🔄 ${iteration}/${maxIterations} → done`);
+          log.info(`${iteration}/${maxIterations} → done`);
           finalResponse = response;
           break;
         }
 
         if (!this.toolRegistry || !toolContext) {
-          log.error("⚠️ Cannot execute tools: registry or context missing");
+          log.error("Cannot execute tools: registry or context missing");
           break;
         }
 
-        log.debug(`🔧 Executing ${toolCalls.length} tool call(s)`);
+        log.debug(`Executing ${toolCalls.length} tool call(s)`);
 
         context.messages.push(response.message);
 
@@ -841,7 +841,7 @@ export class AgentRuntime {
 
           const resultText = truncateToolResult(exec.result, MAX_TOOL_RESULT_SIZE);
           if (resultText.includes('"_truncated":true')) {
-            log.warn(`⚠️ Tool result too large, truncated to ${resultText.length} chars`);
+            log.warn(`Tool result too large, truncated to ${resultText.length} chars`);
           }
 
           if (provider === "cocoon") {
@@ -882,7 +882,7 @@ export class AgentRuntime {
           await Promise.allSettled(observingHookPromises);
         }
 
-        log.info(`🔄 ${iteration}/${maxIterations} → ${iterationToolNames.join(", ")}`);
+        log.info(`${iteration}/${maxIterations} → ${iterationToolNames.join(", ")}`);
 
         // Stall detection: break early if all tool calls are duplicates from prior iterations
         const iterSignatures = toolPlans.map(
@@ -894,20 +894,20 @@ export class AgentRuntime {
 
         if (allDuplicates) {
           log.warn(
-            `🔁 Loop stall detected: all ${iterSignatures.length} tool call(s) are repeats — breaking early`
+            `Loop stall detected: all ${iterSignatures.length} tool call(s) are repeats — breaking early`
           );
           finalResponse = response;
           break;
         }
 
         if (iteration === maxIterations) {
-          log.info(`⚠️ Max iterations reached (${maxIterations})`);
+          log.info(`Max iterations reached (${maxIterations})`);
           finalResponse = response;
         }
       }
 
       if (!finalResponse) {
-        log.error("⚠️ Agentic loop exited early without final response");
+        log.error("Agentic loop exited early without final response");
         return {
           content: "Internal error: Agent loop failed to produce a response.",
           toolCalls: [],
@@ -946,7 +946,7 @@ export class AgentRuntime {
         if (u.cacheRead) cacheParts.push(`${(u.cacheRead / 1000).toFixed(1)}K cached`);
         if (u.cacheWrite) cacheParts.push(`${(u.cacheWrite / 1000).toFixed(1)}K new`);
         const cacheInfo = cacheParts.length > 0 ? ` (${cacheParts.join(", ")})` : "";
-        log.info(`💰 ${inK}K in${cacheInfo}, ${u.output} out | $${u.totalCost.toFixed(3)}`);
+        log.info(`${inK}K in${cacheInfo}, ${u.output} out | $${u.totalCost.toFixed(3)}`);
 
         accumulateTokenUsage(u);
       }
@@ -956,14 +956,14 @@ export class AgentRuntime {
       const usedTelegramSendTool = totalToolCalls.some((tc) => TELEGRAM_SEND_TOOLS.has(tc.name));
 
       if (!content && totalToolCalls.length > 0 && !usedTelegramSendTool) {
-        log.warn("⚠️ Empty response after tool calls - generating fallback");
+        log.warn("Empty response after tool calls - generating fallback");
         content =
           "I executed the requested action but couldn't generate a response. Please try again.";
       } else if (!content && usedTelegramSendTool) {
-        log.info("✅ Response sent via Telegram tool - no additional text needed");
+        log.info("Response sent via Telegram tool - no additional text needed");
         content = "";
       } else if (!content && accumulatedUsage.input === 0 && accumulatedUsage.output === 0) {
-        log.warn("⚠️ Empty response with zero tokens - possible API issue");
+        log.warn("Empty response with zero tokens - possible API issue");
         content = "I couldn't process your request. Please try again.";
       }
 
@@ -1033,7 +1033,7 @@ export class AgentRuntime {
 
     resetSession(chatId);
 
-    log.info(`🗑️  Cleared history for chat ${chatId}`);
+    log.info(`Cleared history for chat ${chatId}`);
   }
 
   getConfig(): Config {
@@ -1066,7 +1066,7 @@ export class AgentRuntime {
     maxTokens?: number;
   }): void {
     this.compactionManager.updateConfig(config);
-    log.info({ config: this.compactionManager.getConfig() }, `🗜️  Compaction config updated`);
+    log.info({ config: this.compactionManager.getConfig() }, `Compaction config updated`);
   }
 
   getCompactionConfig() {

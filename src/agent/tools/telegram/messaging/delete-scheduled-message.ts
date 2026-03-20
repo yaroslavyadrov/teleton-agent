@@ -42,7 +42,7 @@ export const telegramDeleteScheduledMessageExecutor: ToolExecutor<
       })
     );
 
-    log.info(`🗑️ delete_scheduled: ${messageIds.length} messages cancelled in ${chatId}`);
+    log.info(`delete_scheduled: ${messageIds.length} messages cancelled in ${chatId}`);
 
     return {
       success: true,
@@ -52,9 +52,9 @@ export const telegramDeleteScheduledMessageExecutor: ToolExecutor<
         deletedCount: messageIds.length,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
-    if (error.errorMessage === "MESSAGE_ID_INVALID") {
+  } catch (error: unknown) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("MESSAGE_ID_INVALID")) {
       return {
         success: false,
         error: "One or more message IDs are invalid or not scheduled messages.",

@@ -172,10 +172,10 @@ export class TelegramAuthManager {
       await this.saveSession(session);
       log.info("Telegram authentication successful");
       return { status: "authenticated", user };
-    } catch (err: unknown) {
-      const error = err as { errorMessage?: string };
+    } catch (error: unknown) {
+      const tgError = error as { errorMessage?: string };
 
-      if (error.errorMessage === "SESSION_PASSWORD_NEEDED") {
+      if (tgError.errorMessage === "SESSION_PASSWORD_NEEDED") {
         session.state = "2fa_required";
         // Get password hint
         try {
@@ -187,16 +187,16 @@ export class TelegramAuthManager {
         return { status: "2fa_required", passwordHint: session.passwordHint };
       }
 
-      if (error.errorMessage === "PHONE_CODE_INVALID") {
+      if (tgError.errorMessage === "PHONE_CODE_INVALID") {
         return { status: "invalid_code" };
       }
 
-      if (error.errorMessage === "PHONE_CODE_EXPIRED") {
+      if (tgError.errorMessage === "PHONE_CODE_EXPIRED") {
         session.state = "failed";
         return { status: "expired" };
       }
 
-      throw err;
+      throw error;
     }
   }
 
@@ -232,14 +232,14 @@ export class TelegramAuthManager {
       await this.saveSession(session);
       log.info("Telegram 2FA authentication successful");
       return { status: "authenticated", user };
-    } catch (err: unknown) {
-      const error = err as { errorMessage?: string };
+    } catch (error: unknown) {
+      const tgError = error as { errorMessage?: string };
 
-      if (error.errorMessage === "PASSWORD_HASH_INVALID") {
+      if (tgError.errorMessage === "PASSWORD_HASH_INVALID") {
         return { status: "invalid_password" };
       }
 
-      throw err;
+      throw error;
     }
   }
 
@@ -413,10 +413,10 @@ export class TelegramAuthManager {
       }
 
       return { status: "waiting" };
-    } catch (err: unknown) {
-      const error = err as { errorMessage?: string };
+    } catch (error: unknown) {
+      const tgError = error as { errorMessage?: string };
 
-      if (error.errorMessage === "SESSION_PASSWORD_NEEDED") {
+      if (tgError.errorMessage === "SESSION_PASSWORD_NEEDED") {
         session.state = "2fa_required";
         try {
           const passwordResult = await session.client.invoke(new Api.account.GetPassword());
@@ -427,7 +427,7 @@ export class TelegramAuthManager {
         return { status: "2fa_required", passwordHint: session.passwordHint };
       }
 
-      throw err;
+      throw error;
     }
   }
 
@@ -452,8 +452,8 @@ export class TelegramAuthManager {
       if (this.session.client.connected) {
         await this.session.client.disconnect();
       }
-    } catch (err) {
-      log.warn({ err }, "Error disconnecting auth client");
+    } catch (error: unknown) {
+      log.warn({ error }, "Error disconnecting auth client");
     }
 
     this.session = null;

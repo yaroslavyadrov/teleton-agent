@@ -66,8 +66,7 @@ export const telegramUpdateProfileExecutor: ToolExecutor<UpdateProfileParams> = 
     // Get underlying GramJS client
     const gramJsClient = context.bridge.getClient().getClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const updates: any = {};
+    const updates: Record<string, boolean> = {};
 
     // Update name if provided
     if (firstName !== undefined || lastName !== undefined) {

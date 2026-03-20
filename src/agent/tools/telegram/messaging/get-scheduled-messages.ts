@@ -47,7 +47,7 @@ export const telegramGetScheduledMessagesExecutor: ToolExecutor<
       hasMedia: !!msg.media,
     }));
 
-    log.info(`📋 get_scheduled_messages: ${scheduled.length} scheduled in ${chatId}`);
+    log.info(`get_scheduled_messages: ${scheduled.length} scheduled in ${chatId}`);
 
     return {
       success: true,

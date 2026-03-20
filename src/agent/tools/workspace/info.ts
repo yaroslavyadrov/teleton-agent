@@ -48,8 +48,8 @@ function getDirSize(dirPath: string): { count: number; size: number } {
         } catch {}
       }
     }
-  } catch (err) {
-    log.debug({ err }, "Failed to read directory stats");
+  } catch (error: unknown) {
+    log.debug({ err: error }, "Failed to read directory stats");
   }
 
   return { count, size };
@@ -148,7 +148,7 @@ export const workspaceInfoExecutor: ToolExecutor<WorkspaceInfoParams> = async (
       success: true,
       data: info,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: getErrorMessage(error),

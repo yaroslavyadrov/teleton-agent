@@ -63,13 +63,13 @@ export class MarketplaceService {
       const entries = await this.fetchPromise;
       this.cache = { entries, fetchedAt: Date.now() };
       return entries;
-    } catch (err) {
+    } catch (error: unknown) {
       // Stale-on-error: return stale cache if available
       if (this.cache) {
-        log.warn({ err }, "Registry fetch failed, using stale cache");
+        log.warn({ error }, "Registry fetch failed, using stale cache");
         return this.cache.entries;
       }
-      throw err;
+      throw error;
     } finally {
       this.fetchPromise = null;
     }
@@ -267,16 +267,16 @@ export class MarketplaceService {
         version: adapted.version,
         toolCount,
       };
-    } catch (err) {
+    } catch (error: unknown) {
       // Cleanup on failure
       if (existsSync(pluginDir)) {
         try {
           rmSync(pluginDir, { recursive: true, force: true });
-        } catch (cleanupErr) {
-          log.error({ err: cleanupErr }, `Failed to cleanup ${pluginDir}`);
+        } catch (cleanupErr: unknown) {
+          log.error({ error: cleanupErr }, `Failed to cleanup ${pluginDir}`);
         }
       }
-      throw err;
+      throw error;
     } finally {
       this.installing.delete(pluginId);
     }

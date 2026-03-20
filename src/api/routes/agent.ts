@@ -26,8 +26,8 @@ export function createAgentRoutes(lifecycle: AgentLifecycle | null | undefined) 
         }
         await lifecycle.start();
         log.info("Agent restarted via Management API");
-      } catch (err) {
-        log.error({ err }, "Agent restart failed");
+      } catch (error) {
+        log.error({ err: error }, "Agent restart failed");
       }
     })().catch(() => {});
 

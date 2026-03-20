@@ -60,11 +60,11 @@ async function checkConfig(workspaceDir: string): Promise<CheckResult> {
       status: "ok",
       message: "Valid",
     };
-  } catch (err) {
+  } catch (error) {
     return {
       name: "Config file",
       status: "error",
-      message: `Parse error: ${err instanceof Error ? err.message : String(err)}`,
+      message: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

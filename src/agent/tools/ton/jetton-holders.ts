@@ -5,6 +5,22 @@ import { getErrorMessage } from "../../../utils/errors.js";
 import { createLogger } from "../../../utils/logger.js";
 
 const log = createLogger("Tools");
+
+interface TonApiJettonHolder {
+  address?: string;
+  owner?: { address?: string; name?: string; is_wallet?: boolean };
+  balance: string;
+}
+
+interface FormattedHolder {
+  rank: number;
+  address: string;
+  name: string | null;
+  balance: string;
+  balanceRaw: string;
+  isWallet: boolean;
+}
+
 interface JettonHoldersParams {
   jetton_address: string;
   limit?: number;
@@ -68,8 +84,7 @@ export const jettonHoldersExecutor: ToolExecutor<JettonHoldersParams> = async (
       // Ignore
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TON API response is untyped
-    const holders = addresses.map((h: any, index: number) => {
+    const holders: FormattedHolder[] = addresses.map((h: TonApiJettonHolder, index: number) => {
       const balanceRaw = BigInt(h.balance || "0");
       const balanceFormatted = Number(balanceRaw) / 10 ** decimals;
 
@@ -85,14 +100,12 @@ export const jettonHoldersExecutor: ToolExecutor<JettonHoldersParams> = async (
 
     // Calculate concentration (top holder %)
     const _totalTop = holders.reduce(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TON API response is untyped
-      (sum: number, h: any) => sum + parseFloat(h.balance.replace(/,/g, "")),
+      (sum: number, h: FormattedHolder) => sum + parseFloat(h.balance.replace(/,/g, "")),
       0
     );
 
     let message = `Top ${holders.length} holders of ${symbol}:\n\n`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TON API response is untyped
-    holders.forEach((h: any) => {
+    holders.forEach((h) => {
       const nameTag = h.name ? ` (${h.name})` : "";
       message += `#${h.rank}: ${h.balance} ${symbol}\n`;
       message += `   ${h.address}${nameTag}\n`;

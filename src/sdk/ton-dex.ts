@@ -14,19 +14,20 @@ import { getCachedTonClient, loadWallet, getKeyPair } from "../ton/wallet-servic
 import { StonApiClient } from "@ston-fi/api";
 import { dexFactory } from "@ston-fi/sdk";
 import { Factory, Asset, PoolType, ReadinessStatus, JettonRoot, VaultJetton } from "@dedust/sdk";
+import type { Pool } from "@dedust/sdk";
 import { DEDUST_FACTORY_MAINNET, DEDUST_GAS } from "../agent/tools/dedust/constants.js";
 import { getDecimals, toUnits, fromUnits } from "../agent/tools/dedust/asset-cache.js";
 import { withTxLock } from "../ton/tx-lock.js";
 
+import type { OpenedContract } from "@ton/ton";
+
 /** Find the best DeDust pool (volatile first, then stable fallback). */
 async function findDedustPool(
   tonClient: Awaited<ReturnType<typeof getCachedTonClient>>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DeDust Factory type from tonClient.open() is complex and not directly importable
-  factory: any,
+  factory: OpenedContract<Factory>,
   fromAsset: ReturnType<typeof Asset.native>,
   toAsset: ReturnType<typeof Asset.native>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DeDust pool type from tonClient.open() is complex and not directly importable
-): Promise<{ pool: any; poolType: string } | null> {
+): Promise<{ pool: OpenedContract<Pool>; poolType: string } | null> {
   try {
     const pool = tonClient.open(await factory.getPool(PoolType.VOLATILE, [fromAsset, toAsset]));
     const status = await pool.getReadinessStatus();
@@ -91,8 +92,8 @@ async function getStonfiQuote(
       priceImpact: simulationResult.priceImpact || undefined,
       fee: feeAmount.toFixed(6),
     };
-  } catch (err) {
-    log.debug("dex.quoteSTONfi() failed:", err);
+  } catch (error) {
+    log.debug("dex.quoteSTONfi() failed:", error);
     return null;
   }
 }
@@ -145,8 +146,8 @@ async function getDedustQuote(
       fee: feeAmount.toFixed(6),
       poolType,
     };
-  } catch (err) {
-    log.debug("dex.quoteDeDust() failed:", err);
+  } catch (error) {
+    log.debug("dex.quoteDeDust() failed:", error);
     return null;
   }
 }

@@ -64,12 +64,9 @@ export const telegramTranscribeAudioExecutor: ToolExecutor<TranscribeAudioParams
             msgId: messageId,
           })
         );
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-      } catch (pollError: any) {
+      } catch (pollError: unknown) {
         // On transient errors (FLOOD_WAIT, network), keep polling
-        log.warn(
-          `⚠️ Transcription poll ${retries} failed: ${pollError.errorMessage || pollError.message}`
-        );
+        log.warn(`Transcription poll ${retries} failed: ${getErrorMessage(pollError)}`);
         continue;
       }
     }
@@ -87,7 +84,7 @@ export const telegramTranscribeAudioExecutor: ToolExecutor<TranscribeAudioParams
       };
     }
 
-    log.info(`🎤 transcribe_audio: msg ${messageId} → "${result.text?.substring(0, 50)}..."`);
+    log.info(`transcribe_audio: msg ${messageId} → "${result.text?.substring(0, 50)}..."`);
 
     return {
       success: true,
@@ -101,16 +98,16 @@ export const telegramTranscribeAudioExecutor: ToolExecutor<TranscribeAudioParams
         }),
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle specific Telegram errors
-    if (error.errorMessage === "PREMIUM_ACCOUNT_REQUIRED") {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("PREMIUM_ACCOUNT_REQUIRED")) {
       return {
         success: false,
         error: "Telegram Premium is required to transcribe audio messages.",
       };
     }
-    if (error.errorMessage === "MSG_ID_INVALID") {
+    if (errMsg.includes("MSG_ID_INVALID")) {
       return {
         success: false,
         error: "Invalid message ID — the message may not exist or is not a voice/audio message.",

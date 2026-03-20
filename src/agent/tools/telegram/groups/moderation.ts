@@ -85,7 +85,7 @@ export const telegramKickUserExecutor: ToolExecutor<KickUserParams> = async (
         message: `👢 User ${user_id} kicked from chat`,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error in telegram_kick_user");
     return {
       success: false,
@@ -173,9 +173,9 @@ export const telegramBanUserExecutor: ToolExecutor<BanUserParams> = async (
             participant: user_id,
           })
         );
-      } catch (e) {
+      } catch (innerError: unknown) {
         // Ignore if deletion fails (might not have permission)
-        log.warn({ err: e }, "Could not delete user messages");
+        log.warn({ err: innerError }, "Could not delete user messages");
       }
     }
 
@@ -192,7 +192,7 @@ export const telegramBanUserExecutor: ToolExecutor<BanUserParams> = async (
         message: `🚫 User ${user_id} banned ${durationStr}`,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error in telegram_ban_user");
     return {
       success: false,
@@ -257,7 +257,7 @@ export const telegramUnbanUserExecutor: ToolExecutor<UnbanUserParams> = async (
         message: `✅ User ${user_id} unbanned`,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error in telegram_unban_user");
     return {
       success: false,

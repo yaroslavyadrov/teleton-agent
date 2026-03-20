@@ -46,8 +46,7 @@ export const telegramGetMyStickersExecutor: ToolExecutor<GetMyStickersParams> = 
     const gramJsClient = context.bridge.getClient().getClient();
 
     // Get all installed sticker sets
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const result: any = await gramJsClient.invoke(
+    const result = await gramJsClient.invoke(
       new Api.messages.GetAllStickers({
         hash: toLong(0),
       })
@@ -64,14 +63,11 @@ export const telegramGetMyStickersExecutor: ToolExecutor<GetMyStickersParams> = 
     }
 
     // Format sticker sets
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    let sets = result.sets.map((set: any) => ({
+    let sets = result.sets.map((set) => ({
       shortName: set.shortName,
       title: set.title,
       count: set.count,
       validIndices: `0-${set.count - 1}`,
-      animated: set.animated || false,
-      video: set.videos || false,
       emojis: set.emojis || false,
     }));
 

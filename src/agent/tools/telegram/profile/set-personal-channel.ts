@@ -43,7 +43,7 @@ export const telegramSetPersonalChannelExecutor: ToolExecutor<SetPersonalChannel
 
     await gramJsClient.invoke(new Api.account.UpdatePersonalChannel({ channel }));
 
-    log.info(`👤 set_personal_channel: ${action} (${params.channelId || "empty"})`);
+    log.info(`set_personal_channel: ${action} (${params.channelId || "empty"})`);
 
     return {
       success: true,
@@ -52,15 +52,15 @@ export const telegramSetPersonalChannelExecutor: ToolExecutor<SetPersonalChannel
         channelId: params.channelId || null,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
-    if (error.errorMessage === "CHANNEL_INVALID") {
+  } catch (error: unknown) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("CHANNEL_INVALID")) {
       return {
         success: false,
         error: "Invalid channel — make sure you are an admin of this public channel.",
       };
     }
-    if (error.errorMessage === "CHANNELS_ADMIN_PUBLIC_TOO_MUCH") {
+    if (errMsg.includes("CHANNELS_ADMIN_PUBLIC_TOO_MUCH")) {
       return {
         success: false,
         error: "You administer too many public channels to set a personal channel.",

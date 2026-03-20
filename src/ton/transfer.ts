@@ -26,8 +26,8 @@ export async function sendTon(params: SendTonParams): Promise<string | null> {
       let recipientAddress: Address;
       try {
         recipientAddress = Address.parse(toAddress);
-      } catch (e) {
-        log.error({ err: e }, `Invalid recipient address: ${toAddress}`);
+      } catch (innerError) {
+        log.error({ err: innerError }, `Invalid recipient address: ${toAddress}`);
         return null;
       }
 

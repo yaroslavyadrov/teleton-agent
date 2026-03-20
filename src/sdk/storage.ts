@@ -72,9 +72,9 @@ export function createStorageSDK(db: Database.Database): StorageSDK {
       let serialized: string;
       try {
         serialized = JSON.stringify(value);
-      } catch (err) {
+      } catch (error) {
         throw new PluginSDKError(
-          `Failed to serialize value: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to serialize value: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }

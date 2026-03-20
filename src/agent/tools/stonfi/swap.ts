@@ -11,7 +11,7 @@ import { SendMode } from "@ton/core";
 import { dexFactory } from "@ston-fi/sdk";
 import { StonApiClient } from "@ston-fi/api";
 import { withTxLock } from "../../../ton/tx-lock.js";
-import { getErrorMessage } from "../../../utils/errors.js";
+import { getErrorMessage, isHttpError } from "../../../utils/errors.js";
 import { createLogger } from "../../../utils/logger.js";
 
 const log = createLogger("Tools");
@@ -208,12 +208,13 @@ export const stonfiSwapExecutor: ToolExecutor<JettonSwapParams> = async (
         },
       };
     }); // withTxLock
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DEX API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Invalidate node cache on 429/5xx so next attempt picks a fresh node
-    const status = error?.status || error?.response?.status;
-    if (status === 429 || status >= 500) {
-      invalidateTonClientCache();
+    if (isHttpError(error)) {
+      const status = error.status ?? error.response?.status;
+      if (status === 429 || (status !== undefined && status >= 500)) {
+        invalidateTonClientCache();
+      }
     }
     log.error({ err: error }, "Error in stonfi_swap");
     return {

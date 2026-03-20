@@ -43,7 +43,7 @@ export const telegramSendScheduledNowExecutor: ToolExecutor<SendScheduledNowPara
       })
     );
 
-    log.info(`🚀 send_scheduled_now: ${messageIds.length} messages sent in ${chatId}`);
+    log.info(`send_scheduled_now: ${messageIds.length} messages sent in ${chatId}`);
 
     return {
       success: true,
@@ -53,9 +53,9 @@ export const telegramSendScheduledNowExecutor: ToolExecutor<SendScheduledNowPara
         sentCount: messageIds.length,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
-    if (error.errorMessage === "MESSAGE_ID_INVALID") {
+  } catch (error: unknown) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("MESSAGE_ID_INVALID")) {
       return {
         success: false,
         error: "One or more message IDs are invalid or not scheduled messages.",

@@ -91,9 +91,9 @@ export function adaptPlugin(
   if (raw.manifest) {
     try {
       manifest = validateManifest(raw.manifest);
-    } catch (err) {
+    } catch (error: unknown) {
       log.warn(
-        `[${entryName}] invalid manifest, ignoring: ${err instanceof Error ? err.message : err}`
+        `[${entryName}] invalid manifest, ignoring: ${error instanceof Error ? error.message : error}`
       );
     }
   }
@@ -216,8 +216,8 @@ export function adaptPlugin(
             migrateFromMainDb(pluginDb, pluginTables);
           }
         }
-      } catch (err) {
-        pluginLog.error(`migrate() failed: ${err instanceof Error ? err.message : err}`);
+      } catch (error: unknown) {
+        pluginLog.error(`migrate() failed: ${error instanceof Error ? error.message : error}`);
         if (pluginDb) {
           try {
             pluginDb.close();
@@ -276,8 +276,8 @@ export function adaptPlugin(
             scope: def.scope as ToolScope | undefined,
           };
         });
-      } catch (err) {
-        pluginLog.error(`tools() failed: ${err instanceof Error ? err.message : err}`);
+      } catch (error: unknown) {
+        pluginLog.error(`tools() failed: ${error instanceof Error ? error.message : error}`);
         return [];
       }
     },
@@ -294,16 +294,16 @@ export function adaptPlugin(
           log: logFn,
         };
         await raw.start(enhancedContext);
-      } catch (err) {
-        pluginLog.error(`start() failed: ${err instanceof Error ? err.message : err}`);
+      } catch (error: unknown) {
+        pluginLog.error(`start() failed: ${error instanceof Error ? error.message : error}`);
       }
     },
 
     async stop() {
       try {
         await raw.stop?.();
-      } catch (err) {
-        pluginLog.error(`stop() failed: ${err instanceof Error ? err.message : err}`);
+      } catch (error: unknown) {
+        pluginLog.error(`stop() failed: ${error instanceof Error ? error.message : error}`);
       } finally {
         if (pluginDb) {
           try {
@@ -355,8 +355,8 @@ export async function ensurePluginDeps(pluginDir: string, pluginEntry: string): 
       env: { ...process.env, NODE_ENV: "production" },
     });
     log.info(`[${pluginEntry}] Dependencies installed`);
-  } catch (err) {
-    log.error(`[${pluginEntry}] Failed to install deps: ${String(err).slice(0, 300)}`);
+  } catch (error: unknown) {
+    log.error(`[${pluginEntry}] Failed to install deps: ${String(error).slice(0, 300)}`);
   }
 }
 
@@ -472,8 +472,10 @@ export async function loadEnhancedPlugins(
 
       loadedNames.add(adapted.name);
       modules.push(adapted);
-    } catch (err) {
-      log.error(`Plugin "${entry}" failed to adapt: ${err instanceof Error ? err.message : err}`);
+    } catch (error: unknown) {
+      log.error(
+        `Plugin "${entry}" failed to adapt: ${error instanceof Error ? error.message : error}`
+      );
     }
   }
 

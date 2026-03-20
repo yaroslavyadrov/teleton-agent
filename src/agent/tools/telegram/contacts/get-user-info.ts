@@ -138,7 +138,7 @@ export const telegramGetUserInfoExecutor: ToolExecutor<GetUserInfoParams> = asyn
       userInfo.voiceMessagesForbidden = full.voiceMessagesForbidden || false;
     }
 
-    log.info(`👤 get_user_info: ${userInfo.fullName || userInfo.username || userInfo.id}`);
+    log.info(`get_user_info: ${userInfo.fullName || userInfo.username || userInfo.id}`);
 
     return {
       success: true,

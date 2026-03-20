@@ -420,9 +420,9 @@ export function runMigrations(db: Database.Database): void {
       const addColumnIfNotExists = (table: string, column: string, type: string) => {
         try {
           db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
-        } catch (e: unknown) {
-          if (!(e instanceof Error) || !e.message.includes("duplicate column name")) {
-            throw e;
+        } catch (error: unknown) {
+          if (!(error instanceof Error) || !error.message.includes("duplicate column name")) {
+            throw error;
           }
         }
       };
@@ -600,9 +600,9 @@ export function runMigrations(db: Database.Database): void {
       const addColumnIfNotExists = (table: string, column: string, type: string) => {
         try {
           db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
-        } catch (e: unknown) {
-          if (!(e instanceof Error) || !e.message.includes("duplicate column name")) {
-            throw e;
+        } catch (error: unknown) {
+          if (!(error instanceof Error) || !error.message.includes("duplicate column name")) {
+            throw error;
           }
         }
       };

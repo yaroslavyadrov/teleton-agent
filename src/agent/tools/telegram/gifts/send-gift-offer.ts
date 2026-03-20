@@ -71,25 +71,24 @@ export const telegramSendGiftOfferExecutor: ToolExecutor<SendGiftOfferParams> = 
         message: `Offer of ${price} Stars sent for NFT ${slug}. Valid for ${Math.round(duration / 3600)}h.`,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorMsg = getErrorMessage(error);
 
-    if (error.errorMessage === "BALANCE_TOO_LOW" || errorMsg.includes("BALANCE_TOO_LOW")) {
+    if (errorMsg.includes("BALANCE_TOO_LOW")) {
       return {
         success: false,
         error: "Insufficient Stars balance to make this offer.",
       };
     }
 
-    if (error.errorMessage === "STARGIFT_SLUG_INVALID" || errorMsg.includes("STARGIFT_NOT_FOUND")) {
+    if (errorMsg.includes("STARGIFT_SLUG_INVALID") || errorMsg.includes("STARGIFT_NOT_FOUND")) {
       return {
         success: false,
         error: `NFT not found: "${params.slug}". Check the slug.`,
       };
     }
 
-    if (error.errorMessage === "PEER_ID_INVALID" || errorMsg.includes("PEER_ID_INVALID")) {
+    if (errorMsg.includes("PEER_ID_INVALID")) {
       return {
         success: false,
         error: `Could not find user "${params.userId}".`,

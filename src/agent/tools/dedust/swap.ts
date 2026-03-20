@@ -12,7 +12,7 @@ import { Factory, Asset, PoolType, ReadinessStatus, JettonRoot, VaultJetton } fr
 import { DEDUST_FACTORY_MAINNET, DEDUST_GAS, NATIVE_TON_ADDRESS } from "./constants.js";
 import { getDecimals, toUnits, fromUnits } from "./asset-cache.js";
 import { withTxLock } from "../../../ton/tx-lock.js";
-import { getErrorMessage } from "../../../utils/errors.js";
+import { getErrorMessage, isHttpError } from "../../../utils/errors.js";
 import { createLogger } from "../../../utils/logger.js";
 
 const log = createLogger("Tools");
@@ -240,11 +240,12 @@ export const dedustSwapExecutor: ToolExecutor<DedustSwapParams> = async (
         },
       };
     }); // withTxLock
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DEX API response is untyped
-  } catch (error: any) {
-    const status = error?.status || error?.response?.status;
-    if (status === 429 || status >= 500) {
-      invalidateTonClientCache();
+  } catch (error: unknown) {
+    if (isHttpError(error)) {
+      const status = error.status ?? error.response?.status;
+      if (status === 429 || (status !== undefined && status >= 500)) {
+        invalidateTonClientCache();
+      }
     }
     log.error({ err: error }, "Error in dedust_swap");
     return {

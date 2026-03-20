@@ -101,10 +101,10 @@ export function createBotSDK(
             replyMarkup: markup,
           });
           return;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS error shape is untyped
-        } catch (error: any) {
-          if (error?.errorMessage === "MESSAGE_NOT_MODIFIED") return;
-          log.warn(`GramJS edit failed, falling back to Grammy: ${error?.errorMessage || error}`);
+        } catch (error: unknown) {
+          const grammJsErr = error as { errorMessage?: string };
+          if (grammJsErr.errorMessage === "MESSAGE_NOT_MODIFIED") return;
+          log.warn(`GramJS edit failed, falling back to Grammy: ${grammJsErr.errorMessage || error}`);
         }
       }
 
@@ -117,10 +117,10 @@ export function createBotSDK(
             link_preview_options: { is_disabled: true },
             reply_markup: kb,
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Grammy error shape is untyped
-        } catch (error: any) {
-          if (error?.description?.includes("message is not modified")) return;
-          log.error(`Failed to edit inline message: ${error?.description || error}`);
+        } catch (error: unknown) {
+          const grammyErr = error as { description?: string };
+          if (grammyErr.description?.includes("message is not modified")) return;
+          log.error(`Failed to edit inline message: ${grammyErr.description || error}`);
         }
       }
     },

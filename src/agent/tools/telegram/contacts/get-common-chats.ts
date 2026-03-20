@@ -63,15 +63,18 @@ export const telegramGetCommonChatsExecutor: ToolExecutor<GetCommonChatsParams> 
     );
 
     // Parse common chats
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const commonChats = result.chats.map((chat: any) => ({
-      chatId: chat.id?.toString(),
-      title: chat.title || null,
-      username: chat.username || null,
-      isChannel: chat.broadcast || false,
-      isMegagroup: chat.megagroup || false,
-      membersCount: chat.participantsCount || null,
-    }));
+    const commonChats = result.chats.map((chat) => {
+      const isChannel = chat.className === "Channel";
+      const chan = isChannel ? (chat as Api.Channel) : undefined;
+      return {
+        chatId: chat.id?.toString(),
+        title: "title" in chat ? chat.title : null,
+        username: chan?.username || null,
+        isChannel: chan?.broadcast || false,
+        isMegagroup: chan?.megagroup || false,
+        membersCount: chan?.participantsCount || null,
+      };
+    });
 
     return {
       success: true,

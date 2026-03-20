@@ -1,3 +1,4 @@
+import type { TelegramClient } from "telegram";
 import { randomLong } from "../../../utils/gramjs-bigint.js";
 import { Type } from "@sinclair/typebox";
 import type { Tool, ToolExecutor, ToolResult } from "../types.js";
@@ -208,8 +209,7 @@ export const dealProposeExecutor: ToolExecutor<DealProposeParams> = async (
  * This makes the deal card with buttons appear directly in the chat.
  */
 async function sendInlineBotResult(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deal data is dynamically structured
-  bridge: any,
+  bridge: { getClient(): { getClient(): TelegramClient } },
   chatId: string,
   botUsername: string,
   dealId: string
@@ -237,8 +237,7 @@ async function sendInlineBotResult(
   }
 
   // Find the deal result (skip help/not_found/wrong_user results)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deal data is dynamically structured
-  const dealResult = results.results.find((r: any) => r.id === dealId);
+  const dealResult = results.results.find((r) => r.id === dealId);
   const resultToSend = dealResult || results.results[0];
 
   // Send the inline result as a message in the chat

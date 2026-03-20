@@ -84,8 +84,7 @@ export const telegramSendStickerExecutor: ToolExecutor<SendStickerParams> = asyn
     // Method 1: Send sticker from a sticker set by name + index
     if (hasSetInfo) {
       // Get the sticker set to access individual stickers
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-      const stickerSet: any = await gramJsClient.invoke(
+      const stickerSet = await gramJsClient.invoke(
         new Api.messages.GetStickerSet({
           stickerset: new Api.InputStickerSetShortName({
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by hasSetInfo check
@@ -95,7 +94,11 @@ export const telegramSendStickerExecutor: ToolExecutor<SendStickerParams> = asyn
         })
       );
 
-      if (!stickerSet.documents || stickerSet.documents.length === 0) {
+      if (
+        stickerSet.className !== "messages.StickerSet" ||
+        !stickerSet.documents ||
+        stickerSet.documents.length === 0
+      ) {
         return {
           success: false,
           error: `Sticker set '${stickerSetShortName}' is empty or not found`,
@@ -112,7 +115,7 @@ export const telegramSendStickerExecutor: ToolExecutor<SendStickerParams> = asyn
 
       // Get the specific sticker document
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by hasSetInfo + bounds check
-      const stickerDoc = stickerSet.documents[stickerIndex!];
+      const stickerDoc = stickerSet.documents[stickerIndex!] as Api.Document;
 
       // Send using SendMedia with the document
       const _result = await gramJsClient.invoke(

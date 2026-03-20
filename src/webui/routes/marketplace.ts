@@ -27,9 +27,9 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
       const refresh = c.req.query("refresh") === "true";
       const plugins = await svc.listPlugins(refresh);
       return c.json<APIResponse<MarketplacePlugin[]>>({ success: true, data: plugins });
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         500
       );
     }
@@ -57,10 +57,10 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
           .map((m) => ({ name: m.name, version: m.version ?? "0.0.0" }))
       );
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
-    } catch (err) {
-      const status = err instanceof ConflictError ? 409 : 500;
+    } catch (error: unknown) {
+      const status = error instanceof ConflictError ? 409 : 500;
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         status
       );
     }
@@ -88,10 +88,10 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
           .map((m) => ({ name: m.name, version: m.version ?? "0.0.0" }))
       );
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
-    } catch (err) {
-      const status = err instanceof ConflictError ? 409 : 500;
+    } catch (error: unknown) {
+      const status = error instanceof ConflictError ? 409 : 500;
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         status
       );
     }
@@ -119,10 +119,10 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
           .map((m) => ({ name: m.name, version: m.version ?? "0.0.0" }))
       );
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
-    } catch (err) {
-      const status = err instanceof ConflictError ? 409 : 500;
+    } catch (error: unknown) {
+      const status = error instanceof ConflictError ? 409 : 500;
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         status
       );
     }
@@ -151,9 +151,9 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
           configured: string[];
         }>
       >({ success: true, data: { declared, configured } });
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         500
       );
     }
@@ -183,9 +183,9 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { key, set: true },
       });
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         500
       );
     }
@@ -211,9 +211,9 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { key, set: false },
       });
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json<APIResponse>(
-        { success: false, error: err instanceof Error ? err.message : String(err) },
+        { success: false, error: error instanceof Error ? error.message : String(error) },
         500
       );
     }

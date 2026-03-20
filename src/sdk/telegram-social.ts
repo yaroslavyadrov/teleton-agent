@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- GramJS API responses/errors are untyped; every `any` in this file is for Telegram API interop */
 import type { TelegramBridge } from "../telegram/bridge.js";
 import type { Api } from "telegram";
 import type {
@@ -115,9 +114,9 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         }
 
         return null;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getChatInfo() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getChatInfo() failed:", error);
         return null;
       }
     },
@@ -145,10 +144,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           username: user.username || undefined,
           isBot: user.bot || false,
         };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get user info: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get user info: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -168,14 +167,15 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           result = await client.invoke(
             new Api.contacts.ResolveUsername({ username: cleanUsername })
           );
-        } catch (err: any) {
+        } catch (innerError: unknown) {
+          const tgErr = innerError as { message?: string; errorMessage?: string };
           if (
-            err.message?.includes("USERNAME_NOT_OCCUPIED") ||
-            err.errorMessage === "USERNAME_NOT_OCCUPIED"
+            tgErr.message?.includes("USERNAME_NOT_OCCUPIED") ||
+            tgErr.errorMessage === "USERNAME_NOT_OCCUPIED"
           ) {
             return null;
           }
-          throw err;
+          throw innerError;
         }
 
         if (result.users && result.users.length > 0) {
@@ -205,10 +205,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         }
 
         return null;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to resolve username: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to resolve username: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -249,9 +249,9 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             rank: (p && "rank" in p && p.rank) || null,
           };
         });
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getParticipants() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getParticipants() failed:", error);
         return [];
       }
     },
@@ -314,10 +314,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         }
 
         return null;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create poll: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to create poll: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -388,10 +388,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         }
 
         return null;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create quiz: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to create quiz: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -422,10 +422,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             }),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to ban user: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to ban user: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -446,10 +446,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             }),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to unban user: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to unban user: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -471,10 +471,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             }),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to mute user: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to mute user: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -488,17 +488,17 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(
+        const result = await client.invoke(
           new Api.payments.GetStarsStatus({
             peer: new Api.InputPeerSelf(),
           })
         );
 
         return Number(result.balance?.amount?.toString() || "0");
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get stars balance: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get stars balance: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -525,7 +525,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             : undefined,
         };
 
-        const form: any = await client.invoke(
+        const form = await client.invoke(
           new Api.payments.GetPaymentForm({
             invoice: new Api.InputInvoiceStarGift(invoiceData),
           })
@@ -537,10 +537,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             invoice: new Api.InputInvoiceStarGift(invoiceData),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send gift: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send gift: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -552,15 +552,15 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(new Api.payments.GetStarGifts({ hash: 0 }));
+        const result = await client.invoke(new Api.payments.GetStarGifts({ hash: 0 }));
 
         if (result.className === "payments.StarGiftsNotModified") {
           return [];
         }
 
         return (result.gifts || [])
-          .filter((gift: any) => !gift.soldOut)
-          .map((gift: any) => ({
+          .filter((g): g is Api.StarGift => g.className !== "StarGiftUnique" && !g.soldOut)
+          .map((gift) => ({
             id: gift.id?.toString(),
             starsAmount: Number(gift.stars?.toString() || "0"),
             availableAmount: gift.limited
@@ -570,10 +570,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
               ? Number(gift.availabilityTotal?.toString() || "0")
               : undefined,
           }));
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get available gifts: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get available gifts: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -585,7 +585,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(
+        const result = await client.invoke(
           new Api.payments.GetSavedStarGifts({
             peer: new Api.InputPeerSelf(),
             offset: "",
@@ -593,8 +593,8 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           })
         );
 
-        return (result.gifts || []).map((savedGift: any) => {
-          const gift = savedGift.gift;
+        return (result.gifts || []).map((savedGift) => {
+          const gift = savedGift.gift as Api.StarGift;
           return {
             id: gift?.id?.toString() || "",
             fromId: savedGift.fromId ? Number(savedGift.fromId) : undefined,
@@ -604,10 +604,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             messageId: savedGift.msgId || undefined,
           };
         });
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get my gifts: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get my gifts: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -619,7 +619,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(
+        const result = await client.invoke(
           new Api.payments.GetResaleStarGifts({
             giftId: toLong(giftId),
             offset: "",
@@ -627,14 +627,17 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           })
         );
 
-        return (result.gifts || []).map((listing: any) => ({
-          id: listing.slug || listing.id?.toString() || "",
-          starsAmount: Number(listing.resellStars?.toString() || "0"),
-        }));
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+        return (result.gifts || []).map((g) => {
+          const listing = g as Api.StarGiftUnique;
+          return {
+            id: listing.slug || listing.id?.toString() || "",
+            starsAmount: Number(listing.resellAmount?.[0]?.amount?.toString() || "0"),
+          };
+        });
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get resale gifts: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get resale gifts: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -652,7 +655,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           toId,
         });
 
-        const form: any = await client.invoke(new Api.payments.GetPaymentForm({ invoice }));
+        const form = await client.invoke(new Api.payments.GetPaymentForm({ invoice }));
 
         await client.invoke(
           new Api.payments.SendStarsForm({
@@ -660,10 +663,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             invoice,
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to buy resale gift: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to buy resale gift: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -688,9 +691,9 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           lastMessageDate: dialog.date || null,
           lastMessage: dialog.message?.message?.substring(0, 100) || null,
         }));
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getDialogs() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getDialogs() failed:", error);
         return [];
       }
     },
@@ -704,9 +707,9 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         });
 
         return messages.map(toSimpleMessage);
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getHistory() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getHistory() failed:", error);
         return [];
       }
     },
@@ -727,7 +730,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(
+        const result = await client.invoke(
           new Api.payments.GetStarsTransactions({
             peer: new Api.InputPeerSelf(),
             offset: "",
@@ -735,16 +738,16 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           })
         );
 
-        return (result.history || []).map((tx: any) => ({
+        return (result.history || []).map((tx) => ({
           id: tx.id?.toString() || "",
-          amount: Number(tx.stars?.amount?.toString() || "0"),
+          amount: Number(tx.amount?.amount?.toString() || "0"),
           date: tx.date || 0,
           peer: tx.peer?.className || undefined,
           description: tx.description || undefined,
         }));
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getStarsTransactions() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getStarsTransactions() failed:", error);
         return [];
       }
     },
@@ -768,15 +771,16 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             transferredTo: toUserId.toString(),
             paidTransfer: false,
           };
-        } catch (freeErr: any) {
-          if (freeErr?.errorMessage !== "PAYMENT_REQUIRED") throw freeErr;
+        } catch (freeErr: unknown) {
+          const tgErr = freeErr as { errorMessage?: string };
+          if (tgErr.errorMessage !== "PAYMENT_REQUIRED") throw freeErr;
 
           // Paid transfer flow
           const invoice = new Api.InputInvoiceStarGiftTransfer({
             stargift: stargiftInput,
             toId: toUser,
           });
-          const form: any = await client.invoke(new Api.payments.GetPaymentForm({ invoice }));
+          const form = await client.invoke(new Api.payments.GetPaymentForm({ invoice }));
           const transferCost = form.invoice?.prices?.[0]?.amount?.toString() || "unknown";
           await client.invoke(new Api.payments.SendStarsForm({ formId: form.formId, invoice }));
           return {
@@ -786,10 +790,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             starsSpent: transferCost,
           };
         }
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to transfer collectible: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to transfer collectible: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -810,10 +814,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             }),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to set collectible price: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to set collectible price: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -826,17 +830,18 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const Api = await getApi();
 
         // Try as username first, then phone
-        let result: any;
+        let result: Api.fragment.CollectibleInfo | undefined;
         let type: "username" | "phone" = "username";
         try {
           const collectible = new Api.InputCollectibleUsername({
             username: slug.replace("@", ""),
           });
           result = await client.invoke(new Api.fragment.GetCollectibleInfo({ collectible }));
-        } catch (err: any) {
+        } catch (innerError: unknown) {
+          const tgErr = innerError as { errorMessage?: string };
           if (
-            err.errorMessage === "USERNAME_NOT_OCCUPIED" ||
-            err.errorMessage === "PHONE_NOT_OCCUPIED"
+            tgErr.errorMessage === "USERNAME_NOT_OCCUPIED" ||
+            tgErr.errorMessage === "PHONE_NOT_OCCUPIED"
           ) {
             return null;
           }
@@ -845,10 +850,11 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             type = "phone";
             const collectible = new Api.InputCollectiblePhone({ phone: slug });
             result = await client.invoke(new Api.fragment.GetCollectibleInfo({ collectible }));
-          } catch (phoneErr: any) {
+          } catch (phoneErr: unknown) {
+            const phoneTgErr = phoneErr as { errorMessage?: string };
             if (
-              phoneErr.errorMessage === "PHONE_NOT_OCCUPIED" ||
-              phoneErr.errorMessage === "USERNAME_NOT_OCCUPIED"
+              phoneTgErr.errorMessage === "PHONE_NOT_OCCUPIED" ||
+              phoneTgErr.errorMessage === "USERNAME_NOT_OCCUPIED"
             ) {
               return null;
             }
@@ -866,9 +872,9 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           cryptoAmount: result.cryptoAmount?.toString(),
           url: result.url,
         };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getCollectibleInfo() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getCollectibleInfo() failed:", error);
         return null;
       }
     },
@@ -879,18 +885,22 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(new Api.payments.GetUniqueStarGift({ slug }));
+        const result = await client.invoke(new Api.payments.GetUniqueStarGift({ slug }));
 
-        const gift = result.gift;
+        const gift = result.gift as Api.StarGiftUnique;
         const users = result.users || [];
-        const ownerUserId = gift.ownerId?.userId?.toString();
-        const ownerUser = users.find((u: any) => u.id?.toString() === ownerUserId);
+        const ownerPeer = gift.ownerId;
+        const ownerUserId =
+          ownerPeer && "userId" in ownerPeer ? ownerPeer.userId?.toString() : undefined;
+        const ownerUser = users.find(
+          (u): u is Api.User => u.className === "User" && u.id?.toString() === ownerUserId
+        );
 
         return {
           id: gift.id?.toString() || "",
           giftId: gift.giftId?.toString() || "",
           slug: gift.slug,
-          title: gift.title,
+          title: gift.title || "",
           num: gift.num,
           owner: {
             id: ownerUserId,
@@ -899,20 +909,32 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             username: ownerUser?.username || undefined,
           },
           giftAddress: gift.giftAddress || undefined,
-          attributes: (gift.attributes || []).map((attr: any) => ({
-            type: attr.className?.replace("StarGiftAttribute", "").toLowerCase(),
-            name: attr.name,
-            rarityPercent: attr.rarityPermille ? attr.rarityPermille / 10 : undefined,
-          })),
-          availability: gift.availability
-            ? { total: gift.availability.total, remaining: gift.availability.remaining }
-            : undefined,
+          attributes: (gift.attributes || []).map((attr) => {
+            const type = attr.className?.replace("StarGiftAttribute", "").toLowerCase();
+            const name = "name" in attr ? (attr.name as string) : "";
+            const rarity = "rarity" in attr ? attr.rarity : undefined;
+            const permille =
+              rarity && "permille" in rarity ? (rarity.permille as number) : undefined;
+            return {
+              type,
+              name,
+              rarityPercent: permille ? permille / 10 : undefined,
+            };
+          }),
+          availability:
+            gift.availabilityTotal > 0
+              ? {
+                  total: gift.availabilityTotal,
+                  remaining: gift.availabilityTotal - gift.availabilityIssued,
+                }
+              : undefined,
           nftLink: `t.me/nft/${gift.slug}`,
         };
-      } catch (err: any) {
-        if (err.errorMessage === "STARGIFT_SLUG_INVALID") return null;
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getUniqueGift() failed:", err);
+      } catch (error: unknown) {
+        const tgErr = error as { errorMessage?: string };
+        if (tgErr.errorMessage === "STARGIFT_SLUG_INVALID") return null;
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getUniqueGift() failed:", error);
         return null;
       }
     },
@@ -923,7 +945,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result: any = await client.invoke(
+        const result = await client.invoke(
           new Api.payments.GetUniqueStarGiftValueInfo({ slug })
         );
 
@@ -942,10 +964,11 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
           listedCount: result.listedCount,
           currency: result.currency,
         };
-      } catch (err: any) {
-        if (err.errorMessage === "STARGIFT_SLUG_INVALID") return null;
-        if (err instanceof PluginSDKError) throw err;
-        log.error("telegram.getUniqueGiftValue() failed:", err);
+      } catch (error: unknown) {
+        const tgErr = error as { errorMessage?: string };
+        if (tgErr.errorMessage === "STARGIFT_SLUG_INVALID") return null;
+        if (error instanceof PluginSDKError) throw error;
+        log.error("telegram.getUniqueGiftValue() failed:", error);
         return null;
       }
     },
@@ -973,10 +996,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             randomId: randomLong(),
           })
         );
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send gift offer: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send gift offer: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1066,10 +1089,10 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
             ? result.updates.find((u) => u.className === "UpdateStory")
             : undefined;
         return storyUpdate?.story?.id ?? null;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send story: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send story: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }

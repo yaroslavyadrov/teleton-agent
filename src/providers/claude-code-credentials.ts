@@ -57,8 +57,8 @@ function readCredentialsFile(): ClaudeOAuthCredentials | null {
   try {
     const raw = readFileSync(filePath, "utf-8");
     return JSON.parse(raw) as ClaudeOAuthCredentials;
-  } catch (e) {
-    log.warn({ err: e, path: filePath }, "Failed to parse Claude Code credentials file");
+  } catch (error) {
+    log.warn({ err: error, path: filePath }, "Failed to parse Claude Code credentials file");
     return null;
   }
 }
@@ -203,8 +203,8 @@ async function performOAuthRefresh(refreshToken: string): Promise<string | null>
         },
       };
       writeFileSync(filePath, JSON.stringify(updated, null, 2), { mode: 0o600 });
-    } catch (e) {
-      log.warn({ err: e }, "Failed to persist refreshed OAuth credentials to disk");
+    } catch (innerError) {
+      log.warn({ err: innerError }, "Failed to persist refreshed OAuth credentials to disk");
     }
 
     // Update in-memory cache
@@ -214,8 +214,8 @@ async function performOAuthRefresh(refreshToken: string): Promise<string | null>
 
     log.info("Claude Code OAuth token refreshed successfully");
     return cachedToken;
-  } catch (e) {
-    log.warn({ err: e }, "OAuth token refresh request failed");
+  } catch (error) {
+    log.warn({ err: error }, "OAuth token refresh request failed");
     return null;
   }
 }

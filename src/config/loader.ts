@@ -6,6 +6,7 @@ import { ConfigSchema, type Config } from "./schema.js";
 import { getProviderMetadata, type SupportedProvider } from "./providers.js";
 import { TELETON_ROOT } from "../workspace/paths.js";
 import { createLogger } from "../utils/logger.js";
+import { validateEnv } from "./env.js";
 
 const log = createLogger("Config");
 
@@ -19,6 +20,7 @@ export function expandPath(path: string): string {
 }
 
 export function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Config {
+  const env = validateEnv();
   const fullPath = expandPath(configPath);
 
   if (!existsSync(fullPath)) {
@@ -65,37 +67,28 @@ export function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Config {
   config.storage.sessions_file = expandPath(config.storage.sessions_file);
   config.storage.memory_file = expandPath(config.storage.memory_file);
 
-  if (process.env.TELETON_API_KEY) {
-    config.agent.api_key = process.env.TELETON_API_KEY;
+  if (env.TELETON_API_KEY) {
+    config.agent.api_key = env.TELETON_API_KEY;
   }
-  if (process.env.TELETON_TG_API_ID) {
-    const apiId = parseInt(process.env.TELETON_TG_API_ID, 10);
-    if (isNaN(apiId)) {
-      throw new Error(
-        `Invalid TELETON_TG_API_ID environment variable: "${process.env.TELETON_TG_API_ID}" is not a valid integer`
-      );
-    }
-    config.telegram.api_id = apiId;
+  if (env.TELETON_TG_API_ID != null) {
+    config.telegram.api_id = env.TELETON_TG_API_ID;
   }
-  if (process.env.TELETON_TG_API_HASH) {
-    config.telegram.api_hash = process.env.TELETON_TG_API_HASH;
+  if (env.TELETON_TG_API_HASH) {
+    config.telegram.api_hash = env.TELETON_TG_API_HASH;
   }
-  if (process.env.TELETON_TG_PHONE) {
-    config.telegram.phone = process.env.TELETON_TG_PHONE;
+  if (env.TELETON_TG_PHONE) {
+    config.telegram.phone = env.TELETON_TG_PHONE;
   }
 
   // WebUI environment variable overrides
-  if (process.env.TELETON_WEBUI_ENABLED) {
-    config.webui.enabled = process.env.TELETON_WEBUI_ENABLED === "true";
+  if (env.TELETON_WEBUI_ENABLED != null) {
+    config.webui.enabled = env.TELETON_WEBUI_ENABLED;
   }
-  if (process.env.TELETON_WEBUI_PORT) {
-    const port = parseInt(process.env.TELETON_WEBUI_PORT, 10);
-    if (!isNaN(port) && port >= 1024 && port <= 65535) {
-      config.webui.port = port;
-    }
+  if (env.TELETON_WEBUI_PORT != null && env.TELETON_WEBUI_PORT >= 1024) {
+    config.webui.port = env.TELETON_WEBUI_PORT;
   }
-  if (process.env.TELETON_WEBUI_HOST) {
-    config.webui.host = process.env.TELETON_WEBUI_HOST;
+  if (env.TELETON_WEBUI_HOST) {
+    config.webui.host = env.TELETON_WEBUI_HOST;
     if (!["127.0.0.1", "localhost", "::1"].includes(config.webui.host)) {
       log.warn(
         { host: config.webui.host },
@@ -105,39 +98,36 @@ export function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Config {
   }
 
   // Management API environment variable overrides
-  if (process.env.TELETON_API_ENABLED) {
+  if (env.TELETON_API_ENABLED != null) {
     if (!config.api) config.api = { enabled: false, port: 7778, key_hash: "", allowed_ips: [] };
-    config.api.enabled = process.env.TELETON_API_ENABLED === "true";
+    config.api.enabled = env.TELETON_API_ENABLED;
   }
-  if (process.env.TELETON_API_PORT) {
-    const port = parseInt(process.env.TELETON_API_PORT, 10);
-    if (!isNaN(port) && port >= 1024 && port <= 65535) {
-      if (!config.api) config.api = { enabled: false, port: 7778, key_hash: "", allowed_ips: [] };
-      config.api.port = port;
-    }
+  if (env.TELETON_API_PORT != null && env.TELETON_API_PORT >= 1024) {
+    if (!config.api) config.api = { enabled: false, port: 7778, key_hash: "", allowed_ips: [] };
+    config.api.port = env.TELETON_API_PORT;
   }
 
   // Local LLM base URL override
-  if (process.env.TELETON_BASE_URL) {
+  if (env.TELETON_BASE_URL) {
     try {
-      new URL(process.env.TELETON_BASE_URL);
-      config.agent.base_url = process.env.TELETON_BASE_URL;
+      new URL(env.TELETON_BASE_URL);
+      config.agent.base_url = env.TELETON_BASE_URL;
     } catch {
       throw new Error(
-        `Invalid TELETON_BASE_URL: "${process.env.TELETON_BASE_URL}" is not a valid URL`
+        `Invalid TELETON_BASE_URL: "${env.TELETON_BASE_URL}" is not a valid URL`
       );
     }
   }
 
   // Optional API key overrides
-  if (process.env.TELETON_TAVILY_API_KEY) {
-    config.tavily_api_key = process.env.TELETON_TAVILY_API_KEY;
+  if (env.TELETON_TAVILY_API_KEY) {
+    config.tavily_api_key = env.TELETON_TAVILY_API_KEY;
   }
-  if (process.env.TELETON_TONAPI_KEY) {
-    config.tonapi_key = process.env.TELETON_TONAPI_KEY;
+  if (env.TELETON_TONAPI_KEY) {
+    config.tonapi_key = env.TELETON_TONAPI_KEY;
   }
-  if (process.env.TELETON_TONCENTER_API_KEY) {
-    config.toncenter_api_key = process.env.TELETON_TONCENTER_API_KEY;
+  if (env.TELETON_TONCENTER_API_KEY) {
+    config.toncenter_api_key = env.TELETON_TONCENTER_API_KEY;
   }
 
   return config;

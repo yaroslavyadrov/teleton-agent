@@ -17,12 +17,18 @@ export function getClient(bridge: TelegramBridge) {
 }
 
 /** Convert a GramJS message to a SimpleMessage */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS message type is dynamic and untyped in SDK context
-export function toSimpleMessage(msg: any): SimpleMessage {
+export function toSimpleMessage(msg: Api.Message): SimpleMessage {
+  const fromId = msg.fromId;
+  let senderId = 0;
+  if (fromId) {
+    if ("userId" in fromId) senderId = Number(fromId.userId);
+    else if ("channelId" in fromId) senderId = Number(fromId.channelId);
+    else if ("chatId" in fromId) senderId = Number(fromId.chatId);
+  }
   return {
     id: msg.id,
     text: msg.message ?? "",
-    senderId: Number(msg.fromId?.userId ?? msg.fromId?.channelId ?? 0),
+    senderId,
     timestamp: new Date(msg.date * 1000),
   };
 }

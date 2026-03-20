@@ -7,7 +7,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { dirname } from "path";
 import { createInterface } from "readline";
 import { markdownToTelegramHtml } from "./formatting.js";
-import { withFloodRetry } from "./flood-retry.js";
+
 import { createLogger } from "../utils/logger.js";
 
 const log = createLogger("Telegram");
@@ -151,8 +151,8 @@ export class TelegramUserClient {
               );
               authenticated = true;
               break;
-            } catch (err: unknown) {
-              const errObj = err as Record<string, string>;
+            } catch (error: unknown) {
+              const errObj = error as Record<string, string>;
               if (errObj.errorMessage === "PHONE_CODE_INVALID") {
                 const remaining = maxAttempts - attempt - 1;
                 if (remaining > 0) {
@@ -170,7 +170,7 @@ export class TelegramUserClient {
                 authenticated = true;
                 break;
               } else {
-                throw err;
+                throw error;
               }
             }
           }
@@ -316,15 +316,13 @@ export class TelegramUserClient {
     const formattedMessage =
       parseMode === "html" ? markdownToTelegramHtml(options.message) : options.message;
 
-    return withFloodRetry(() =>
-      this.client.sendMessage(entity, {
-        message: formattedMessage,
-        replyTo: options.replyTo,
-        silent: options.silent,
-        parseMode: parseMode === "none" ? undefined : parseMode,
-        linkPreview: false,
-      })
-    );
+    return this.client.sendMessage(entity, {
+      message: formattedMessage,
+      replyTo: options.replyTo,
+      silent: options.silent,
+      parseMode: parseMode === "none" ? undefined : parseMode,
+      linkPreview: false,
+    });
   }
 
   async getMessages(

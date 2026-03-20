@@ -66,8 +66,7 @@ export const telegramCreateChannelExecutor: ToolExecutor<CreateChannelParams> = 
     const gramJsClient = context.bridge.getClient().getClient();
 
     // Create channel
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const result: any = await gramJsClient.invoke(
+    const result = await gramJsClient.invoke(
       new Api.channels.CreateChannel({
         title,
         about,
@@ -77,13 +76,17 @@ export const telegramCreateChannelExecutor: ToolExecutor<CreateChannelParams> = 
     );
 
     // Extract channel info from updates
-    const channel = result.chats?.[0];
+    const chats = "chats" in result ? result.chats : [];
+    const channel = chats[0];
 
     const data: Record<string, unknown> = {
       channelId: channel?.id?.toString() || "unknown",
       title,
       type: megagroup ? "megagroup" : "channel",
-      accessHash: channel?.accessHash?.toString(),
+      accessHash:
+        channel && channel.className === "Channel"
+          ? channel.accessHash?.toString()
+          : undefined,
     };
 
     // Set username if provided (best-effort — creation still succeeds on failure)
@@ -103,8 +106,7 @@ export const telegramCreateChannelExecutor: ToolExecutor<CreateChannelParams> = 
           );
           data.username = clean;
           data.link = `https://t.me/${clean}`;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-        } catch (usernameError: any) {
+        } catch (usernameError: unknown) {
           const msg = getErrorMessage(usernameError);
           if (msg.includes("USERNAME_OCCUPIED")) {
             data.usernameError = `Username @${clean} is already taken.`;
@@ -124,7 +126,7 @@ export const telegramCreateChannelExecutor: ToolExecutor<CreateChannelParams> = 
       success: true,
       data,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error creating channel");
     return {
       success: false,

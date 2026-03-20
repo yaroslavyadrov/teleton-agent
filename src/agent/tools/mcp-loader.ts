@@ -118,7 +118,7 @@ export async function loadMcpServers(config: McpConfig): Promise<McpConnection[]
             );
           }),
         ]).finally(() => clearTimeout(timeoutHandle));
-      } catch (err) {
+      } catch (error: unknown) {
         // If Streamable HTTP failed on a URL server, retry with SSE
         if (serverConfig.url && transport instanceof StreamableHTTPClientTransport) {
           await client.close().catch(() => {});
@@ -143,7 +143,7 @@ export async function loadMcpServers(config: McpConfig): Promise<McpConnection[]
             scope: serverConfig.scope ?? "always",
           };
         }
-        throw err;
+        throw error;
       }
 
       return { serverName: name, client, scope: serverConfig.scope ?? "always" };
@@ -223,10 +223,10 @@ export async function registerMcpTools(
 
             const text = extractText(result.content as Array<{ type: string; text?: string }>);
             return { success: true, data: sanitizeForContext(text) };
-          } catch (error) {
+          } catch (innerError: unknown) {
             return {
               success: false,
-              error: `MCP tool "${mcpTool.name}" failed: ${getErrorMessage(error)}`,
+              error: `MCP tool "${mcpTool.name}" failed: ${getErrorMessage(innerError)}`,
             };
           }
         };
@@ -258,7 +258,7 @@ export async function registerMcpTools(
         totalCount += count;
         serverNames.push(conn.serverName);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       log.warn(
         `MCP server "${conn.serverName}" tool discovery failed: ${error instanceof Error ? error.message : error}`
       );
@@ -276,7 +276,7 @@ export async function closeMcpServers(connections: McpConnection[]): Promise<voi
     connections.map(async (conn) => {
       try {
         await conn.client.close();
-      } catch (error) {
+      } catch (error: unknown) {
         log.warn(
           `MCP server "${conn.serverName}" close failed: ${error instanceof Error ? error.message : error}`
         );

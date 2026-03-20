@@ -134,7 +134,7 @@ export const telegramInviteToChannelExecutor: ToolExecutor<InviteToChannelParams
       })
     );
 
-    log.info(`📨 invite_to_channel: Invited ${resolved.length} users to ${channel.title}`);
+    log.info(`invite_to_channel: Invited ${resolved.length} users to ${channel.title}`);
 
     return {
       success: true,
@@ -147,33 +147,33 @@ export const telegramInviteToChannelExecutor: ToolExecutor<InviteToChannelParams
         failedCount: failed.length,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error inviting to channel");
 
     // Handle common errors
-    if (error.message?.includes("CHAT_ADMIN_REQUIRED")) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("CHAT_ADMIN_REQUIRED")) {
       return {
         success: false,
         error: "You need admin rights to invite users to this channel",
       };
     }
 
-    if (error.message?.includes("USER_PRIVACY_RESTRICTED")) {
+    if (errMsg.includes("USER_PRIVACY_RESTRICTED")) {
       return {
         success: false,
         error: "User's privacy settings prevent being added to groups",
       };
     }
 
-    if (error.message?.includes("USER_NOT_MUTUAL_CONTACT")) {
+    if (errMsg.includes("USER_NOT_MUTUAL_CONTACT")) {
       return {
         success: false,
         error: "You can only add mutual contacts to this group",
       };
     }
 
-    if (error.message?.includes("USERS_TOO_MUCH")) {
+    if (errMsg.includes("USERS_TOO_MUCH")) {
       return {
         success: false,
         error: "Too many users in the channel",
@@ -182,7 +182,7 @@ export const telegramInviteToChannelExecutor: ToolExecutor<InviteToChannelParams
 
     return {
       success: false,
-      error: getErrorMessage(error),
+      error: errMsg,
     };
   }
 };

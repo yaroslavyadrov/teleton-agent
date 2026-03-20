@@ -50,7 +50,7 @@ export const telegramGetAdminedChannelsExecutor: ToolExecutor<GetAdminedChannels
       isBroadcast: ch.broadcast || false,
     }));
 
-    log.info(`📡 get_admined_channels: ${channels.length} channels found`);
+    log.info(`get_admined_channels: ${channels.length} channels found`);
 
     return {
       success: true,

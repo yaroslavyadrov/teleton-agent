@@ -52,8 +52,7 @@ export const telegramSearchGifsExecutor: ToolExecutor<SearchGifsParams> = async 
     const gifBot = await gramJsClient.getEntity("@gif");
 
     // Search for GIFs using inline bot query
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const result: any = await gramJsClient.invoke(
+    const result = await gramJsClient.invoke(
       new Api.messages.GetInlineBotResults({
         bot: gifBot,
         peer: "me",
@@ -62,8 +61,7 @@ export const telegramSearchGifsExecutor: ToolExecutor<SearchGifsParams> = async 
       })
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const gifs = result.results.slice(0, limit).map((res: any, idx: number) => ({
+    const gifs = result.results.slice(0, limit).map((res, idx: number) => ({
       id: res.id,
       type: res.type,
       title: res.title || `GIF ${idx + 1}`,

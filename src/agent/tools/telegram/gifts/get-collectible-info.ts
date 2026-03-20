@@ -42,7 +42,7 @@ export const telegramGetCollectibleInfoExecutor: ToolExecutor<GetCollectibleInfo
 
     const result = await gramJsClient.invoke(new Api.fragment.GetCollectibleInfo({ collectible }));
 
-    log.info(`💎 get_collectible_info: ${type}=${value}`);
+    log.info(`get_collectible_info: ${type}=${value}`);
 
     return {
       success: true,
@@ -57,12 +57,9 @@ export const telegramGetCollectibleInfoExecutor: ToolExecutor<GetCollectibleInfo
         url: result.url,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
-    if (
-      error.errorMessage === "PHONE_NOT_OCCUPIED" ||
-      error.errorMessage === "USERNAME_NOT_OCCUPIED"
-    ) {
+  } catch (error: unknown) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("PHONE_NOT_OCCUPIED") || errMsg.includes("USERNAME_NOT_OCCUPIED")) {
       return {
         success: false,
         error: `Collectible not found: ${params.type} "${params.value}" is not a Fragment collectible.`,

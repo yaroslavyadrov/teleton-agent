@@ -69,8 +69,7 @@ export const telegramCheckChannelUsernameExecutor: ToolExecutor<
         available: !!available,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error checking channel username");
 
     const msg = getErrorMessage(error);

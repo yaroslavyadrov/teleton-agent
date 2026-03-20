@@ -53,10 +53,10 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { ...mgr.getStatus(), enabled: true },
       } as APIResponse);
-    } catch (err) {
-      log.error({ err }, "Failed to start TON Proxy");
+    } catch (error: unknown) {
+      log.error({ error }, "Failed to start TON Proxy");
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }
@@ -85,10 +85,10 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { running: false, installed: true, port: 8080, enabled: false },
       } as APIResponse);
-    } catch (err) {
-      log.error({ err }, "Failed to stop TON Proxy");
+    } catch (error: unknown) {
+      log.error({ error }, "Failed to stop TON Proxy");
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }
@@ -125,10 +125,10 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { running: false, installed: false, port: 8080, enabled: false },
       } as APIResponse);
-    } catch (err) {
-      log.error({ err }, "Failed to uninstall TON Proxy");
+    } catch (error: unknown) {
+      log.error({ error }, "Failed to uninstall TON Proxy");
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }

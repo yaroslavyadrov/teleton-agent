@@ -64,13 +64,12 @@ export const telegramSearchStickersExecutor: ToolExecutor<SearchStickersParams> 
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const sets = result.sets.slice(0, limit).map((set: any) => ({
+    const sets = result.sets.slice(0, limit).map((set) => ({
       shortName: set.set.shortName,
       title: set.set.title,
       count: set.set.count,
       validIndices: `0-${set.set.count - 1}`,
-      installed: set.set.installed || false,
+      installed: set.set.installedDate != null,
     }));
 
     return {

@@ -160,12 +160,12 @@ ${blue}  ┌──────────────────────�
     } else {
       await runInteractiveOnboarding(options, prompter);
     }
-  } catch (err) {
-    if (err instanceof CancelledError) {
+  } catch (error) {
+    if (error instanceof CancelledError) {
       console.log(`\n  ${DIM("Setup cancelled. No changes were made.")}\n`);
       process.exit(0);
     }
-    throw err;
+    throw error;
   }
 }
 
@@ -378,8 +378,8 @@ async function runInteractiveOnboarding(
         default: true,
         theme,
       });
-    } catch (err) {
-      if (err instanceof CancelledError) throw err;
+    } catch (error) {
+      if (error instanceof CancelledError) throw error;
       prompter.warn(
         "Claude Code credentials not found. Make sure Claude Code is installed and authenticated (claude login)."
       );
@@ -1057,9 +1057,9 @@ async function runInteractiveOnboarding(
       const displayName = `${me?.firstName || ""}${me?.username ? ` (@${me.username})` : ""}`;
       console.log(`  ${GREEN("✓")} ${DIM("Telegram connected as")} ${CYAN(displayName)}\n`);
       STEPS[6].value = `Connected${me?.username ? ` (@${me.username})` : ""}`;
-    } catch (err) {
+    } catch (error) {
       prompter.warn(
-        `Telegram connection failed: ${err instanceof Error ? err.message : String(err)}\n` +
+        `Telegram connection failed: ${error instanceof Error ? error.message : String(error)}\n` +
           "You can authenticate later when running: teleton start"
       );
       STEPS[6].value = "Auth on first start";

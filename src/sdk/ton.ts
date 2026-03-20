@@ -67,11 +67,19 @@ const DEFAULT_TX_RETENTION_DAYS = 30;
 
 const CLEANUP_PROBABILITY = 0.1;
 
+interface TonApiJettonBalance {
+  jetton: { address: string; name?: string; symbol?: string; decimals?: number; image?: string };
+  balance: string;
+  wallet_address?: { address: string };
+  price?: { prices?: Record<string, string> };
+}
+
 /** Match a jetton in a balances array by raw address or parsed canonical form. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI jetton balance response is untyped
-function findJettonBalance(balances: any[], jettonAddress: string): any | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI jetton balance items are untyped
-  return balances.find((b: any) => {
+function findJettonBalance(
+  balances: TonApiJettonBalance[],
+  jettonAddress: string
+): TonApiJettonBalance | undefined {
+  return balances.find((b) => {
     if (b.jetton.address.toLowerCase() === jettonAddress.toLowerCase()) return true;
     try {
       return (
@@ -97,8 +105,8 @@ function cleanupOldTransactions(
     if (result.changes > 0) {
       log.debug(`Cleaned up ${result.changes} old transaction records (>${retentionDays}d)`);
     }
-  } catch (err) {
-    log.error("Transaction cleanup failed:", err);
+  } catch (error) {
+    log.error("Transaction cleanup failed:", error);
   }
 }
 
@@ -107,8 +115,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
     getAddress(): string | null {
       try {
         return getWalletAddress();
-      } catch (err) {
-        log.error("ton.getAddress() failed:", err);
+      } catch (error) {
+        log.error("ton.getAddress() failed:", error);
         return null;
       }
     },
@@ -118,8 +126,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         const addr = address ?? getWalletAddress();
         if (!addr) return null;
         return await getWalletBalance(addr);
-      } catch (err) {
-        log.error("ton.getBalance() failed:", err);
+      } catch (error) {
+        log.error("ton.getBalance() failed:", error);
         return null;
       }
     },
@@ -127,8 +135,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
     async getPrice(): Promise<TonPrice | null> {
       try {
         return await getTonPrice();
-      } catch (err) {
-        log.error("ton.getPrice() failed:", err);
+      } catch (error) {
+        log.error("ton.getPrice() failed:", error);
         return null;
       }
     },
@@ -166,10 +174,10 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
 
         return { txRef, amount };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send TON: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send TON: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -189,8 +197,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         );
 
         return formatTransactions(transactions);
-      } catch (err) {
-        log.error("ton.getTransactions() failed:", err);
+      } catch (error) {
+        log.error("ton.getTransactions() failed:", error);
         return [];
       }
     },
@@ -271,12 +279,12 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           verified: false,
           error: `Payment not found. Send ${params.amount} TON to ${address} with memo: ${params.memo}`,
         };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
-        log.error("ton.verifyPayment() failed:", err);
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
+        log.error("ton.verifyPayment() failed:", error);
         return {
           verified: false,
-          error: `Verification failed: ${err instanceof Error ? err.message : String(err)}`,
+          error: `Verification failed: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
     },
@@ -318,8 +326,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
 
         return balances;
-      } catch (err) {
-        log.error("ton.getJettonBalances() failed:", err);
+      } catch (error) {
+        log.error("ton.getJettonBalances() failed:", error);
         return [];
       }
     },
@@ -348,8 +356,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           description: metadata.description || undefined,
           image: data.preview || metadata.image || undefined,
         };
-      } catch (err) {
-        log.error("ton.getJettonInfo() failed:", err);
+      } catch (error) {
+        log.error("ton.getJettonInfo() failed:", error);
         return null;
       }
     },
@@ -397,7 +405,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           );
         }
 
-        const senderJettonWallet = jettonBalance.wallet_address.address;
+        const senderJettonWallet = (jettonBalance.wallet_address ?? { address: "" }).address;
         const decimals = jettonBalance.jetton.decimals ?? 9;
         const currentBalance = BigInt(jettonBalance.balance);
         const amountStr = amount.toFixed(decimals);
@@ -469,38 +477,38 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
               });
 
               return seq;
-            } catch (err) {
-              lastErr = err;
-              const httpErr = isHttpError(err) ? err : undefined;
+            } catch (innerError) {
+              lastErr = innerError;
+              const httpErr = isHttpError(innerError) ? innerError : undefined;
               const status = httpErr?.status || httpErr?.response?.status;
               const respData = httpErr?.response?.data;
               if (status === 429 || (status && status >= 500)) {
                 invalidateTonClientCache();
                 if (attempt < MAX_SEND_ATTEMPTS) {
                   log.warn(
-                    `sendJetton attempt ${attempt} failed (${status}): ${JSON.stringify(respData ?? (err as Error).message)}, retrying...`
+                    `sendJetton attempt ${attempt} failed (${status}): ${JSON.stringify(respData ?? (innerError as Error).message)}, retrying...`
                   );
                   await new Promise((r) => setTimeout(r, 1000 * attempt));
                   continue;
                 }
               }
-              throw err;
+              throw innerError;
             }
           }
           throw lastErr;
         });
 
         return { success: true, seqno };
-      } catch (err) {
+      } catch (error) {
         // Invalidate node cache on 429/5xx so next attempt picks a fresh node
-        const outerHttpErr = isHttpError(err) ? err : undefined;
+        const outerHttpErr = isHttpError(error) ? error : undefined;
         const status = outerHttpErr?.status || outerHttpErr?.response?.status;
         if (status === 429 || (status && status >= 500)) {
           invalidateTonClientCache();
         }
-        if (err instanceof PluginSDKError) throw err;
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send jetton: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send jetton: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -520,9 +528,9 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         const data = await response.json();
 
         const match = findJettonBalance(data.balances ?? [], jettonAddress);
-        return match ? match.wallet_address.address : null;
-      } catch (err) {
-        log.error("ton.getJettonWalletAddress() failed:", err);
+        return match?.wallet_address?.address ?? null;
+      } catch (error) {
+        log.error("ton.getJettonWalletAddress() failed:", error);
         return null;
       }
     },
@@ -608,10 +616,10 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           publicKey: walletData.publicKey,
           walletVersion: "v5r1",
         };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create transfer: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to create transfer: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -660,7 +668,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           );
         }
 
-        const senderJettonWallet = jettonBalance.wallet_address.address;
+        const senderJettonWallet = (jettonBalance.wallet_address ?? { address: "" }).address;
         const decimals = jettonBalance.jetton.decimals ?? 9;
         const currentBalance = BigInt(jettonBalance.balance);
         const amountStr = amount.toFixed(decimals);
@@ -759,10 +767,10 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           publicKey: walletData.publicKey,
           walletVersion: "v5r1",
         };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create jetton transfer: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to create jetton transfer: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -772,8 +780,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
       try {
         const wallet = loadWallet();
         return wallet?.publicKey ?? null;
-      } catch (err) {
-        log.error("ton.getPublicKey() failed:", err);
+      } catch (error) {
+        log.error("ton.getPublicKey() failed:", error);
         return null;
       }
     },
@@ -802,13 +810,11 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
 
         return (
           data.nft_items
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI NFT response is untyped
-            .filter((item: any) => item.trust !== "blacklist")
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI NFT response is untyped
-            .map((item: any) => mapNftItem(item))
+            .filter((item: TonApiNftItem) => item.trust !== "blacklist")
+            .map((item: TonApiNftItem) => mapNftItem(item))
         );
-      } catch (err) {
-        log.error("ton.getNftItems() failed:", err);
+      } catch (error) {
+        log.error("ton.getNftItems() failed:", error);
         return [];
       }
     },
@@ -824,8 +830,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
 
         const item = await response.json();
         return mapNftItem(item);
-      } catch (err) {
-        log.error("ton.getNftInfo() failed:", err);
+      } catch (error) {
+        log.error("ton.getNftInfo() failed:", error);
         return null;
       }
     },
@@ -835,9 +841,9 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
     toNano(amount: number | string): bigint {
       try {
         return tonToNano(String(amount));
-      } catch (err) {
+      } catch (error) {
         throw new PluginSDKError(
-          `toNano conversion failed: ${err instanceof Error ? err.message : String(err)}`,
+          `toNano conversion failed: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -879,8 +885,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           change7d: rateData.diff_7d?.USD ?? null,
           change30d: rateData.diff_30d?.USD ?? null,
         };
-      } catch (err) {
-        log.debug("ton.getJettonPrice() failed:", err);
+      } catch (error) {
+        log.debug("ton.getJettonPrice() failed:", error);
         return null;
       }
     },
@@ -911,8 +917,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           decimals = parseInt(infoData.metadata?.decimals || "9");
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI holder response is untyped
-        return addresses.map((h: any, index: number) => {
+        return addresses.map((h: TonApiJettonHolder, index: number) => {
           return {
             rank: index + 1,
             address: h.owner?.address || h.address,
@@ -921,8 +926,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
             balanceRaw: h.balance || "0",
           };
         });
-      } catch (err) {
-        log.debug("ton.getJettonHolders() failed:", err);
+      } catch (error) {
+        log.debug("ton.getJettonHolders() failed:", error);
         return [];
       }
     },
@@ -1001,8 +1006,8 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           marketCap,
           holders: holdersCount,
         };
-      } catch (err) {
-        log.debug("ton.getJettonHistory() failed:", err);
+      } catch (error) {
+        log.debug("ton.getJettonHistory() failed:", error);
         return null;
       }
     },
@@ -1028,15 +1033,15 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         const client = await getCachedTonClient();
         const contract = client.open(wallet);
         return await contract.getSeqno();
-      } catch (err) {
-        const httpErr = isHttpError(err) ? err : undefined;
+      } catch (error) {
+        const httpErr = isHttpError(error) ? error : undefined;
         const status = httpErr?.status || httpErr?.response?.status;
         if (status === 429 || (status !== undefined && status >= 500)) {
           invalidateTonClientCache();
         }
-        if (err instanceof PluginSDKError) throw err;
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get seqno: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to get seqno: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1068,15 +1073,15 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
 
         return { exitCode: result.exit_code, stack: items };
-      } catch (err) {
-        const httpErr = isHttpError(err) ? err : undefined;
+      } catch (error) {
+        const httpErr = isHttpError(error) ? error : undefined;
         const status = httpErr?.status || httpErr?.response?.status;
         if (status === 429 || (status !== undefined && status >= 500)) {
           invalidateTonClientCache();
         }
-        if (err instanceof PluginSDKError) throw err;
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to run get method: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to run get method: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1145,15 +1150,15 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         });
 
         return { hash: `${seqno}_${Date.now()}_send`, seqno };
-      } catch (err) {
-        const httpErr = isHttpError(err) ? err : undefined;
+      } catch (error) {
+        const httpErr = isHttpError(error) ? error : undefined;
         const status = httpErr?.status || httpErr?.response?.status;
         if (status === 429 || (status !== undefined && status >= 500)) {
           invalidateTonClientCache();
         }
-        if (err instanceof PluginSDKError) throw err;
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1223,15 +1228,15 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         });
 
         return { hash: `${seqno}_${Date.now()}_sendMessages`, seqno };
-      } catch (err) {
-        const httpErr = isHttpError(err) ? err : undefined;
+      } catch (error) {
+        const httpErr = isHttpError(error) ? error : undefined;
         const status = httpErr?.status || httpErr?.response?.status;
         if (status === 429 || (status !== undefined && status >= 500)) {
           invalidateTonClientCache();
         }
-        if (err instanceof PluginSDKError) throw err;
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send messages: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send messages: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1280,13 +1285,13 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
                 ],
               });
             });
-          } catch (err) {
-            const httpErr = isHttpError(err) ? err : undefined;
+          } catch (error) {
+            const httpErr = isHttpError(error) ? error : undefined;
             const status = httpErr?.status || httpErr?.response?.status;
             if (status === 429 || (status !== undefined && status >= 500)) {
               invalidateTonClientCache();
             }
-            throw err;
+            throw error;
           }
         },
       };
@@ -1299,12 +1304,32 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI NFT item response is untyped
-function mapNftItem(item: any): NftItem {
+interface TonApiNftPreview {
+  resolution: string;
+  url: string;
+}
+
+interface TonApiNftItem {
+  address: string;
+  index?: number;
+  owner?: { address?: string };
+  collection?: { address?: string; name?: string };
+  metadata?: { name?: string; description?: string; image?: string };
+  previews?: TonApiNftPreview[];
+  trust?: string;
+  dns?: string;
+}
+
+interface TonApiJettonHolder {
+  address?: string;
+  owner?: { address?: string; name?: string };
+  balance: string;
+}
+
+function mapNftItem(item: TonApiNftItem): NftItem {
   const meta = item.metadata || {};
   const coll = item.collection || {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TonAPI preview objects are untyped
-  const previews: any[] = item.previews || [];
+  const previews = item.previews || [];
   const preview =
     (previews.length > 1 && previews[1].url) ||
     (previews.length > 0 && previews[0].url) ||

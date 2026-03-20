@@ -46,8 +46,7 @@ export const telegramBuyResaleGiftExecutor: ToolExecutor<BuyResaleGiftParams> = 
       toId,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const form: any = await gramJsClient.invoke(new Api.payments.GetPaymentForm({ invoice }));
+    const form = await gramJsClient.invoke(new Api.payments.GetPaymentForm({ invoice }));
 
     // Complete the purchase
     await gramJsClient.invoke(

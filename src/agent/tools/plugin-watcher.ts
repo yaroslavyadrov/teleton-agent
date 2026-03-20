@@ -140,9 +140,9 @@ export class PluginWatcher {
       pluginName,
       setTimeout(() => {
         this.reloadTimers.delete(pluginName);
-        this.reloadPlugin(pluginName).catch((err) => {
+        this.reloadPlugin(pluginName).catch((error: unknown) => {
           log.error(
-            `Unexpected error reloading "${pluginName}": ${err instanceof Error ? err.message : err}`
+            `Unexpected error reloading "${pluginName}": ${error instanceof Error ? error.message : error}`
           );
         });
       }, RELOAD_DEBOUNCE_MS)
@@ -238,7 +238,7 @@ export class PluginWatcher {
               )
             ),
           ]);
-        } catch (stopErr) {
+        } catch (stopErr: unknown) {
           log.warn(
             `Old plugin "${pluginName}" stop() failed: ${stopErr instanceof Error ? stopErr.message : stopErr}`
           );
@@ -272,8 +272,10 @@ export class PluginWatcher {
 
       log.info(`Plugin "${pluginName}" v${adapted.version} reloaded (${newTools.length} tools)`);
       return true;
-    } catch (err) {
-      log.error(`Failed to reload "${pluginName}": ${err instanceof Error ? err.message : err}`);
+    } catch (error: unknown) {
+      log.error(
+        `Failed to reload "${pluginName}": ${error instanceof Error ? error.message : error}`
+      );
 
       // Rollback: only if we actually stopped the old plugin (steps 1-4 errors
       // don't need rollback — old module is still running)

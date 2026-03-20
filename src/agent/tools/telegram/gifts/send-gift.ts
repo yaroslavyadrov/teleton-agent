@@ -74,8 +74,7 @@ export const telegramSendGiftExecutor: ToolExecutor<SendGiftParams> = async (
       message: message ? new Api.TextWithEntities({ text: message, entities: [] }) : undefined,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const form: any = await gramJsClient.invoke(
+    const form = await gramJsClient.invoke(
       new Api.payments.GetPaymentForm({
         invoice: new Api.InputInvoiceStarGift(invoiceData),
       })

@@ -54,14 +54,17 @@ export const telegramGetBlockedExecutor: ToolExecutor<GetBlockedParams> = async 
     );
 
     // Parse blocked users
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    const blockedUsers = result.users.map((user: any) => ({
-      userId: user.id?.toString(),
-      username: user.username || null,
-      firstName: user.firstName || null,
-      lastName: user.lastName || null,
-      isBot: user.bot || false,
-    }));
+    const blockedUsers = result.users.map((user) => {
+      const isUser = user.className === "User";
+      const u = isUser ? (user as Api.User) : undefined;
+      return {
+        userId: user.id?.toString(),
+        username: u?.username || null,
+        firstName: u?.firstName || null,
+        lastName: u?.lastName || null,
+        isBot: u?.bot || false,
+      };
+    });
 
     return {
       success: true,

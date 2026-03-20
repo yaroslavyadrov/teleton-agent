@@ -152,9 +152,9 @@ export class SetupServer {
         }
 
         return c.json({ success: true, data: { token } });
-      } catch (err) {
+      } catch (error: unknown) {
         return c.json(
-          { success: false, error: err instanceof Error ? err.message : String(err) },
+          { success: false, error: error instanceof Error ? error.message : String(error) },
           500
         );
       }
@@ -231,7 +231,7 @@ export class SetupServer {
             resolve();
           }
         );
-      } catch (error) {
+      } catch (error: unknown) {
         reject(error);
       }
     });

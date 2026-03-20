@@ -2,6 +2,7 @@ import { TelegramUserClient, type TelegramClientConfig } from "./client.js";
 import { Api } from "telegram";
 import type { NewMessageEvent } from "telegram/events/NewMessage.js";
 import { createLogger } from "../utils/logger.js";
+import { withFloodRetry } from "./flood-retry.js";
 
 const log = createLogger("Telegram");
 
@@ -116,17 +117,29 @@ export class TelegramBridge {
         });
 
         const gramJsClient = this.client.getClient();
-        return await gramJsClient.sendMessage(peer, {
-          message: options.text,
-          replyTo: options.replyToId,
-          buttons,
-        });
+        return await withFloodRetry(
+          () =>
+            gramJsClient.sendMessage(peer, {
+              message: options.text,
+              replyTo: options.replyToId,
+              buttons,
+            }),
+          undefined,
+          undefined,
+          options.chatId
+        );
       }
 
-      return await this.client.sendMessage(peer, {
-        message: options.text,
-        replyTo: options.replyToId,
-      });
+      return await withFloodRetry(
+        () =>
+          this.client.sendMessage(peer, {
+            message: options.text,
+            replyTo: options.replyToId,
+          }),
+        undefined,
+        undefined,
+        options.chatId
+      );
     } catch (error) {
       log.error({ err: error }, "Error sending message");
       throw error;
@@ -142,7 +155,7 @@ export class TelegramBridge {
     try {
       const peer = this.peerCache.get(options.chatId) || options.chatId;
 
-      let buttons;
+      let buttons: Api.ReplyInlineMarkup | undefined;
       if (options.inlineKeyboard && options.inlineKeyboard.length > 0) {
         buttons = new Api.ReplyInlineMarkup({
           rows: options.inlineKeyboard.map(
@@ -161,13 +174,19 @@ export class TelegramBridge {
       }
 
       const gramJsClient = this.client.getClient();
-      const result = await gramJsClient.invoke(
-        new Api.messages.EditMessage({
-          peer,
-          id: options.messageId,
-          message: options.text,
-          replyMarkup: buttons,
-        })
+      const result = await withFloodRetry(
+        () =>
+          gramJsClient.invoke(
+            new Api.messages.EditMessage({
+              peer,
+              id: options.messageId,
+              message: options.text,
+              replyMarkup: buttons,
+            })
+          ),
+        undefined,
+        undefined,
+        options.chatId
       );
 
       if (result instanceof Api.Updates) {
@@ -220,16 +239,22 @@ export class TelegramBridge {
     try {
       const peer = this.peerCache.get(chatId) || chatId;
 
-      await this.client.getClient().invoke(
-        new Api.messages.SendReaction({
-          peer,
-          msgId: messageId,
-          reaction: [
-            new Api.ReactionEmoji({
-              emoticon: emoji,
-            }),
-          ],
-        })
+      await withFloodRetry(
+        () =>
+          this.client.getClient().invoke(
+            new Api.messages.SendReaction({
+              peer,
+              msgId: messageId,
+              reaction: [
+                new Api.ReactionEmoji({
+                  emoticon: emoji,
+                }),
+              ],
+            })
+          ),
+        undefined,
+        undefined,
+        chatId
       );
     } catch (error) {
       log.error({ err: error }, "Error sending reaction");

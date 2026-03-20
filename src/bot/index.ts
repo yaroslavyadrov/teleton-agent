@@ -68,7 +68,7 @@ export class DealBot {
       const queryId = ctx.inlineQuery.id;
       const userId = ctx.from.id;
 
-      log.info(`🔍 [Bot] Inline query from ${userId}: "${query}"`);
+      log.info(`[Bot] Inline query from ${userId}: "${query}"`);
 
       const dealId = query;
 
@@ -210,7 +210,7 @@ export class DealBot {
       const userId = ctx.from.id;
       const { action, dealId } = data;
 
-      log.info(`🔘 [Bot] Callback from ${userId}: ${action} on deal ${dealId}`);
+      log.info(`[Bot] Callback from ${userId}: ${action} on deal ${dealId}`);
 
       const inlineMsgId = ctx.callbackQuery.inline_message_id;
       if (inlineMsgId) {
@@ -320,7 +320,7 @@ export class DealBot {
     await this.editInlineMessage(ctx, text, buttons);
     await ctx.answerCallbackQuery({ text: "✅ Deal accepted!" });
 
-    log.info(`✅ [Bot] Deal ${deal.dealId} accepted by ${deal.userId}`);
+    log.info(`[Bot] Deal ${deal.dealId} accepted by ${deal.userId}`);
   }
 
   private async handleDecline(ctx: Context, deal: DealContext): Promise<void> {
@@ -337,7 +337,7 @@ export class DealBot {
     await this.editInlineMessage(ctx, text, buttons);
     await ctx.answerCallbackQuery({ text: "❌ Deal declined" });
 
-    log.info(`❌ [Bot] Deal ${deal.dealId} declined by ${deal.userId}`);
+    log.info(`[Bot] Deal ${deal.dealId} declined by ${deal.userId}`);
   }
 
   private async handleSent(ctx: Context, deal: DealContext): Promise<void> {
@@ -354,7 +354,7 @@ export class DealBot {
     await this.editInlineMessage(ctx, text, buttons);
     await ctx.answerCallbackQuery({ text: "⏳ Verifying..." });
 
-    log.info(`📤 [Bot] Deal ${deal.dealId} payment claimed by ${deal.userId}`);
+    log.info(`[Bot] Deal ${deal.dealId} payment claimed by ${deal.userId}`);
   }
 
   private async handleCopyAddress(ctx: Context): Promise<void> {
@@ -489,14 +489,14 @@ export class DealBot {
    * Start the bot (non-blocking - long polling runs in background)
    */
   async start(): Promise<void> {
-    log.info(`🤖 [Bot] Starting @${this.config.username}...`);
+    log.info(`[Bot] Starting @${this.config.username}...`);
 
     // Connect GramJS bot for styled buttons (best-effort)
     if (this.gramjsBot) {
       try {
         await this.gramjsBot.connect(this.config.token);
       } catch {
-        log.warn("⚠️ [Bot] GramJS MTProto connection failed, buttons will be unstyled");
+        log.warn("[Bot] GramJS MTProto connection failed, buttons will be unstyled");
         this.gramjsBot = null;
       }
     }
@@ -506,7 +506,7 @@ export class DealBot {
     // bot.start() launches long polling - do NOT await (it blocks forever)
     this.bot
       .start({
-        onStart: () => log.info(`🤖 [Bot] @${this.config.username} polling started`),
+        onStart: () => log.info(`[Bot] @${this.config.username} polling started`),
       })
       .catch((err) => {
         log.error({ err }, "[Bot] Polling error");
@@ -517,7 +517,7 @@ export class DealBot {
    * Stop the bot
    */
   async stop(): Promise<void> {
-    log.info(`🛑 [Bot] Stopping @${this.config.username}...`);
+    log.info(`[Bot] Stopping @${this.config.username}...`);
     await this.bot.stop();
     if (this.gramjsBot) {
       await this.gramjsBot.disconnect();

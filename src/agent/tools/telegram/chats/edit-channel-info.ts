@@ -94,7 +94,7 @@ export const telegramEditChannelInfoExecutor: ToolExecutor<EditChannelInfoParams
       updates.push(`about → "${about.substring(0, 50)}${about.length > 50 ? "..." : ""}"`);
     }
 
-    log.info(`✏️ edit_channel_info: ${channel.title} - ${updates.join(", ")}`);
+    log.info(`edit_channel_info: ${channel.title} - ${updates.join(", ")}`);
 
     return {
       success: true,
@@ -104,19 +104,19 @@ export const telegramEditChannelInfoExecutor: ToolExecutor<EditChannelInfoParams
         updated: updates,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error editing channel info");
 
     // Handle common errors
-    if (error.message?.includes("CHAT_ADMIN_REQUIRED")) {
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("CHAT_ADMIN_REQUIRED")) {
       return {
         success: false,
         error: "You need admin rights to edit this channel",
       };
     }
 
-    if (error.message?.includes("CHAT_NOT_MODIFIED")) {
+    if (errMsg.includes("CHAT_NOT_MODIFIED")) {
       return {
         success: true,
         data: {
@@ -127,7 +127,7 @@ export const telegramEditChannelInfoExecutor: ToolExecutor<EditChannelInfoParams
 
     return {
       success: false,
-      error: getErrorMessage(error),
+      error: errMsg,
     };
   }
 };

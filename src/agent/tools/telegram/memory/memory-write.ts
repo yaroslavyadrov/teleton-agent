@@ -131,7 +131,7 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
       }
       appendFileSync(MEMORY_FILE, entry, "utf-8");
 
-      log.info(`📝 Memory written to MEMORY.md${section ? ` (section: ${section})` : ""}`);
+      log.info(`Memory written to MEMORY.md${section ? ` (section: ${section})` : ""}`);
 
       // Check memory size and warn if approaching limit
       const lineCount = getMemoryLineCount();
@@ -169,7 +169,7 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
 
       appendFileSync(logPath, entry, "utf-8");
 
-      log.info(`📅 Memory written to daily log${section ? ` (${section})` : ""}`);
+      log.info(`Memory written to daily log${section ? ` (${section})` : ""}`);
 
       return {
         success: true,

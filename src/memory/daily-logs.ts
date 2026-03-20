@@ -131,13 +131,13 @@ export function cleanupOldDailyLogs(maxAgeDays = 60): number {
         try {
           unlinkSync(join(MEMORY_DIR, file));
           deleted++;
-        } catch (err) {
-          log.warn({ err, file }, "Failed to delete old daily log");
+        } catch (innerError) {
+          log.warn({ err: innerError, file }, "Failed to delete old daily log");
         }
       }
     }
-  } catch (err) {
-    log.error({ err }, "Failed to list memory directory for cleanup");
+  } catch (error) {
+    log.error({ err: error }, "Failed to list memory directory for cleanup");
   }
 
   if (deleted > 0) {

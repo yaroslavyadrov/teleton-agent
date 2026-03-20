@@ -72,8 +72,7 @@ export const telegramSetChannelUsernameExecutor: ToolExecutor<SetChannelUsername
         link: clean ? `https://t.me/${clean}` : null,
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error setting channel username");
 
     const msg = getErrorMessage(error);

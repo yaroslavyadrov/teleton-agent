@@ -34,21 +34,14 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Runtime deps for native modules
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy package files and install production deps only
 COPY package.json package-lock.json ./
 RUN npm pkg delete scripts.prepare \
     && npm ci --omit=dev \
     && npm cache clean --force
 
-# Remove build tools (no longer needed after native compilation)
-RUN apt-get purge -y python3 make g++ && apt-get autoremove -y
+# Copy pre-built native module from build stage
+COPY --from=build /app/node_modules/better-sqlite3/build/Release/better_sqlite3.node /app/node_modules/better-sqlite3/build/Release/better_sqlite3.node
 
 # Copy compiled code, bin wrapper, and templates
 COPY --from=build /app/dist/ dist/

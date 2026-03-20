@@ -80,9 +80,9 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
 
       const response: APIResponse<ConfigKeyData[]> = { success: true, data };
       return c.json(response);
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }
@@ -173,11 +173,11 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
           ...(meta.itemType ? { itemType: meta.itemType } : {}),
         };
         return c.json({ success: true, data: result } as APIResponse<ConfigKeyData>);
-      } catch (err) {
+      } catch (error: unknown) {
         return c.json(
           {
             success: false,
-            error: err instanceof Error ? err.message : String(err),
+            error: error instanceof Error ? error.message : String(error),
           } as APIResponse,
           500
         );
@@ -243,9 +243,9 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
         ...(meta.options ? { options: meta.options } : {}),
       };
       return c.json({ success: true, data: result } as APIResponse<ConfigKeyData>);
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }
@@ -305,9 +305,9 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
         ...(meta.itemType ? { itemType: meta.itemType } : {}),
       };
       return c.json({ success: true, data: result } as APIResponse<ConfigKeyData>);
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         500
       );
     }
@@ -336,9 +336,9 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
           displayName: meta.displayName,
         },
       } as APIResponse);
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         400
       );
     }
@@ -356,9 +356,9 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { valid: !error, error: error ?? null },
       } as APIResponse);
-    } catch (err) {
+    } catch (error: unknown) {
       return c.json(
-        { success: false, error: err instanceof Error ? err.message : String(err) } as APIResponse,
+        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
         400
       );
     }

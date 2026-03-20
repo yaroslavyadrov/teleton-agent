@@ -79,8 +79,7 @@ export const jettonSendExecutor: ToolExecutor<JettonSendParams> = async (
     const jettonsData = await jettonsResponse.json();
 
     // Find the jetton in our balances (safe: skip entries with malformed addresses)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TON API response is untyped
-    const jettonBalance = jettonsData.balances?.find((b: any) => {
+    const jettonBalance = jettonsData.balances?.find((b: { jetton: { address: string } }) => {
       if (b.jetton.address.toLowerCase() === jetton_address.toLowerCase()) return true;
       try {
         return (

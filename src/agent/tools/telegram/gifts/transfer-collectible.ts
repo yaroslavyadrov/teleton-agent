@@ -89,10 +89,9 @@ export const telegramTransferCollectibleExecutor: ToolExecutor<TransferCollectib
           message: "Collectible transferred successfully (free transfer)!",
         },
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-    } catch (freeTransferError: any) {
+    } catch (freeTransferError: unknown) {
       // If PAYMENT_REQUIRED, the transfer requires Stars - use payment flow
-      if (freeTransferError?.errorMessage === "PAYMENT_REQUIRED") {
+      if (getErrorMessage(freeTransferError).includes("PAYMENT_REQUIRED")) {
         log.info("Transfer requires payment, using payment flow...");
 
         // Create invoice for paid transfer
@@ -102,8 +101,7 @@ export const telegramTransferCollectibleExecutor: ToolExecutor<TransferCollectib
         });
 
         // Get payment form
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS API response is untyped
-        const form: any = await gramJsClient.invoke(
+        const form = await gramJsClient.invoke(
           new Api.payments.GetPaymentForm({
             invoice: invoice,
           })
@@ -135,7 +133,7 @@ export const telegramTransferCollectibleExecutor: ToolExecutor<TransferCollectib
       // Re-throw if it's a different error
       throw freeTransferError;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     log.error({ err: error }, "Error transferring collectible");
 
     const errorMsg = getErrorMessage(error);

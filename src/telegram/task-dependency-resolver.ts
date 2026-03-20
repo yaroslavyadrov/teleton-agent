@@ -170,7 +170,7 @@ export class TaskDependencyResolver {
         return;
       }
 
-      log.info(`🚀 Triggering dependent task: ${task.description}`);
+      log.info(`Triggering dependent task: ${task.description}`);
 
       // Get "me" entity for Saved Messages
       const gramJsClient = this.bridge.getClient().getClient();

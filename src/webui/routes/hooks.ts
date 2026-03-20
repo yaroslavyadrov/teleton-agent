@@ -20,8 +20,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
     try {
       const data = getBlocklistConfig(deps.memory.db);
       return c.json<APIResponse<BlocklistConfig>>({ success: true, data });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -58,8 +58,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
       deps.userHookEvaluator?.reload();
 
       return c.json<APIResponse<BlocklistConfig>>({ success: true, data: config });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -69,8 +69,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
     try {
       const data = getTriggersConfig(deps.memory.db);
       return c.json<APIResponse<TriggerEntry[]>>({ success: true, data });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -114,8 +114,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
       deps.userHookEvaluator?.reload();
 
       return c.json<APIResponse<TriggerEntry>>({ success: true, data: entry });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -162,8 +162,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
       deps.userHookEvaluator?.reload();
 
       return c.json<APIResponse<TriggerEntry>>({ success: true, data: triggers[idx] });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -175,8 +175,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
       setTriggersConfig(deps.memory.db, filtered);
       deps.userHookEvaluator?.reload();
       return c.json<APIResponse<null>>({ success: true, data: null });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -203,8 +203,8 @@ export function createHooksRoutes(deps: WebUIServerDeps) {
         success: true,
         data: { id, enabled: body.enabled },
       });
-    } catch (err) {
-      return c.json<APIResponse>({ success: false, error: getErrorMessage(err) }, 500);
+    } catch (error: unknown) {
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 

@@ -23,10 +23,10 @@ export function createTelegramSDK(bridge: TelegramBridge, log: PluginLogger): Te
           inlineKeyboard: opts?.inlineKeyboard,
         });
         return msg.id;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send message: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send message: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -42,10 +42,10 @@ export function createTelegramSDK(bridge: TelegramBridge, log: PluginLogger): Te
           inlineKeyboard: opts?.inlineKeyboard,
         });
         return typeof msg?.id === "number" ? msg.id : messageId;
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to edit message: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to edit message: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -92,10 +92,10 @@ export function createTelegramSDK(bridge: TelegramBridge, log: PluginLogger): Te
         }
 
         return { value, messageId };
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send dice: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send dice: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -105,10 +105,10 @@ export function createTelegramSDK(bridge: TelegramBridge, log: PluginLogger): Te
       requireBridge();
       try {
         await bridge.sendReaction(chatId, messageId, emoji);
-      } catch (err) {
-        if (err instanceof PluginSDKError) throw err;
+      } catch (error) {
+        if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send reaction: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to send reaction: ${error instanceof Error ? error.message : String(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -125,8 +125,8 @@ export function createTelegramSDK(bridge: TelegramBridge, log: PluginLogger): Te
           senderUsername: m.senderUsername,
           timestamp: m.timestamp,
         }));
-      } catch (err) {
-        log.error("telegram.getMessages() failed:", err);
+      } catch (error) {
+        log.error("telegram.getMessages() failed:", error);
         return [];
       }
     },

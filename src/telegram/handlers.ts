@@ -335,10 +335,10 @@ export class MessageHandler {
         timestamp: message.timestamp,
       };
       for (const hook of this.pluginMessageHooks) {
-        hook(event).catch((err) => {
+        hook(event).catch((error) => {
           log.error(
-            { err: err instanceof Error ? err : undefined },
-            `Plugin onMessage hook error: ${err instanceof Error ? err.message : err}`
+            { err: error instanceof Error ? error : undefined },
+            `Plugin onMessage hook error: ${error instanceof Error ? error.message : error}`
           );
         });
       }
@@ -358,7 +358,7 @@ export class MessageHandler {
           message.chatId.length > 10
             ? message.chatId.slice(0, 7) + ".." + message.chatId.slice(-2)
             : message.chatId;
-        log.info(`⏭️  Group ${chatShort} msg:${message.id} (not mentioned)`);
+        log.info(`Group ${chatShort} msg:${message.id} (not mentioned)`);
       } else {
         log.debug(`Skipping message ${message.id} from ${message.senderId}: ${context.reason}`);
       }
@@ -431,11 +431,14 @@ export class MessageHandler {
               if (transcribeResult.success && transcribeData?.text) {
                 transcriptionText = transcribeData.text as string;
                 log.info(
-                  `🎤 Auto-transcribed voice msg ${message.id}: "${transcriptionText?.substring(0, 80)}..."`
+                  `Auto-transcribed voice msg ${message.id}: "${transcriptionText?.substring(0, 80)}..."`
                 );
               }
-            } catch (err) {
-              log.warn({ err }, `Failed to auto-transcribe voice message ${message.id}`);
+            } catch (innerError) {
+              log.warn(
+                { err: innerError },
+                `Failed to auto-transcribe voice message ${message.id}`
+              );
             }
           }
 

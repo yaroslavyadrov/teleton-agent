@@ -164,10 +164,13 @@ Thank you for trading! 🎉`,
               toId: toUser,
             })
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS error shape is untyped
-        } catch (freeTransferError: any) {
+        } catch (freeTransferError: unknown) {
           // If PAYMENT_REQUIRED, use payment flow
-          if (freeTransferError?.errorMessage === "PAYMENT_REQUIRED") {
+          if (
+            freeTransferError instanceof Error &&
+            "errorMessage" in freeTransferError &&
+            (freeTransferError as { errorMessage?: string }).errorMessage === "PAYMENT_REQUIRED"
+          ) {
             log.info("Transfer requires payment, using payment flow...");
 
             const invoice = new Api.InputInvoiceStarGiftTransfer({
@@ -175,8 +178,7 @@ Thank you for trading! 🎉`,
               toId: toUser,
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS payment form response is untyped
-            const form: any = await gramJsClient.invoke(
+            const form = await gramJsClient.invoke(
               new Api.payments.GetPaymentForm({
                 invoice: invoice,
               })

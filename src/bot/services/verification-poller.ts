@@ -60,11 +60,11 @@ export class VerificationPoller {
    */
   start(): void {
     if (this.intervalId) {
-      log.warn("⚠️ [Poller] Already running");
+      log.warn("[Poller] Already running");
       return;
     }
 
-    log.info(`🔄 [Poller] Started (interval: ${this.config.pollIntervalMs}ms)`);
+    log.info(`[Poller] Started (interval: ${this.config.pollIntervalMs}ms)`);
 
     this.intervalId = setInterval(() => {
       this.poll().catch((err) => log.error({ err }, "[Poller] Unhandled poll error"));
@@ -81,7 +81,7 @@ export class VerificationPoller {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      log.info("🛑 [Poller] Stopped");
+      log.info("[Poller] Stopped");
     }
   }
 
@@ -97,7 +97,7 @@ export class VerificationPoller {
       for (const deal of deals) {
         const retryCount = this.retryMap.get(deal.dealId) || 0;
         if (retryCount === 0) {
-          log.info(`🔍 [Poller] Verifying deal ${deal.dealId}...`);
+          log.info(`[Poller] Verifying deal ${deal.dealId}...`);
         }
         await this.verifyDeal(deal);
       }
@@ -114,7 +114,7 @@ export class VerificationPoller {
 
     // Check max retries
     if (retryCount >= this.config.maxRetries) {
-      log.info(`⏰ [Poller] Deal ${deal.dealId} verification timeout after ${retryCount} retries`);
+      log.info(`[Poller] Deal ${deal.dealId} verification timeout after ${retryCount} retries`);
       await this.handleTimeout(deal);
       return;
     }
@@ -248,7 +248,7 @@ export class VerificationPoller {
     playerWallet?: string,
     giftMsgId?: string
   ): Promise<void> {
-    log.info(`✅ [Poller] Deal ${deal.dealId} payment verified!`);
+    log.info(`[Poller] Deal ${deal.dealId} payment verified!`);
 
     // Update deal status to 'verified' (atomic: only if still payment_claimed)
     let transitioned: boolean;
@@ -279,7 +279,7 @@ export class VerificationPoller {
 
     // Another poller already transitioned this deal — abort
     if (!transitioned) {
-      log.warn(`⚠️ [Poller] Deal ${deal.dealId} already transitioned by another poller, skipping`);
+      log.warn(`[Poller] Deal ${deal.dealId} already transitioned by another poller, skipping`);
       return;
     }
 
@@ -305,7 +305,7 @@ export class VerificationPoller {
         await this.bot.editMessageByInlineId(deal.inlineMessageId, text, buttons);
       }
 
-      log.info(`🎉 [Poller] Deal ${deal.dealId} completed successfully!`);
+      log.info(`[Poller] Deal ${deal.dealId} completed successfully!`);
     } else {
       // Deal failed
       if (deal.inlineMessageId) {
