@@ -808,11 +808,9 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         const data = await response.json();
         if (!Array.isArray(data.nft_items)) return [];
 
-        return (
-          data.nft_items
-            .filter((item: TonApiNftItem) => item.trust !== "blacklist")
-            .map((item: TonApiNftItem) => mapNftItem(item))
-        );
+        return data.nft_items
+          .filter((item: TonApiNftItem) => item.trust !== "blacklist")
+          .map((item: TonApiNftItem) => mapNftItem(item));
       } catch (error) {
         log.error("ton.getNftItems() failed:", error);
         return [];

@@ -32,9 +32,7 @@ export const telegramGetUniqueGiftValueExecutor: ToolExecutor<GetUniqueGiftValue
 
     log.info(`get_unique_gift_value: slug=${slug}`);
 
-    const result = await gramJsClient.invoke(
-      new Api.payments.GetUniqueStarGiftValueInfo({ slug })
-    );
+    const result = await gramJsClient.invoke(new Api.payments.GetUniqueStarGiftValueInfo({ slug }));
 
     return {
       success: true,

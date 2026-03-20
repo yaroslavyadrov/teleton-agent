@@ -86,7 +86,8 @@ export const telegramGetResaleGiftsExecutor: ToolExecutor<GetResaleGiftsParams> 
           slug: gift.slug,
           title: gift.title,
           num: gift.num,
-          ownerId: gift.ownerId && "userId" in gift.ownerId ? gift.ownerId.userId?.toString() : undefined,
+          ownerId:
+            gift.ownerId && "userId" in gift.ownerId ? gift.ownerId.userId?.toString() : undefined,
           ownerName: gift.ownerName || undefined,
           priceStars: starsPrice ? starsPrice.amount?.toString() : undefined,
           priceTon: tonPrice ? tonPrice.amount?.toString() : undefined,

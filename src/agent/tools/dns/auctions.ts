@@ -71,19 +71,21 @@ export const dnsAuctionsExecutor: ToolExecutor<DnsAuctionsParams> = async (
     }
 
     // Format and limit results
-    const formattedAuctions: FormattedAuction[] = auctions.data.slice(0, limit).map((auction: TonApiDnsAuction) => {
-      const currentBid = (BigInt(auction.price) / BigInt(1_000_000_000)).toString();
-      const endDate = new Date(auction.date * 1000).toISOString().replace("T", " ").split(".")[0];
+    const formattedAuctions: FormattedAuction[] = auctions.data
+      .slice(0, limit)
+      .map((auction: TonApiDnsAuction) => {
+        const currentBid = (BigInt(auction.price) / BigInt(1_000_000_000)).toString();
+        const endDate = new Date(auction.date * 1000).toISOString().replace("T", " ").split(".")[0];
 
-      return {
-        domain: auction.domain,
-        currentBid: `${currentBid} TON`,
-        bids: auction.bids,
-        endsAt: auction.date,
-        endDate: endDate + " UTC",
-        owner: auction.owner,
-      };
-    });
+        return {
+          domain: auction.domain,
+          currentBid: `${currentBid} TON`,
+          bids: auction.bids,
+          endsAt: auction.date,
+          endDate: endDate + " UTC",
+          owner: auction.owner,
+        };
+      });
 
     // Create summary message
     const summary = formattedAuctions

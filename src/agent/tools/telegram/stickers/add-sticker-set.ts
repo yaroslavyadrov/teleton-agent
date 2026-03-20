@@ -68,8 +68,7 @@ export const telegramAddStickerSetExecutor: ToolExecutor<AddStickerSetParams> = 
           stickerSet.className === "messages.StickerSet"
             ? stickerSet.set?.title || shortName
             : shortName,
-        count:
-          stickerSet.className === "messages.StickerSet" ? stickerSet.set?.count || 0 : 0,
+        count: stickerSet.className === "messages.StickerSet" ? stickerSet.set?.count || 0 : 0,
       },
     };
   } catch (error) {

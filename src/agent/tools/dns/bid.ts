@@ -79,7 +79,9 @@ export const dnsBidExecutor: ToolExecutor<DnsBidParams> = async (
 
     if (auctionsResponse.ok) {
       const auctions = await auctionsResponse.json();
-      const auction = auctions.data?.find((a: { domain: string; price: string }) => a.domain === fullDomain);
+      const auction = auctions.data?.find(
+        (a: { domain: string; price: string }) => a.domain === fullDomain
+      );
 
       if (auction) {
         const currentBid = parseFloat(fromNano(auction.price));

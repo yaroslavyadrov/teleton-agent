@@ -495,8 +495,7 @@ ${blue}  ┌──────────────────────�
         })
       )
       .then((r) => {
-        if (r.consolidated > 0)
-          log.info(`Consolidated ${r.consolidated} old session memory files`);
+        if (r.consolidated > 0) log.info(`Consolidated ${r.consolidated} old session memory files`);
       })
       .catch((error) => log.warn({ err: error }, "Memory consolidation skipped"));
 
@@ -847,9 +846,7 @@ ${blue}  ┌──────────────────────�
         log.info(`Owner resolved: ${displayName}${displayUsername}`);
       }
     } catch (error) {
-      log.warn(
-        `Could not resolve owner info: ${error instanceof Error ? error.message : error}`
-      );
+      log.warn(`Could not resolve owner info: ${error instanceof Error ? error.message : error}`);
     }
   }
 

@@ -113,9 +113,7 @@ export function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Config {
       new URL(env.TELETON_BASE_URL);
       config.agent.base_url = env.TELETON_BASE_URL;
     } catch {
-      throw new Error(
-        `Invalid TELETON_BASE_URL: "${env.TELETON_BASE_URL}" is not a valid URL`
-      );
+      throw new Error(`Invalid TELETON_BASE_URL: "${env.TELETON_BASE_URL}" is not a valid URL`);
     }
   }
 

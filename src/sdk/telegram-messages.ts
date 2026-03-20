@@ -144,7 +144,10 @@ export function createTelegramMessagesSDK(bridge: TelegramBridge, log: PluginLog
 
         const resultData = result as Api.messages.Messages;
         return (resultData.messages ?? [])
-          .filter((m): m is Api.Message => m.className !== "MessageEmpty" && m.className !== "MessageService")
+          .filter(
+            (m): m is Api.Message =>
+              m.className !== "MessageEmpty" && m.className !== "MessageService"
+          )
           .map(toSimpleMessage);
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;

@@ -84,9 +84,7 @@ export const telegramCreateChannelExecutor: ToolExecutor<CreateChannelParams> = 
       title,
       type: megagroup ? "megagroup" : "channel",
       accessHash:
-        channel && channel.className === "Channel"
-          ? channel.accessHash?.toString()
-          : undefined,
+        channel && channel.className === "Channel" ? channel.accessHash?.toString() : undefined,
     };
 
     // Set username if provided (best-effort — creation still succeeds on failure)

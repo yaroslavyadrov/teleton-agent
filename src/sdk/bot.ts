@@ -104,7 +104,9 @@ export function createBotSDK(
         } catch (error: unknown) {
           const grammJsErr = error as { errorMessage?: string };
           if (grammJsErr.errorMessage === "MESSAGE_NOT_MODIFIED") return;
-          log.warn(`GramJS edit failed, falling back to Grammy: ${grammJsErr.errorMessage || error}`);
+          log.warn(
+            `GramJS edit failed, falling back to Grammy: ${grammJsErr.errorMessage || error}`
+          );
         }
       }
 

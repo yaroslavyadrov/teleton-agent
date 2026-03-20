@@ -107,7 +107,10 @@ export const dnsCheckExecutor: ToolExecutor<DnsCheckParams> = async (
 
     if (auctionsResponse.ok) {
       const auctions = await auctionsResponse.json();
-      const auction = auctions.data?.find((a: { domain: string; price: string; date: number; bids: number }) => a.domain === fullDomain);
+      const auction = auctions.data?.find(
+        (a: { domain: string; price: string; date: number; bids: number }) =>
+          a.domain === fullDomain
+      );
 
       if (auction) {
         const currentBid = (BigInt(auction.price) / BigInt(1_000_000_000)).toString();

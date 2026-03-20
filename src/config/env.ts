@@ -9,7 +9,13 @@ const optionalPort = z.coerce.number().int().min(1).max(65535).optional();
 const optionalBoolean = z
   .string()
   .optional()
-  .transform((v) => v === "true" || v === "1" || v === "yes" ? true : v === "false" || v === "0" || v === "no" ? false : undefined);
+  .transform((v) =>
+    v === "true" || v === "1" || v === "yes"
+      ? true
+      : v === "false" || v === "0" || v === "no"
+        ? false
+        : undefined
+  );
 
 const envSchema = z.object({
   // Core

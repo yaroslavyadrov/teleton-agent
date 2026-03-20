@@ -51,8 +51,7 @@ export const telegramGetStarsBalanceExecutor: ToolExecutor<GetStarsBalanceParams
       data: {
         currency,
         balance: result.balance?.amount?.toString() || "0",
-        balanceNanos:
-          "nanos" in result.balance ? (result.balance.nanos?.toString() || "0") : "0",
+        balanceNanos: "nanos" in result.balance ? result.balance.nanos?.toString() || "0" : "0",
         subscriptionsMissingBalance: result.subscriptionsMissingBalance?.toString(),
         history: result.history?.length || 0,
       },

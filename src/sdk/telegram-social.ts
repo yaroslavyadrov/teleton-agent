@@ -945,9 +945,7 @@ export function createTelegramSocialSDK(bridge: TelegramBridge, log: PluginLogge
         const client = getClient();
         const Api = await getApi();
 
-        const result = await client.invoke(
-          new Api.payments.GetUniqueStarGiftValueInfo({ slug })
-        );
+        const result = await client.invoke(new Api.payments.GetUniqueStarGiftValueInfo({ slug }));
 
         return {
           slug,

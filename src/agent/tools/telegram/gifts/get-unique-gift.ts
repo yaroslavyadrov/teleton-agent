@@ -39,9 +39,7 @@ export const telegramGetUniqueGiftExecutor: ToolExecutor<GetUniqueGiftParams> = 
       gift.className === "StarGiftUnique" && gift.ownerId && "userId" in gift.ownerId
         ? gift.ownerId.userId?.toString()
         : undefined;
-    const ownerUser = users.find(
-      (u) => u.className === "User" && u.id?.toString() === ownerUserId
-    );
+    const ownerUser = users.find((u) => u.className === "User" && u.id?.toString() === ownerUserId);
 
     if (gift.className !== "StarGiftUnique") {
       return { success: false, error: "Gift is not a unique collectible" };
@@ -62,7 +60,9 @@ export const telegramGetUniqueGiftExecutor: ToolExecutor<GetUniqueGiftParams> = 
           name: gift.ownerName || undefined,
           address: gift.ownerAddress || undefined,
           username:
-            ownerUser && ownerUser.className === "User" ? ownerUser.username || undefined : undefined,
+            ownerUser && ownerUser.className === "User"
+              ? ownerUser.username || undefined
+              : undefined,
           firstName:
             ownerUser && ownerUser.className === "User"
               ? ownerUser.firstName || undefined

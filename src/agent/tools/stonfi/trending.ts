@@ -80,7 +80,9 @@ export const stonfiTrendingExecutor: ToolExecutor<JettonTrendingParams> = async 
         if (!a.popularity_index || a.popularity_index <= 0) return false;
         return true;
       })
-      .sort((a: StonfiAsset, b: StonfiAsset) => (b.popularity_index || 0) - (a.popularity_index || 0))
+      .sort(
+        (a: StonfiAsset, b: StonfiAsset) => (b.popularity_index || 0) - (a.popularity_index || 0)
+      )
       .slice(0, limit)
       .map((a: StonfiAsset, index: number) => ({
         rank: index + 1,

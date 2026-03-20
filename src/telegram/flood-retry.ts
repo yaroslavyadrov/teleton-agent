@@ -93,7 +93,9 @@ class FloodGate {
         log.debug(`[FloodGate] ${chatId}: cooldown cleared`);
         return;
       }
-      log.debug(`[FloodGate] ${chatId}: cooldown decayed to ${(entry.cooldownMs / 1000).toFixed(1)}s`);
+      log.debug(
+        `[FloodGate] ${chatId}: cooldown decayed to ${(entry.cooldownMs / 1000).toFixed(1)}s`
+      );
       entry.decayTimer = this.scheduleDecay(chatId, entry);
       entry.decayTimer.unref?.();
     }, DECAY_INTERVAL_MS);

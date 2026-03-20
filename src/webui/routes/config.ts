@@ -82,7 +82,10 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(response);
     } catch (error: unknown) {
       return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } as APIResponse,
         500
       );
     }
@@ -245,7 +248,10 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json({ success: true, data: result } as APIResponse<ConfigKeyData>);
     } catch (error: unknown) {
       return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } as APIResponse,
         500
       );
     }
@@ -307,7 +313,10 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json({ success: true, data: result } as APIResponse<ConfigKeyData>);
     } catch (error: unknown) {
       return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } as APIResponse,
         500
       );
     }
@@ -338,7 +347,10 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       } as APIResponse);
     } catch (error: unknown) {
       return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } as APIResponse,
         400
       );
     }
@@ -358,7 +370,10 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       } as APIResponse);
     } catch (error: unknown) {
       return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) } as APIResponse,
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } as APIResponse,
         400
       );
     }

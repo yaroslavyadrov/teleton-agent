@@ -167,9 +167,7 @@ export const telegramGetMyGiftsExecutor: ToolExecutor<GetMyGiftsParams> = async 
       catalogMap = giftCatalogCache.map;
     } else {
       const prevHash = giftCatalogCache?.hash ?? 0;
-      const catalog = await gramJsClient.invoke(
-        new Api.payments.GetStarGifts({ hash: prevHash })
-      );
+      const catalog = await gramJsClient.invoke(new Api.payments.GetStarGifts({ hash: prevHash }));
 
       if (catalog.className === "payments.StarGifts" && catalog.gifts.length > 0) {
         catalogMap = new Map();
@@ -219,9 +217,7 @@ export const telegramGetMyGiftsExecutor: ToolExecutor<GetMyGiftsParams> = async 
       const gift = savedGift.gift;
       const isCollectible = gift.className === "StarGiftUnique";
 
-      const lookupId = isCollectible
-        ? gift.giftId?.toString()
-        : gift.id?.toString();
+      const lookupId = isCollectible ? gift.giftId?.toString() : gift.id?.toString();
       const catalogInfo = catalogMap.get(lookupId);
 
       const isLimited = isCollectible || catalogInfo?.limited === true;
