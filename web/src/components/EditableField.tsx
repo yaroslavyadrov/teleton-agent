@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { InfoTip } from './InfoTip';
+import { Stepper } from './Stepper';
 
 export interface EditableFieldProps {
   label: string;
@@ -76,11 +77,13 @@ export function EditableField({
   const badgeEl = badge ? (
     <span style={{
       fontSize: 11,
-      padding: '1px 6px',
-      backgroundColor: badge === 'Set' ? 'var(--accent)' : 'var(--red)',
-      color: 'var(--text-on-accent)',
+      padding: '2px 8px',
+      backgroundColor: badge === 'Set' ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'color-mix(in srgb, var(--red) 15%, transparent)',
+      color: badge === 'Set' ? 'var(--accent)' : 'var(--red)',
       marginLeft: 6,
-      fontWeight: 500,
+      fontWeight: 600,
+      borderRadius: 'var(--radius-pill)',
+      letterSpacing: '0.3px',
     }}>
       {badge}
     </span>
@@ -137,7 +140,25 @@ export function EditableField({
     </div>
   ) : null;
 
-  const inputEl = (
+  const inputEl = type === 'number' ? (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', minWidth: 20, textAlign: 'center' }}>
+        {value}
+      </span>
+      <Stepper
+        value={parseFloat(value) || 0}
+        onChange={(v) => {
+          const str = String(v);
+          onChange(str);
+          onSave(str);
+        }}
+        min={min}
+        max={max}
+        step={step}
+        disabled={saving}
+      />
+    </div>
+  ) : (
     <input
       ref={inputRef}
       type={type}
@@ -165,9 +186,9 @@ export function EditableField({
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 36 }}>
         <div style={{ flex: '0 0 auto', minWidth: 120 }}>{labelRow}</div>
-        <div style={{ flex: 1, display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div style={{ flex: 1, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
           {inputEl}
-          {actionButtons}
+          {type !== 'number' && actionButtons}
         </div>
       </div>
     );
@@ -176,9 +197,9 @@ export function EditableField({
   return (
     <div className="form-group">
       <label>{labelRow}</label>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: type === 'number' ? 'space-between' : undefined }}>
         {inputEl}
-        {actionButtons}
+        {type !== 'number' && actionButtons}
       </div>
     </div>
   );

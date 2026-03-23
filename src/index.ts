@@ -560,12 +560,14 @@ ${blue}  ┌──────────────────────�
     this.sdkDeps.rateLimiter = rateLimiter;
     log.info("Bot mode: using main Grammy bridge (no DealBot)");
 
-    if (firstStart && isBotBridge(this.bridge)) {
+    if (isBotBridge(this.bridge)) {
       this.bridge.setCallbackHandler((msg) => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- debouncer initialized before wireBotMode
         void this.debouncer!.enqueue(msg);
       });
-      this.bridge.startPolling();
+      if (firstStart) {
+        this.bridge.startPolling();
+      }
       void this.bridge.syncCommands();
     }
   }
@@ -1072,7 +1074,8 @@ ${blue}  ┌──────────────────────�
     }
 
     this.callbackHandlerRegistered = false;
-    this.messageHandlersRegistered = false;
+    // messageHandlersRegistered stays true — Grammy Bot instance retains its middleware tree
+    // across stop/start cycles; re-registering would throw "registering listeners from within listeners"
     try {
       await this.bridge.disconnect();
     } catch (error: unknown) {

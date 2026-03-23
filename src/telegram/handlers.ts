@@ -543,6 +543,28 @@ export class MessageHandler {
               },
               true
             );
+          } else if (
+            telegramSendCalled &&
+            response.content &&
+            response.content.trim().length > 0 &&
+            !isSilentReply(response.content)
+          ) {
+            // Tool already sent the message to Telegram — store in feed for conversation history
+            await this.storeTelegramMessage(
+              {
+                id: 0, // tool-sent message ID not propagated back
+                chatId: message.chatId,
+                senderId: this.ownUserId ? parseInt(this.ownUserId, 10) : 0,
+                text: response.content,
+                isGroup: message.isGroup,
+                isChannel: message.isChannel,
+                isBot: false,
+                mentionsMe: false,
+                timestamp: new Date(),
+                hasMedia: false,
+              },
+              true
+            );
           }
 
           // 9. Clear pending history after responding (for groups)

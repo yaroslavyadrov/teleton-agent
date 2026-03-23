@@ -80,13 +80,13 @@ export function TelegramSettingsPanel({
               label="Owner ID"
               description="Primary admin Telegram user ID (auto-added to Admin IDs)"
               configKey="telegram.owner_id"
-              type="number"
+              type="text"
               value={getLocal('telegram.owner_id')}
               serverValue={getServer('telegram.owner_id')}
               onChange={(v) => setLocal('telegram.owner_id', v)}
               onSave={(v) => saveConfig('telegram.owner_id', v)}
               onCancel={() => cancelLocal('telegram.owner_id')}
-              min={1}
+              placeholder="123456789"
             />
           </div>
         )}
@@ -185,6 +185,8 @@ export function TelegramSettingsPanel({
                 onSave={(v) => saveConfig('telegram.debounce_ms', v)}
                 onCancel={() => cancelLocal('telegram.debounce_ms')}
                 min={0}
+                step={100}
+                inline
               />
               <EditableField
                 label="Max Message Length"
@@ -197,16 +199,8 @@ export function TelegramSettingsPanel({
                 onSave={(v) => saveConfig('telegram.max_message_length', v)}
                 onCancel={() => cancelLocal('telegram.max_message_length')}
                 min={1}
-              />
-              <EditableField
-                label="Agent Channel"
-                description="Channel username for auto-publishing"
-                configKey="telegram.agent_channel"
-                value={getLocal('telegram.agent_channel')}
-                serverValue={getServer('telegram.agent_channel')}
-                onChange={(v) => setLocal('telegram.agent_channel', v)}
-                onSave={(v) => saveConfig('telegram.agent_channel', v)}
-                onCancel={() => cancelLocal('telegram.agent_channel')}
+                step={100}
+                inline
               />
             </div>
 
@@ -261,7 +255,7 @@ export function TelegramSettingsPanel({
             {/* ── Rate Limits (EditableField, restart badge) ────── */}
             <div style={{ display: 'grid', gap: '12px' }}>
               <EditableField
-                label="Rate Limit -- Messages/sec"
+                label="Rate Limit · Messages/sec"
                 description="Rate limit: messages per second (requires restart)"
                 configKey="telegram.rate_limit_messages_per_second"
                 type="number"
@@ -273,9 +267,10 @@ export function TelegramSettingsPanel({
                 hotReload="restart"
                 min={0}
                 step={0.1}
+                inline
               />
               <EditableField
-                label="Rate Limit -- Groups/min"
+                label="Rate Limit · Groups/min"
                 description="Rate limit: groups per minute (requires restart)"
                 configKey="telegram.rate_limit_groups_per_minute"
                 type="number"
@@ -286,6 +281,7 @@ export function TelegramSettingsPanel({
                 onCancel={() => cancelLocal('telegram.rate_limit_groups_per_minute')}
                 hotReload="restart"
                 min={1}
+                inline
               />
             </div>
       </div>
@@ -306,7 +302,7 @@ export function TelegramSettingsPanel({
   return (
     <>
       {telegramTitle}
-      <div className="card">{telegramCore}</div>
+      {telegramCore}
     </>
   );
 }

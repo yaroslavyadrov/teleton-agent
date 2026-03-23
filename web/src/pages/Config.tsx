@@ -10,6 +10,7 @@ import { ArrayInput } from '../components/ArrayInput';
 import { EditableField } from '../components/EditableField';
 import { ConfigSection } from '../components/ConfigSection';
 import { InfoTip } from '../components/InfoTip';
+import { InfoBanner } from '../components/InfoBanner';
 
 const TABS = [
   { id: 'llm', label: 'LLM' },
@@ -78,7 +79,6 @@ export function Config() {
     config.setError(null);
     try {
       await api.setConfigKey(key, values);
-      config.showSuccess(`${key} updated successfully`);
       loadKeys();
     } catch (err) {
       config.setError(err instanceof Error ? err.message : String(err));
@@ -103,11 +103,6 @@ export function Config() {
         </div>
       )}
 
-      {config.saveSuccess && (
-        <div className="alert success" style={{ marginBottom: '16px' }}>
-          {config.saveSuccess}
-        </div>
-      )}
 
       <PillBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -148,7 +143,7 @@ export function Config() {
                   label="Proxy Port"
                   description="Cocoon Network proxy port"
                   configKey="cocoon.port"
-                  type="number"
+                  type="text"
                   value={config.getLocal('cocoon.port')}
                   serverValue={config.getServer('cocoon.port')}
                   onChange={(v) => config.setLocal('cocoon.port', v)}
@@ -184,31 +179,27 @@ export function Config() {
       {activeTab === 'heartbeat' && (
         <>
           <div className="card-header">
-            <div className="section-title">Heartbeat</div>
-            <p className="card-description">
-              Periodic autonomous wake-up. The agent reads HEARTBEAT.md and acts on its tasks, or stays silent.
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="section-title" style={{ margin: 0 }}>Heartbeat</div>
+              <label className="toggle" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={config.getLocal('heartbeat.enabled') === 'true' || config.getLocal('heartbeat.enabled') === true}
+                  onChange={async (e) => {
+                    const val = e.target.checked;
+                    await config.saveConfig('heartbeat.enabled', String(val));
+                  }}
+                />
+                <span className="toggle-track" />
+                <span className="toggle-thumb" />
+              </label>
+            </div>
           </div>
+          <InfoBanner>
+            Periodic autonomous wake-up. The agent reads HEARTBEAT.md and acts on its tasks, or stays silent.
+          </InfoBanner>
           <div className="card">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <label className="toggle" style={{ margin: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={config.getLocal('heartbeat.enabled') === 'true' || config.getLocal('heartbeat.enabled') === true}
-                      onChange={async (e) => {
-                        const val = e.target.checked;
-                        await config.saveConfig('heartbeat.enabled', String(val));
-                      }}
-                    />
-                    <span className="toggle-track" />
-                    <span className="toggle-thumb" />
-                  </label>
-                  <span>Enabled</span>
-                  <InfoTip text="When enabled, the agent wakes up periodically to check HEARTBEAT.md and act on pending tasks. Replies NO_ACTION (silently suppressed) when nothing needs attention." />
-                </div>
-              </div>
 
               <EditableField
                 label="Interval"
@@ -225,6 +216,7 @@ export function Config() {
                 placeholder="30"
                 hotReload="restart"
                 suffix="min"
+                inline
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -275,10 +267,10 @@ export function Config() {
         <>
           <div className="card-header">
             <div className="section-title">TON Proxy</div>
-            <p className="card-description">
-              Tonutils-Proxy gateway for accessing .ton websites. The binary is auto-downloaded from GitHub on first enable.
-            </p>
           </div>
+          <InfoBanner>
+            Tonutils-Proxy gateway for accessing .ton websites. The binary is auto-downloaded from GitHub on first enable.
+          </InfoBanner>
           <div className="card">
             {proxyError && (
               <div className="alert error" style={{ marginBottom: '14px' }}>
@@ -307,7 +299,6 @@ export function Config() {
                             ? await api.startTonProxy()
                             : await api.stopTonProxy();
                           setProxyStatus(res.data);
-                          config.showSuccess(enable ? 'TON Proxy started' : 'TON Proxy stopped');
                           loadKeys();
                         } catch (err) {
                           setProxyError(err instanceof Error ? err.message : String(err));
@@ -351,7 +342,6 @@ export function Config() {
                       try {
                         const res = await api.uninstallTonProxy();
                         setProxyStatus(res.data);
-                        config.showSuccess('TON Proxy uninstalled');
                         loadKeys();
                       } catch (err) {
                         setProxyError(err instanceof Error ? err.message : String(err));
@@ -381,7 +371,7 @@ export function Config() {
                 label="Proxy Port"
                 description="HTTP proxy listen address port"
                 configKey="ton_proxy.port"
-                type="number"
+                type="text"
                 value={config.getLocal('ton_proxy.port') || '8080'}
                 serverValue={config.getServer('ton_proxy.port') || '8080'}
                 onChange={(v) => config.setLocal('ton_proxy.port', v)}
@@ -438,8 +428,10 @@ export function Config() {
         <>
           <div className="card-header">
             <div className="section-title">Sessions</div>
-            <p className="card-description">Session reset and expiry policies</p>
           </div>
+          <InfoBanner>
+            Session reset and expiry policies. Configure automatic daily resets and idle timeout behavior.
+          </InfoBanner>
           <div className="card">
             <ConfigSection
               keys={SESSION_KEYS}
@@ -459,10 +451,10 @@ export function Config() {
         <>
           <div className="card-header">
             <div className="section-title">Tool RAG</div>
-            <p className="card-description">
-              Semantic tool selection - sends only the most relevant tools to the LLM per message.
-            </p>
           </div>
+          <InfoBanner>
+            Semantic tool selection — sends only the most relevant tools to the LLM per message.
+          </InfoBanner>
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 500 }}>Enabled</span>

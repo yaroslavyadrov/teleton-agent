@@ -169,11 +169,11 @@ export function ArrayInput({ value, onChange, validate, placeholder, disabled }:
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '3px 8px',
-                background: 'var(--bg-glass)',
-                border: '1px solid var(--border-glass)',
-                color: 'var(--text-secondary)',
-                borderRadius: '999px',
+                padding: '2px 8px',
+                background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                border: 'none',
+                color: 'var(--text-primary)',
+                borderRadius: '6px',
                 fontSize: 'var(--font-sm)',
                 lineHeight: '1.4',
                 outline: focusedChip === idx ? '2px solid var(--border-strong)' : 'none',
@@ -190,12 +190,10 @@ export function ArrayInput({ value, onChange, validate, placeholder, disabled }:
                 onMouseEnter={() => setHoverRemove(idx)}
                 onMouseLeave={() => setHoverRemove(-1)}
                 style={{
-                  background: 'none',
-                  border: 'none',
+                  all: 'unset',
                   color: hoverRemove === idx ? 'var(--red)' : 'var(--text-tertiary)',
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  padding: '0 1px',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   lineHeight: '1',
                   transition: 'color 0.15s',
                 }}

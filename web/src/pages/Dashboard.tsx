@@ -17,7 +17,7 @@ function Metric({ label, value, mono }: { label: string; value: string | number;
 
 export function Dashboard() {
   const {
-    loading, error, setError, saveSuccess, status, stats,
+    loading, error, setError, status, stats,
     getLocal, getServer, setLocal, cancelLocal, saveConfig,
     modelOptions, pendingProvider, pendingMeta,
     pendingApiKey, setPendingApiKey,
@@ -78,11 +78,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {saveSuccess && (
-        <div className="alert success" style={{ marginBottom: '16px' }}>
-          {saveSuccess}
-        </div>
-      )}
 
       {/* ── Status bar ─────────────────────────────────────── */}
       <div className="card status-bar">

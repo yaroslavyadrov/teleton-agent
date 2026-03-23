@@ -12,6 +12,7 @@ import type {
 } from "../bridge-interface.js";
 import type { TelegramMessage, InlineButton } from "../bridge.js";
 import { createLogger } from "../../utils/logger.js";
+import { callbackRouter } from "../../bot/callback-router.js";
 
 const log = createLogger("BotBridge");
 
@@ -27,7 +28,7 @@ export class GrammyBotBridge implements ITelegramBridge {
   private connected = false;
   private botPromise: Promise<void> | undefined;
   private callbackHandler: ((msg: TelegramMessage) => void) | undefined;
-  activeDraftIds: Map<string, number> = new Map();
+  private activeDraftIds: Map<string, number> = new Map();
 
   constructor(config: GrammyBotBridgeConfig) {
     this.bot = new Bot(config.bot_token);
@@ -425,7 +426,6 @@ export class GrammyBotBridge implements ITelegramBridge {
         const from = ctx.callbackQuery.from;
         const chat = ctx.callbackQuery.message?.chat;
         if (chat) {
-          const { callbackRouter } = await import("../../bot/callback-router.js");
           const synthetic = callbackRouter.resolveCallback(
             data,
             from.id,

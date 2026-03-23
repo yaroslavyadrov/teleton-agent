@@ -24,6 +24,11 @@ const executor = async (params: any, context: any) => {
   const chatId = context.chatId;
   const senderId = context.senderId;
 
+  if (buttons.length > 100) {
+    return { success: false, error: "Too many buttons (Telegram limit: 100)" };
+  }
+  const effectiveColumns = Math.max(1, Math.min(8, Math.floor(columns)));
+
   // Build inline keyboard with nonce-based callback data
   const inlineKeyboard: Array<Array<{ text: string; callback_data: string }>> = [];
   let currentRow: Array<{ text: string; callback_data: string }> = [];
@@ -31,7 +36,7 @@ const executor = async (params: any, context: any) => {
   for (const btn of buttons) {
     const callbackData = callbackRouter.registerNonce(btn.label, chatId, senderId);
     currentRow.push({ text: btn.label, callback_data: callbackData });
-    if (currentRow.length >= columns) {
+    if (currentRow.length >= effectiveColumns) {
       inlineKeyboard.push(currentRow);
       currentRow = [];
     }

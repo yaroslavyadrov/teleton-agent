@@ -17,6 +17,7 @@ import {
 import { TELEGRAM_SEND_TOOLS } from "../constants/tools.js";
 import {
   chatWithContext,
+  streamWithContext,
   loadContextFromTranscript,
   getProviderModel,
   getEffectiveApiKey,
@@ -589,7 +590,6 @@ export class AgentRuntime {
           streamMode !== "off";
 
         if (shouldStream) {
-          const { streamWithContext } = await import("./client.js");
           const { isBotBridge } = await import("../telegram/bridge-guards.js");
 
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream check

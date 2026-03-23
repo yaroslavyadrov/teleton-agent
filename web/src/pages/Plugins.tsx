@@ -321,9 +321,10 @@ export function Plugins() {
 
       {/* Stats bar */}
       <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2 }}>
-        <div className="tabs" style={{ marginBottom: 0, flexShrink: 0 }}>
+        <div className="tabs" style={{ marginBottom: 0, flexShrink: 0, width: 'auto', display: 'inline-flex' }}>
           <button
             className={`tab ${tab === 'installed' ? 'active' : ''}`}
+            style={{ flex: 'none' }}
             onClick={() => setTab('installed')}
           >
             Installed
@@ -331,6 +332,7 @@ export function Plugins() {
           </button>
           <button
             className={`tab ${tab === 'marketplace' ? 'active' : ''}`}
+            style={{ flex: 'none' }}
             onClick={() => setTab('marketplace')}
           >
             Marketplace

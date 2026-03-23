@@ -15,9 +15,14 @@ const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export class CallbackRouter {
   private nonceMap = new Map<string, NonceEntry>();
+  private cleanupTimer: ReturnType<typeof setInterval> | undefined;
 
   /** Register a button nonce. Returns the callback_data string "btn:[uuid]" */
   registerNonce(label: string, chatId: string, expectedUserId: number): string {
+    if (!this.cleanupTimer) {
+      this.cleanupTimer = setInterval(() => this.cleanup(), 60_000);
+      this.cleanupTimer.unref();
+    }
     this.cleanup();
     const uuid = randomUUID();
     const key = `btn:${uuid}`;
@@ -68,6 +73,14 @@ export class CallbackRouter {
       timestamp: new Date(),
       hasMedia: false,
     };
+  }
+
+  dispose(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = undefined;
+    }
+    this.nonceMap.clear();
   }
 
   /** Clean expired nonces */

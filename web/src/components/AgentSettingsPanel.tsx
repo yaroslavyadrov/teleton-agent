@@ -127,7 +127,8 @@ export function AgentSettingsPanel({
               onChange={(v) => setLocal('agent.max_tokens', v)}
               onSave={(v) => saveConfig('agent.max_tokens', v)}
               onCancel={() => cancelLocal('agent.max_tokens')}
-              min={1}
+              min={100}
+              step={100}
               inline
             />
             <EditableField

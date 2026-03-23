@@ -161,6 +161,7 @@ export function ConfigSection({
             hotReload={item.hotReload}
             badge={badge}
             placeholder={item.sensitive ? '********' : undefined}
+            inline={fieldType === 'number'}
           />
         );
       })}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { setup, BotValidation } from '../../lib/api';
 import { Select } from '../Select';
+import { Stepper } from '../Stepper';
 import { PasswordInput } from './PasswordInput';
 import type { StepProps } from '../../pages/Setup';
 
@@ -130,25 +131,16 @@ export function ConfigStep({ data, onChange }: StepProps) {
       <div className="form-group">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label style={{ margin: 0 }}>Max Agentic Iterations</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', minWidth: '20px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', minWidth: 20, textAlign: 'center' }}>
               {data.maxIterations}
             </span>
-            <div className="stepper">
-              <button
-                type="button"
-                className="stepper-btn"
-                disabled={data.maxIterations <= 1}
-                onClick={() => onChange({ ...data, maxIterations: Math.max(1, data.maxIterations - 1) })}
-              >−</button>
-              <span className="stepper-divider" />
-              <button
-                type="button"
-                className="stepper-btn"
-                disabled={data.maxIterations >= 50}
-                onClick={() => onChange({ ...data, maxIterations: Math.min(50, data.maxIterations + 1) })}
-              >+</button>
-            </div>
+            <Stepper
+              value={data.maxIterations}
+              onChange={(v) => onChange({ ...data, maxIterations: v })}
+              min={1}
+              max={50}
+            />
           </div>
         </div>
         <div className="helper-text">

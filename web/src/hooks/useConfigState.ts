@@ -15,7 +15,6 @@ export function useConfigState() {
   const [toolRag, setToolRag] = useState<ToolRagStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [modelOptions, setModelOptions] = useState<Array<{ value: string; name: string }>>([]);
 
   // Provider switch gating state
@@ -62,18 +61,12 @@ export function useConfigState() {
     setLocalInputs((prev) => ({ ...prev, [key]: serverInputs[key] ?? '' }));
   };
 
-  const showSuccess = (msg: string) => {
-    setSaveSuccess(msg);
-    setTimeout(() => setSaveSuccess(null), 2000);
-  };
-
   const saveConfig = async (key: string, value: string) => {
     if (!value.trim()) return; // never send empty values
     try {
       setError(null);
       await api.setConfigKey(key, value.trim());
       await loadData();
-      showSuccess(`Saved ${key.split('.').pop()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -83,7 +76,6 @@ export function useConfigState() {
     try {
       const res = await api.updateToolRag(update);
       setToolRag(res.data);
-      showSuccess('Tool RAG updated');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -153,7 +145,6 @@ export function useConfigState() {
       setPendingProvider(null);
       setPendingMeta(null);
       setPendingApiKey('');
-      showSuccess(`Switched to ${pendingMeta.displayName}`);
     } catch (err) {
       setPendingError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -169,8 +160,8 @@ export function useConfigState() {
   };
 
   return {
-    loading, error, setError, saveSuccess, status, stats, toolRag,
-    localInputs, getLocal, getServer, setLocal, cancelLocal, saveConfig, saveToolRag, showSuccess,
+    loading, error, setError, status, stats, toolRag,
+    localInputs, getLocal, getServer, setLocal, cancelLocal, saveConfig, saveToolRag,
     modelOptions, pendingProvider, pendingMeta, pendingApiKey, setPendingApiKey,
     pendingValidating, pendingError, setPendingError,
     handleProviderChange, handleProviderConfirm, handleProviderCancel, loadData,

@@ -1062,20 +1062,15 @@ button.btn-sm {
 }
 
 .stepper-btn {
+  all: unset;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 100%;
-  background: transparent;
-  border: none;
-  border-radius: 0;
   color: var(--accent);
   font-size: 18px;
-  font-weight: 400;
   cursor: pointer;
-  padding: 0;
-  box-shadow: none;
   transition: background 0.15s ease;
 }
 
@@ -1085,7 +1080,6 @@ button.btn-sm {
 
 .stepper-btn:active:not(:disabled) {
   background: var(--glass-thick);
-  transform: none;
 }
 
 .stepper-btn:disabled {
@@ -1099,6 +1093,51 @@ button.btn-sm {
   height: 18px;
   background: var(--border-glass);
   flex-shrink: 0;
+}
+
+/* ---- Info Banner (collapsible) ---- */
+
+.info-banner {
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.info-banner-trigger {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.info-banner-trigger:hover {
+  color: var(--text-secondary);
+}
+
+.info-banner-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+}
+
+.info-banner[data-open] .info-banner-chevron {
+  transform: rotate(180deg);
+}
+
+.info-banner-content {
+  padding: 0 12px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 /* ---- Modal ---- */
@@ -1880,14 +1919,14 @@ button.btn-lg {
   padding: var(--space-xs);
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   margin-bottom: var(--space-xl);
   overflow-x: auto;
 }
 
 .pill-bar button {
   padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   border: none;
   background: transparent;
   color: var(--text-secondary);
