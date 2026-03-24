@@ -19,19 +19,45 @@ export { visionAnalyzeTool, visionAnalyzeExecutor };
 export { telegramTranscribeAudioTool, telegramTranscribeAudioExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: telegramSendPhotoTool, executor: telegramSendPhotoExecutor },
-  { tool: telegramSendVoiceTool, executor: telegramSendVoiceExecutor, requiredMode: "user" },
-  { tool: telegramSendStickerTool, executor: telegramSendStickerExecutor, requiredMode: "user" },
-  { tool: telegramSendGifTool, executor: telegramSendGifExecutor, requiredMode: "user" },
+  {
+    tool: telegramSendPhotoTool,
+    executor: telegramSendPhotoExecutor,
+    tags: ["media"],
+  },
+  {
+    tool: telegramSendVoiceTool,
+    executor: telegramSendVoiceExecutor,
+    requiredMode: "user",
+    tags: ["media"],
+  },
+  {
+    tool: telegramSendStickerTool,
+    executor: telegramSendStickerExecutor,
+    requiredMode: "user",
+    tags: ["media"],
+  },
+  {
+    tool: telegramSendGifTool,
+    executor: telegramSendGifExecutor,
+    requiredMode: "user",
+    tags: ["media"],
+  },
   {
     tool: telegramDownloadMediaTool,
     executor: telegramDownloadMediaExecutor,
     requiredMode: "user",
+    tags: ["media"],
   },
-  { tool: visionAnalyzeTool, executor: visionAnalyzeExecutor, requiredMode: "user" },
+  {
+    tool: visionAnalyzeTool,
+    executor: visionAnalyzeExecutor,
+    requiredMode: "user",
+    tags: ["media"],
+  },
   {
     tool: telegramTranscribeAudioTool,
     executor: telegramTranscribeAudioExecutor,
     requiredMode: "user",
+    tags: ["media"],
   },
 ];

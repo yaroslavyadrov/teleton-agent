@@ -11,11 +11,22 @@ export { telegramCreateFolderTool, telegramCreateFolderExecutor };
 export { telegramAddChatToFolderTool, telegramAddChatToFolderExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: telegramGetFoldersTool, executor: telegramGetFoldersExecutor, requiredMode: "user" },
-  { tool: telegramCreateFolderTool, executor: telegramCreateFolderExecutor, requiredMode: "user" },
+  {
+    tool: telegramGetFoldersTool,
+    executor: telegramGetFoldersExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
+  {
+    tool: telegramCreateFolderTool,
+    executor: telegramCreateFolderExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
   {
     tool: telegramAddChatToFolderTool,
     executor: telegramAddChatToFolderExecutor,
     requiredMode: "user",
+    tags: ["social"],
   },
 ];

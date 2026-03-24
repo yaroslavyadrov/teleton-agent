@@ -5,6 +5,7 @@ import { join } from "path";
 import { WORKSPACE_PATHS } from "../../../../workspace/index.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { loadCoreMemory, BLOCK_NAMES, type BlockName } from "../../../../memory/core-blocks.js";
 
 const log = createLogger("Tools");
 
@@ -15,8 +16,9 @@ const MEMORY_FILE = WORKSPACE_PATHS.MEMORY;
  * Parameters for memory_read tool
  */
 interface MemoryReadParams {
-  target: "persistent" | "daily" | "recent" | "list";
+  target: "persistent" | "daily" | "recent" | "list" | "core";
   date?: string; // YYYY-MM-DD for specific daily log
+  block_name?: string; // For target="core", read a specific block
 }
 
 /**
@@ -25,18 +27,23 @@ interface MemoryReadParams {
 export const memoryReadTool: Tool = {
   name: "memory_read",
   description:
-    "Read your memory files: persistent (MEMORY.md), daily (today's log), recent (today+yesterday), or list all.",
+    "Read your memory. Use 'core' for structured blocks (identity, preferences, lessons, goals, contacts). Also: persistent (MEMORY.md), daily, recent, list.",
   category: "data-bearing",
   parameters: Type.Object({
     target: Type.String({
       description:
-        "'persistent' (MEMORY.md), 'daily' (today's log), 'recent' (today+yesterday), 'list' (show all files)",
-      enum: ["persistent", "daily", "recent", "list"],
+        "'core' (structured blocks), 'persistent' (MEMORY.md), 'daily' (today's log), 'recent' (today+yesterday), 'list' (show all files)",
+      enum: ["persistent", "daily", "recent", "list", "core"],
     }),
     date: Type.Optional(
       Type.String({
         description:
           "Specific date for daily log (YYYY-MM-DD format). Only used with target='daily'",
+      })
+    ),
+    block_name: Type.Optional(
+      Type.String({
+        description: `Read a specific core block. One of: ${BLOCK_NAMES.join(", ")}. Only used with target='core'`,
       })
     ),
   }),
@@ -60,7 +67,39 @@ export const memoryReadExecutor: ToolExecutor<MemoryReadParams> = async (
   _context
 ): Promise<ToolResult> => {
   try {
-    const { target, date } = params;
+    const { target, date, block_name } = params;
+
+    if (target === "core") {
+      try {
+        const blocks = loadCoreMemory();
+        if (block_name) {
+          if (!BLOCK_NAMES.includes(block_name as BlockName)) {
+            return {
+              success: false,
+              error: `Unknown block: ${block_name}. Valid: ${BLOCK_NAMES.join(", ")}`,
+            };
+          }
+          return {
+            success: true,
+            data: {
+              target: "core",
+              block: block_name,
+              content: blocks[block_name as keyof typeof blocks] || "",
+              size: (blocks[block_name as keyof typeof blocks] || "").length,
+            },
+          };
+        }
+        return {
+          success: true,
+          data: {
+            target: "core",
+            blocks,
+          },
+        };
+      } catch (err) {
+        return { success: false, error: getErrorMessage(err) };
+      }
+    }
 
     if (target === "list") {
       // List all memory files

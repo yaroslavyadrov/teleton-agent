@@ -11,5 +11,6 @@ export const tools: ToolEntry[] = [
     executor: botInlineSendExecutor,
     scope: "always",
     requiredMode: "user",
+    tags: ["bot"],
   },
 ];

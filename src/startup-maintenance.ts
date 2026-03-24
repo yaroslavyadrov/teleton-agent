@@ -76,6 +76,14 @@ export class StartupMaintenance {
       ftsResult = db.rebuildFtsIndexes();
     }
 
+    // Prune orphan knowledge chunks (files deleted from disk)
+    const orphanResult = await this.memory.knowledge.pruneOrphans();
+    if (orphanResult.markedInactive > 0 || orphanResult.deleted > 0) {
+      log.info(
+        `Knowledge pruning: ${orphanResult.markedInactive} chunks marked inactive, ${orphanResult.deleted} stale chunks deleted`
+      );
+    }
+
     // Consolidate old session memory files (non-blocking)
     import("./session/memory-hook.js")
       .then(({ consolidateOldMemoryFiles }) =>

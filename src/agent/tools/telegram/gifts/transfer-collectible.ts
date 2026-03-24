@@ -22,7 +22,7 @@ interface TransferCollectibleParams {
 export const telegramTransferCollectibleTool: Tool = {
   name: "telegram_transfer_collectible",
   description:
-    "Transfer a collectible gift to another user. Requires verified deal. May cost Stars (see transferStars in telegram_get_my_gifts). Collectibles only.",
+    "Transfer a collectible gift to another user. ALWAYS confirm with the owner before transferring. May cost Stars (see transferStars in telegram_get_my_gifts). Collectibles only.",
   parameters: Type.Object({
     msgId: Type.Number({
       description:

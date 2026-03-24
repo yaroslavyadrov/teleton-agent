@@ -14,16 +14,24 @@ export const tools: ToolEntry[] = [
     tool: telegramSearchStickersTool,
     executor: telegramSearchStickersExecutor,
     requiredMode: "user",
+    tags: ["media"],
   },
-  { tool: telegramSearchGifsTool, executor: telegramSearchGifsExecutor, requiredMode: "user" },
+  {
+    tool: telegramSearchGifsTool,
+    executor: telegramSearchGifsExecutor,
+    requiredMode: "user",
+    tags: ["media"],
+  },
   {
     tool: telegramGetMyStickersTool,
     executor: telegramGetMyStickersExecutor,
     requiredMode: "user",
+    tags: ["media"],
   },
   {
     tool: telegramAddStickerSetTool,
     executor: telegramAddStickerSetExecutor,
     requiredMode: "user",
+    tags: ["media"],
   },
 ];

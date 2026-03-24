@@ -48,37 +48,77 @@ export { telegramDeleteScheduledMessageTool, telegramDeleteScheduledMessageExecu
 export { telegramSendScheduledNowTool, telegramSendScheduledNowExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: telegramSendMessageTool, executor: telegramSendMessageExecutor },
-  { tool: telegramQuoteReplyTool, executor: telegramQuoteReplyExecutor, requiredMode: "user" },
-  { tool: telegramGetRepliesTool, executor: telegramGetRepliesExecutor, requiredMode: "user" },
-  { tool: telegramEditMessageTool, executor: telegramEditMessageExecutor },
+  {
+    tool: telegramSendMessageTool,
+    executor: telegramSendMessageExecutor,
+    tags: ["core"],
+  },
+  {
+    tool: telegramQuoteReplyTool,
+    executor: telegramQuoteReplyExecutor,
+    requiredMode: "user",
+    tags: ["core"],
+  },
+  {
+    tool: telegramGetRepliesTool,
+    executor: telegramGetRepliesExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
+  {
+    tool: telegramEditMessageTool,
+    executor: telegramEditMessageExecutor,
+    tags: ["core"],
+  },
   {
     tool: telegramScheduleMessageTool,
     executor: telegramScheduleMessageExecutor,
     requiredMode: "user",
+    tags: ["automation"],
   },
   {
     tool: telegramGetScheduledMessagesTool,
     executor: telegramGetScheduledMessagesExecutor,
     requiredMode: "user",
+    tags: ["automation"],
   },
   {
     tool: telegramDeleteScheduledMessageTool,
     executor: telegramDeleteScheduledMessageExecutor,
     requiredMode: "user",
+    tags: ["automation"],
   },
   {
     tool: telegramSendScheduledNowTool,
     executor: telegramSendScheduledNowExecutor,
     requiredMode: "user",
+    tags: ["automation"],
   },
   {
     tool: telegramSearchMessagesTool,
     executor: telegramSearchMessagesExecutor,
     requiredMode: "user",
+    tags: ["social"],
   },
-  { tool: telegramPinMessageTool, executor: telegramPinMessageExecutor },
-  { tool: telegramUnpinMessageTool, executor: telegramUnpinMessageExecutor, requiredMode: "user" },
-  { tool: telegramForwardMessageTool, executor: telegramForwardMessageExecutor },
-  { tool: telegramDeleteMessageTool, executor: telegramDeleteMessageExecutor },
+  {
+    tool: telegramPinMessageTool,
+    executor: telegramPinMessageExecutor,
+    tags: ["admin"],
+  },
+  {
+    tool: telegramUnpinMessageTool,
+    executor: telegramUnpinMessageExecutor,
+    requiredMode: "user",
+    tags: ["admin"],
+  },
+  {
+    tool: telegramForwardMessageTool,
+    executor: telegramForwardMessageExecutor,
+    tags: ["social"],
+  },
+  {
+    tool: telegramDeleteMessageTool,
+    executor: telegramDeleteMessageExecutor,
+    tags: ["core"],
+  },
 ];

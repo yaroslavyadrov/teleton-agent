@@ -18,11 +18,13 @@ export const tools: ToolEntry[] = [
     executor: telegramGetStarsBalanceExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["finance"],
   },
   {
     tool: telegramGetStarsTransactionsTool,
     executor: telegramGetStarsTransactionsExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["finance"],
   },
 ];

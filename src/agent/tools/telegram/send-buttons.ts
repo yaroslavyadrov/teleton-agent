@@ -54,4 +54,10 @@ const executor = async (params: any, context: any) => {
   return { success: true, message_id: sent.id };
 };
 
-export const sendButtonsEntry: ToolEntry = { tool, executor, scope: "always", requiredMode: "bot" };
+export const sendButtonsEntry: ToolEntry = {
+  tool,
+  executor,
+  scope: "always",
+  requiredMode: "bot",
+  tags: ["core", "bot"],
+};

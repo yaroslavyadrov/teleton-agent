@@ -19,6 +19,8 @@ export interface HybridSearchResult {
   vectorScore?: number;
   keywordScore?: number;
   createdAt?: number;
+  importance?: number;
+  lastAccessedAt?: number;
 }
 
 /**
@@ -97,7 +99,32 @@ export class HybridSearch {
 
     const keywordResults = this.keywordSearchKnowledge(query, Math.ceil(limit * 3));
 
-    return this.mergeResults(vectorResults, keywordResults, vectorWeight, keywordWeight, limit);
+    const results = this.mergeResults(
+      vectorResults,
+      keywordResults,
+      vectorWeight,
+      keywordWeight,
+      limit
+    );
+
+    // Fire-and-forget: track access on returned chunks (deferred to avoid blocking response)
+    if (results.length > 0) {
+      const ids = results.map((r) => r.id);
+      setImmediate(() => {
+        try {
+          const ph = ids.map(() => "?").join(", ");
+          this.db
+            .prepare(
+              `UPDATE knowledge SET access_count = access_count + 1, last_accessed_at = unixepoch() WHERE id IN (${ph})`
+            )
+            .run(...ids);
+        } catch {
+          // Non-blocking — ignore errors
+        }
+      });
+    }
+
+    return results;
   }
 
   async searchMessages(
@@ -143,13 +170,14 @@ export class HybridSearch {
       const rows = this.db
         .prepare(
           `
-        SELECT kv.id, k.text, k.source, kv.distance, k.created_at
+        SELECT kv.id, k.text, k.source, kv.distance, k.created_at, k.importance, k.last_accessed_at
         FROM (
           SELECT id, distance
           FROM knowledge_vec
           WHERE embedding MATCH ? AND k = ?
         ) kv
         JOIN knowledge k ON k.id = kv.id
+        WHERE (k.status = 'active' OR k.status IS NULL)
       `
         )
         .all(embeddingBuffer, limit) as Array<{
@@ -158,6 +186,8 @@ export class HybridSearch {
         source: string;
         distance: number;
         created_at: number | null;
+        importance: number | null;
+        last_accessed_at: number | null;
       }>;
 
       return rows.map((row) => ({
@@ -167,6 +197,8 @@ export class HybridSearch {
         score: 1 - row.distance,
         vectorScore: 1 - row.distance,
         createdAt: row.created_at ?? undefined,
+        importance: row.importance ?? 0.5,
+        lastAccessedAt: row.last_accessed_at ?? undefined,
       }));
     } catch (error) {
       log.error({ err: error }, "Vector search error (knowledge)");
@@ -182,10 +214,11 @@ export class HybridSearch {
       const rows = this.db
         .prepare(
           `
-        SELECT k.id, k.text, k.source, rank as score, k.created_at
+        SELECT k.id, k.text, k.source, rank as score, k.created_at, k.importance, k.last_accessed_at
         FROM knowledge_fts kf
         JOIN knowledge k ON k.rowid = kf.rowid
         WHERE knowledge_fts MATCH ?
+          AND (k.status = 'active' OR k.status IS NULL)
         ORDER BY rank
         LIMIT ?
       `
@@ -196,12 +229,16 @@ export class HybridSearch {
         source: string;
         score: number;
         created_at: number | null;
+        importance: number | null;
+        last_accessed_at: number | null;
       }>;
 
       return rows.map((row) => ({
         ...row,
         keywordScore: this.bm25ToScore(row.score),
         createdAt: row.created_at ?? undefined,
+        importance: row.importance ?? 0.5,
+        lastAccessedAt: row.last_accessed_at ?? undefined,
       }));
     } catch (error) {
       log.error({ err: error }, "FTS5 search error (knowledge)");
@@ -345,7 +382,14 @@ export class HybridSearch {
     const now = Math.floor(Date.now() / 1000);
     const results = Array.from(byId.values());
     for (const r of results) {
-      if (r.createdAt) {
+      if (r.source !== "message" && r.importance !== undefined) {
+        // Composite scoring for knowledge: 0.4 × relevance + 0.3 × importance + 0.3 × recency
+        const refTime = r.lastAccessedAt ?? r.createdAt ?? now;
+        const hoursSince = Math.max(0, (now - refTime) / SECONDS_PER_HOUR);
+        const recency = Math.pow(0.995, hoursSince);
+        r.score = 0.4 * r.score + 0.3 * r.importance + 0.3 * recency;
+      } else if (r.createdAt) {
+        // Legacy recency boost for messages
         const ageDays = Math.max(0, (now - r.createdAt) / SECONDS_PER_DAY);
         const boost = 1 / (1 + ageDays * RECENCY_DECAY_FACTOR);
         r.score *= 1 - RECENCY_WEIGHT + RECENCY_WEIGHT * boost;

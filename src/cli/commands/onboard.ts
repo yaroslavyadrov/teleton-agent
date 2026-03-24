@@ -1011,6 +1011,7 @@ async function runInteractiveOnboarding(
       temperature: 0.7,
       system_prompt: null,
       max_agentic_iterations: parseInt(maxAgenticIterations, 10),
+      toolset: "full",
       session_reset_policy: {
         daily_reset_enabled: true,
         daily_reset_hour: 4,
@@ -1222,6 +1223,7 @@ async function runNonInteractiveOnboarding(
       temperature: 0.7,
       system_prompt: null,
       max_agentic_iterations: 5,
+      toolset: "full",
       session_reset_policy: {
         daily_reset_enabled: true,
         daily_reset_hour: 4,

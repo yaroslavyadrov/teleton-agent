@@ -5,6 +5,14 @@ import { join } from "path";
 import { WORKSPACE_PATHS } from "../../../../workspace/index.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { scanMemoryContent } from "../../../../utils/memory-guard.js";
+import { getKnowledgeIndexer } from "../../../../memory/agent/knowledge.js";
+import {
+  updateBlock,
+  appendToBlock,
+  deleteFromBlock,
+  BLOCK_NAMES,
+} from "../../../../memory/core-blocks.js";
 
 const log = createLogger("Tools");
 
@@ -27,8 +35,10 @@ function getMemoryLineCount(): number {
  */
 interface MemoryWriteParams {
   content: string;
-  target: "persistent" | "daily";
+  target: "persistent" | "daily" | "core";
   section?: string;
+  block_name?: string;
+  mode?: "update" | "append" | "delete";
 }
 
 /**
@@ -37,20 +47,32 @@ interface MemoryWriteParams {
 export const memoryWriteTool: Tool = {
   name: "memory_write",
   description:
-    "Save to agent memory. Use 'persistent' for long-term facts, preferences, contacts, rules → MEMORY.md. Use 'daily' for session notes, events, temporary context → today's log. Disabled in group chats.",
+    "Save to agent memory. Targets: 'core' for structured blocks (identity, preferences, lessons, goals, contacts) — primary long-term storage. 'persistent' for additional facts in MEMORY.md (max 150 lines in prompt). 'daily' for session notes and events. Note: writes are saved to disk but not visible in your prompt until next session. Disabled in group chats.",
   parameters: Type.Object({
     content: Type.String({
-      description: "The content to write to memory. Be concise but complete.",
+      description:
+        "The content to write. For core+delete mode, this is the substring to match and remove.",
     }),
     target: Type.String({
-      description:
-        "'persistent' for MEMORY.md (long-term facts), 'daily' for today's log (notes, events)",
-      enum: ["persistent", "daily"],
+      description: "'core' (structured blocks), 'persistent' (MEMORY.md), 'daily' (today's log)",
+      enum: ["persistent", "daily", "core"],
     }),
+    block_name: Type.Optional(
+      Type.String({
+        description: `Block name for target='core'. One of: ${BLOCK_NAMES.join(", ")}`,
+      })
+    ),
+    mode: Type.Optional(
+      Type.String({
+        description:
+          "For target='core': 'update' (replace block), 'append' (add to block), 'delete' (remove line matching content). Default: 'update'",
+        enum: ["update", "append", "delete"],
+      })
+    ),
     section: Type.Optional(
       Type.String({
         description:
-          "Optional section header to organize the content (e.g., 'Lessons Learned', 'Contacts', 'Trades')",
+          "Optional section header for persistent/daily targets (e.g., 'Lessons Learned', 'Contacts')",
       })
     ),
   }),
@@ -90,7 +112,7 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
   context
 ): Promise<ToolResult> => {
   try {
-    const { content, target, section } = params;
+    const { content, target, section, block_name, mode } = params;
 
     // SECURITY: Block memory writes in group chats to prevent memory poisoning
     if (context.isGroup) {
@@ -108,10 +130,52 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
       };
     }
 
+    // SECURITY: Scan for prompt injection, exfiltration, and other threats
+    const scan = scanMemoryContent(content);
+    if (!scan.safe) {
+      log.warn(`Memory write blocked — threats detected: ${scan.threats.join(", ")}`);
+      return {
+        success: false,
+        error: `Memory write blocked: suspicious content detected (${scan.threats.join(", ")}).`,
+      };
+    }
+
     ensureMemoryDir();
 
     const now = new Date();
     const timestamp = now.toLocaleTimeString("en-US", { hour12: false });
+
+    if (target === "core") {
+      if (!block_name) {
+        return {
+          success: false,
+          error: `block_name is required for target='core'. Valid blocks: ${BLOCK_NAMES.join(", ")}`,
+        };
+      }
+      try {
+        const op = mode || "update";
+        if (op === "delete") {
+          deleteFromBlock(block_name, content);
+        } else if (op === "append") {
+          appendToBlock(block_name, content);
+        } else {
+          updateBlock(block_name, content);
+        }
+
+        log.info(`Core memory block '${block_name}' ${op}d`);
+        return {
+          success: true,
+          data: {
+            target: "core",
+            block: block_name,
+            mode: op,
+            timestamp: now.toISOString(),
+          },
+        };
+      } catch (err) {
+        return { success: false, error: getErrorMessage(err) };
+      }
+    }
 
     if (target === "persistent") {
       // Write to MEMORY.md
@@ -130,6 +194,9 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
         });
       }
       appendFileSync(MEMORY_FILE, entry, "utf-8");
+      getKnowledgeIndexer()
+        ?.indexFile(MEMORY_FILE)
+        .catch(() => {});
 
       log.info(`Memory written to MEMORY.md${section ? ` (section: ${section})` : ""}`);
 
@@ -168,6 +235,9 @@ export const memoryWriteExecutor: ToolExecutor<MemoryWriteParams> = async (
       entry += `\n\n${content}\n\n---\n\n`;
 
       appendFileSync(logPath, entry, "utf-8");
+      getKnowledgeIndexer()
+        ?.indexFile(logPath)
+        .catch(() => {});
 
       log.info(`Memory written to daily log${section ? ` (${section})` : ""}`);
 

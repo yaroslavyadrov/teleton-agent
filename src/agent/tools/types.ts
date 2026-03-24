@@ -88,6 +88,8 @@ export interface ToolEntry {
   scope?: ToolScope;
   /** When set to "user", excluded in bot mode. When set to "bot", excluded in user mode. */
   requiredMode?: "user" | "bot";
+  /** Toolset tags for profile-based filtering (e.g. "core", "finance", "social") */
+  tags?: string[];
 }
 
 /**

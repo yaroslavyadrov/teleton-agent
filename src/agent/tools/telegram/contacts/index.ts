@@ -17,22 +17,31 @@ export const tools: ToolEntry[] = [
     executor: telegramBlockUserExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["social"],
   },
   {
     tool: telegramGetBlockedTool,
     executor: telegramGetBlockedExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["social"],
   },
   {
     tool: telegramGetCommonChatsTool,
     executor: telegramGetCommonChatsExecutor,
     requiredMode: "user",
+    tags: ["social"],
   },
-  { tool: telegramGetUserInfoTool, executor: telegramGetUserInfoExecutor, requiredMode: "user" },
+  {
+    tool: telegramGetUserInfoTool,
+    executor: telegramGetUserInfoExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
   {
     tool: telegramCheckUsernameTool,
     executor: telegramCheckUsernameExecutor,
     requiredMode: "user",
+    tags: ["social"],
   },
 ];

@@ -36,6 +36,15 @@ export class ToolRegistry {
   private onToolsChangedCallbacks: Array<(removed: string[], added: PiAiTool[]) => void> = [];
   private mode: "user" | "bot";
   private requiredModes: Map<string, "user" | "bot"> = new Map();
+  private toolTags: Map<string, string[]> = new Map();
+  private activeToolset: string | null = null; // null = "full" (no filtering)
+
+  private static readonly TOOLSET_PROFILES: Record<string, string[]> = {
+    minimal: ["core"],
+    standard: ["core", "workspace", "web", "social"],
+    trading: ["core", "workspace", "web", "finance"],
+    full: [], // empty = no filtering
+  };
 
   constructor(mode: "user" | "bot" = "user") {
     this.mode = mode;
@@ -45,7 +54,8 @@ export class ToolRegistry {
     tool: Tool,
     executor: ToolExecutor<TParams>,
     scope?: ToolScope,
-    requiredMode?: "user" | "bot"
+    requiredMode?: "user" | "bot",
+    tags?: string[]
   ): void {
     if (this.tools.has(tool.name)) {
       throw new Error(`Tool "${tool.name}" is already registered`);
@@ -56,6 +66,9 @@ export class ToolRegistry {
     }
     if (requiredMode) {
       this.requiredModes.set(tool.name, requiredMode);
+    }
+    if (tags && tags.length > 0) {
+      this.toolTags.set(tool.name, tags);
     }
     this.toolModules.set(tool.name, tool.name.split("_")[0]);
     this.toolArrayCache = null;
@@ -73,6 +86,25 @@ export class ToolRegistry {
       return !reqMode || reqMode === mode;
     }).length;
     log.info(`Mode switched to ${mode}, ${count} tools available`);
+  }
+
+  setActiveToolset(name: string | null): void {
+    if (name && name !== "full" && !ToolRegistry.TOOLSET_PROFILES[name]) {
+      log.warn(`Unknown toolset "${name}", falling back to full`);
+      this.activeToolset = null;
+      return;
+    }
+    this.activeToolset = name === "full" ? null : name;
+    this.toolArrayCache = null;
+    log.info(`Active toolset: ${this.activeToolset ?? "full"}`);
+  }
+
+  getActiveToolset(): string | null {
+    return this.activeToolset;
+  }
+
+  getAvailableToolsets(): string[] {
+    return Object.keys(ToolRegistry.TOOLSET_PROFILES);
   }
 
   getAvailableModules(): string[] {
@@ -229,6 +261,19 @@ export class ToolRegistry {
         // Filter out mode-restricted tools (takes priority over DB overrides)
         const reqMode = this.requiredModes.get(rt.tool.name);
         if (reqMode && reqMode !== this.mode) return false;
+
+        // Filter by active toolset profile
+        if (this.activeToolset) {
+          const allowedTags = ToolRegistry.TOOLSET_PROFILES[this.activeToolset];
+          if (allowedTags && allowedTags.length > 0) {
+            const toolTagList = this.toolTags.get(rt.tool.name);
+            // Tools without tags are always included (backward compat)
+            if (toolTagList && toolTagList.length > 0) {
+              const hasMatch = toolTagList.some((t) => allowedTags.includes(t));
+              if (!hasMatch) return false;
+            }
+          }
+        }
 
         // Filter out disabled tools
         if (!this.isToolEnabled(rt.tool.name)) return false;

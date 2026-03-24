@@ -41,56 +41,83 @@ export { telegramCheckChannelUsernameTool, telegramCheckChannelUsernameExecutor 
 export { telegramSetChannelUsernameTool, telegramSetChannelUsernameExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: telegramGetDialogsTool, executor: telegramGetDialogsExecutor, requiredMode: "user" },
-  { tool: telegramGetHistoryTool, executor: telegramGetHistoryExecutor, requiredMode: "user" },
-  { tool: telegramGetChatInfoTool, executor: telegramGetChatInfoExecutor },
-  { tool: telegramMarkAsReadTool, executor: telegramMarkAsReadExecutor, requiredMode: "user" },
+  {
+    tool: telegramGetDialogsTool,
+    executor: telegramGetDialogsExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
+  {
+    tool: telegramGetHistoryTool,
+    executor: telegramGetHistoryExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
+  {
+    tool: telegramGetChatInfoTool,
+    executor: telegramGetChatInfoExecutor,
+    tags: ["social"],
+  },
+  {
+    tool: telegramMarkAsReadTool,
+    executor: telegramMarkAsReadExecutor,
+    requiredMode: "user",
+    tags: ["social"],
+  },
   {
     tool: telegramJoinChannelTool,
     executor: telegramJoinChannelExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramLeaveChannelTool,
     executor: telegramLeaveChannelExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramCreateChannelTool,
     executor: telegramCreateChannelExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramEditChannelInfoTool,
     executor: telegramEditChannelInfoExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramInviteToChannelTool,
     executor: telegramInviteToChannelExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramGetAdminedChannelsTool,
     executor: telegramGetAdminedChannelsExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramCheckChannelUsernameTool,
     executor: telegramCheckChannelUsernameExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
   {
     tool: telegramSetChannelUsernameTool,
     executor: telegramSetChannelUsernameExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["admin"],
   },
 ];

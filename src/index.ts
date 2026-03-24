@@ -12,6 +12,7 @@ import { MessageHandler } from "./telegram/handlers.js";
 import { AdminHandler } from "./telegram/admin.js";
 import { MessageDebouncer } from "./telegram/debounce.js";
 import { getDatabase, closeDatabase, initializeMemory, type MemorySystem } from "./memory/index.js";
+import { setKnowledgeIndexer } from "./memory/agent/knowledge.js";
 import { getWalletAddress } from "./ton/wallet-service.js";
 import { setTonapiKey } from "./constants/api-endpoints.js";
 import { setToncenterApiKey } from "./ton/endpoint.js";
@@ -175,6 +176,8 @@ export class TeletonApp {
       },
       workspaceDir: join(TELETON_ROOT),
     });
+
+    setKnowledgeIndexer(this.memory.knowledge);
 
     const db = getDatabase().getDb();
 

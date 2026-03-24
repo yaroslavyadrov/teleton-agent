@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot, InlineKeyboard, InputFile, type Context } from "grammy";
 import { markdownToTelegramHtml } from "../formatting.js";
+import { TELEGRAM_MAX_MESSAGE_LENGTH } from "../../constants/limits.js";
 import type {
   ITelegramBridge,
   SentMessage,
@@ -97,21 +98,67 @@ export class GrammyBotBridge implements ITelegramBridge {
       ? this.toGrammyKeyboard(options.inlineKeyboard)
       : undefined;
 
-    const result = await this.bot.api.sendMessage(
-      Number(options.chatId),
-      markdownToTelegramHtml(options.text),
-      {
-        parse_mode: "HTML",
-        reply_to_message_id: options.replyToId,
-        reply_markup: replyMarkup,
-      }
-    );
+    const html = markdownToTelegramHtml(options.text);
+
+    // Auto-split: if HTML exceeds Telegram limit, send in chunks
+    if (html.length > TELEGRAM_MAX_MESSAGE_LENGTH) {
+      return this.sendLongMessage(options.chatId, html, options.replyToId, replyMarkup);
+    }
+
+    const result = await this.bot.api.sendMessage(Number(options.chatId), html, {
+      parse_mode: "HTML",
+      reply_to_message_id: options.replyToId,
+      reply_markup: replyMarkup,
+    });
 
     return {
       id: result.message_id,
       date: result.date,
       chatId: options.chatId,
     };
+  }
+
+  /** Split and send HTML that exceeds the Telegram message limit */
+  private async sendLongMessage(
+    chatId: string,
+    html: string,
+    replyToId?: number,
+    replyMarkup?: InlineKeyboard
+  ): Promise<SentMessage> {
+    const chunks: string[] = [];
+    let remaining = html;
+
+    while (remaining.length > TELEGRAM_MAX_MESSAGE_LENGTH) {
+      // Find a split point: prefer double newline, then single newline, then space
+      let splitAt = remaining.lastIndexOf("\n\n", TELEGRAM_MAX_MESSAGE_LENGTH);
+      if (splitAt < TELEGRAM_MAX_MESSAGE_LENGTH * 0.3) {
+        splitAt = remaining.lastIndexOf("\n", TELEGRAM_MAX_MESSAGE_LENGTH);
+      }
+      if (splitAt < TELEGRAM_MAX_MESSAGE_LENGTH * 0.3) {
+        splitAt = remaining.lastIndexOf(" ", TELEGRAM_MAX_MESSAGE_LENGTH);
+      }
+      if (splitAt < TELEGRAM_MAX_MESSAGE_LENGTH * 0.3) {
+        splitAt = TELEGRAM_MAX_MESSAGE_LENGTH; // hard cut as last resort
+      }
+      chunks.push(remaining.slice(0, splitAt));
+      remaining = remaining.slice(splitAt).trimStart();
+    }
+    if (remaining.length > 0) chunks.push(remaining);
+
+    let lastResult: SentMessage = { id: 0, date: Math.floor(Date.now() / 1000), chatId };
+
+    for (let i = 0; i < chunks.length; i++) {
+      const isFirst = i === 0;
+      const isLast = i === chunks.length - 1;
+      const result = await this.bot.api.sendMessage(Number(chatId), chunks[i], {
+        parse_mode: "HTML",
+        reply_to_message_id: isFirst ? replyToId : undefined,
+        reply_markup: isLast ? replyMarkup : undefined,
+      });
+      lastResult = { id: result.message_id, date: result.date, chatId };
+    }
+
+    return lastResult;
   }
 
   async editMessage(options: EditMessageOptions): Promise<SentMessage> {
@@ -222,7 +269,11 @@ export class GrammyBotBridge implements ITelegramBridge {
   }
 
   async setTyping(chatId: string): Promise<void> {
-    await this.bot.api.sendChatAction(Number(chatId), "typing");
+    try {
+      await this.bot.api.sendChatAction(Number(chatId), "typing");
+    } catch {
+      // 429 rate-limits on typing are harmless — swallow silently
+    }
   }
 
   async sendReaction(chatId: string, messageId: number, emoji: string): Promise<void> {
@@ -238,29 +289,48 @@ export class GrammyBotBridge implements ITelegramBridge {
   /**
    * Stream text to chat via sendMessageDraft. Does NOT send a final message —
    * the caller decides when to finalize (after all tool iterations complete).
-   * Returns the accumulated text.
+   * When accumulated text approaches the Telegram message limit, the current
+   * draft is flushed as a real message and streaming continues in a new draft.
+   * Returns only the un-sent remainder (what finalizeDraft should send).
    */
   async streamDraft(chatId: string, textStream: AsyncIterable<string>): Promise<string> {
-    const draftId = this.activeDraftIds.get(chatId) ?? Math.floor(Math.random() * 2147483647) + 1;
+    let draftId = this.activeDraftIds.get(chatId) ?? Math.floor(Math.random() * 2147483647) + 1;
     this.activeDraftIds.set(chatId, draftId);
     let fullText = "";
     let lastDraftTime = 0;
     const THROTTLE_MS = 300;
     const numericChatId = Number(chatId);
+    // Leave headroom for HTML expansion from markdownToTelegramHtml
+    const SPLIT_THRESHOLD = TELEGRAM_MAX_MESSAGE_LENGTH - 300;
 
     for await (const chunk of textStream) {
       fullText += chunk;
       // Don't stream silent tokens or heartbeat tokens as visible drafts
       if (fullText.trim() === "__SILENT__" || fullText.trim() === "NO_ACTION") continue;
+
+      // Auto-split: when accumulated text nears the limit, flush as real message
+      const html = markdownToTelegramHtml(fullText);
+      if (html.length >= SPLIT_THRESHOLD) {
+        // Clear draft bubble and send as real message
+        try {
+          await this.bot.api.sendMessageDraft(numericChatId, draftId, " ");
+        } catch {
+          /* best effort */
+        }
+        await this.sendMessage({ chatId, text: fullText });
+
+        // Reset for next segment
+        fullText = "";
+        draftId = Math.floor(Math.random() * 2147483647) + 1;
+        this.activeDraftIds.set(chatId, draftId);
+        lastDraftTime = 0;
+        continue;
+      }
+
       const now = Date.now();
       if (now - lastDraftTime >= THROTTLE_MS && fullText.length > 0) {
         try {
-          await this.bot.api.sendMessageDraft(
-            numericChatId,
-            draftId,
-            markdownToTelegramHtml(fullText),
-            { parse_mode: "HTML" }
-          );
+          await this.bot.api.sendMessageDraft(numericChatId, draftId, html, { parse_mode: "HTML" });
         } catch {
           // Draft updates are best-effort
         }

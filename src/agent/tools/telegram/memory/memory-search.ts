@@ -1,6 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { HybridSearch } from "../../../../memory/search/hybrid.js";
+import { getKnowledgeIndexer } from "../../../../memory/agent/knowledge.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
 
@@ -40,8 +41,20 @@ export const memorySearchExecutor: ToolExecutor<MemorySearchParams> = async (
     const { query } = params;
     const limit = Math.min(params.limit ?? 5, 20);
 
-    const search = new HybridSearch(context.db, /* vectorEnabled */ false);
-    const results = await search.searchKnowledge(query, /* queryEmbedding */ [], { limit });
+    const embedder = getKnowledgeIndexer()?.getEmbedder() ?? null;
+
+    let queryEmbedding: number[] = [];
+    if (embedder) {
+      try {
+        queryEmbedding = await embedder.embedQuery(query);
+      } catch (error) {
+        log.warn({ err: error }, "Embedding failed — falling back to keyword-only search");
+      }
+    }
+
+    const vectorEnabled = queryEmbedding.length > 0;
+    const search = new HybridSearch(context.db, vectorEnabled);
+    const results = await search.searchKnowledge(query, queryEmbedding, { limit });
 
     if (results.length === 0) {
       return {

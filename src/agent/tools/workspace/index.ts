@@ -16,10 +16,25 @@ export { workspaceInfoTool, workspaceInfoExecutor };
 export { workspaceRenameTool, workspaceRenameExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: workspaceWriteTool, executor: workspaceWriteExecutor, scope: "dm-only" },
-  { tool: workspaceDeleteTool, executor: workspaceDeleteExecutor, scope: "dm-only" },
-  { tool: workspaceRenameTool, executor: workspaceRenameExecutor, scope: "dm-only" },
-  { tool: workspaceListTool, executor: workspaceListExecutor },
-  { tool: workspaceReadTool, executor: workspaceReadExecutor },
-  { tool: workspaceInfoTool, executor: workspaceInfoExecutor },
+  {
+    tool: workspaceWriteTool,
+    executor: workspaceWriteExecutor,
+    scope: "dm-only",
+    tags: ["workspace"],
+  },
+  {
+    tool: workspaceDeleteTool,
+    executor: workspaceDeleteExecutor,
+    scope: "dm-only",
+    tags: ["workspace"],
+  },
+  {
+    tool: workspaceRenameTool,
+    executor: workspaceRenameExecutor,
+    scope: "dm-only",
+    tags: ["workspace"],
+  },
+  { tool: workspaceListTool, executor: workspaceListExecutor, tags: ["workspace"] },
+  { tool: workspaceReadTool, executor: workspaceReadExecutor, tags: ["workspace"] },
+  { tool: workspaceInfoTool, executor: workspaceInfoExecutor, tags: ["workspace"] },
 ];

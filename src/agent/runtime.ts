@@ -24,7 +24,7 @@ import {
   type ChatResponse,
 } from "./client.js";
 import { getProviderMetadata, type SupportedProvider } from "../config/providers.js";
-import { buildSystemPrompt } from "../soul/loader.js";
+import { buildSystemPrompt, captureMemorySnapshot, clearMemorySnapshot } from "../soul/loader.js";
 import { getDatabase } from "../memory/index.js";
 import { sanitizeForContext } from "../utils/sanitize.js";
 import { formatMessageEnvelope } from "../memory/envelope.js";
@@ -280,6 +280,7 @@ export class AgentRuntime {
         }
 
         session = resetSessionWithPolicy(chatId, resetPolicy);
+        clearMemorySnapshot(); // New session will capture a fresh snapshot
       }
 
       let context: Context = loadContextFromTranscript(session.sessionId);
@@ -288,6 +289,10 @@ export class AgentRuntime {
         log.info(`Loading existing session: ${session.sessionId}`);
       } else {
         log.info(`Starting new session: ${session.sessionId}`);
+        // Capture a frozen memory snapshot for this session's lifetime.
+        // Subsequent writes update the disk file but NOT the system prompt,
+        // preserving the Anthropic prefix cache across all turns.
+        captureMemorySnapshot();
       }
 
       // Hook: session:start — fire concurrently with message formatting + embedding
@@ -501,6 +506,7 @@ export class AgentRuntime {
         session = getSession(chatId)!;
         context = loadContextFromTranscript(session.sessionId);
         context.messages.push(userMsg);
+        captureMemorySnapshot(); // Refresh snapshot for the new compacted session
       }
 
       appendToTranscript(session.sessionId, userMsg);

@@ -9,5 +9,6 @@ export const tools: ToolEntry[] = [
     executor: telegramSendStoryExecutor,
     scope: "dm-only",
     requiredMode: "user",
+    tags: ["social"],
   },
 ];

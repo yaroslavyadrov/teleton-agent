@@ -1,5 +1,5 @@
 import type { Context, Message, TextContent } from "@mariozechner/pi-ai";
-import { appendToTranscript } from "../session/transcript.js";
+import { appendToTranscript, readTranscript } from "../session/transcript.js";
 import { randomUUID } from "crypto";
 import { writeSummaryToDailyLog } from "./daily-logs.js";
 import { summarizeWithFallback } from "./ai-summarization.js";
@@ -17,6 +17,8 @@ import {
   DEFAULT_MAX_SUMMARY_TOKENS,
   MEMORY_FLUSH_RECENT_MESSAGES,
 } from "../constants/limits.js";
+
+const COMPACTION_PREFIX = "[Auto-compacted";
 
 export interface CompactionConfig {
   enabled: boolean;
@@ -145,7 +147,8 @@ export async function compactContext(
   config: CompactionConfig,
   apiKey: string,
   provider?: SupportedProvider,
-  utilityModel?: string
+  utilityModel?: string,
+  previousSummary?: string | null
 ): Promise<Context> {
   const keepCount = config.keepRecentMessages ?? 10;
 
@@ -203,36 +206,59 @@ export async function compactContext(
   );
 
   try {
+    const iterativePreamble = previousSummary
+      ? `You are updating an existing conversation summary. This is compaction round N — information compounds, never disappears.
+
+<previous_summary>
+${previousSummary}
+</previous_summary>
+
+Rules for iterative update:
+- Every fact in <previous_summary> MUST appear in your output unless the new messages explicitly contradict it.
+- When a fact is updated (e.g. balance changed, task completed), keep both the old and new state: "Balance: 50 TON → 42 TON (sent 8 TON to EQ...)".
+- Move completed items from Open Items to Actions Taken — don't delete them.
+- If the user's intent evolved, show the progression: "Initially X, now pivoted to Y because Z."
+
+`
+      : "";
+
     const result = await summarizeWithFallback({
       messages: oldMessages,
       apiKey,
       contextWindow: config.maxTokens ?? DEFAULT_CONTEXT_WINDOW,
       maxSummaryTokens: DEFAULT_MAX_SUMMARY_TOKENS,
-      customInstructions: `Output a structured summary using EXACTLY these sections:
+      customInstructions: `${iterativePreamble}You are summarizing an AI agent's Telegram conversation for context continuity.
+The agent operates on TON blockchain (wallets, swaps, NFTs) and Telegram (messages, groups, channels).
 
-## User Intent
-What the user is trying to accomplish (1-2 sentences).
+Output ONLY these sections. Skip a section entirely if it has zero content — no placeholders, no "None."
 
-## Key Decisions
-Bullet list of decisions made and commitments agreed upon.
+## Goal
+What the user wants accomplished. 1-2 sentences max. Include the specific asset, address, or entity if named.
 
-## Important Context
-Critical facts, preferences, constraints, or technical details needed for continuity.
+## Decisions & Commitments
+Bullet list. Each bullet = one decision. Include WHO decided, WHAT was decided, and any constraints.
+Priority: financial commitments > technical choices > preferences.
 
-## Actions Taken
-What was done: tools used, messages sent, transactions made (with specific values/addresses if relevant).
+## State
+Active values the agent needs to continue work. Be exact:
+- Addresses, balances, transaction hashes, prices
+- Chat IDs, user IDs, group names involved
+- File paths, API endpoints, config values
+- Error states or rate limits hit
 
-## Open Items
-Unfinished tasks, pending questions, or next steps.
+## Done
+What was completed. Each bullet: tool used + result. Keep specific values.
+"Sent 8 TON to EQ...abc (tx: ...def)" not "Sent some TON."
 
-Keep each section concise. Omit a section if empty. Preserve specific names, numbers, and identifiers.`,
+## Open
+Unfinished work, blocked tasks, questions waiting for user response. Most urgent first.`,
       provider,
       utilityModel,
     });
 
     log.info(`AI Summary: ${result.tokensUsed} tokens, ${result.chunksProcessed} chunks processed`);
 
-    const summaryText = `[Auto-compacted ${oldMessages.length} messages]\n\n${result.summary}`;
+    const summaryText = `${COMPACTION_PREFIX} ${oldMessages.length} messages]\n\n${result.summary}`;
 
     const summaryMessage: Message = {
       role: "user",
@@ -247,7 +273,7 @@ Keep each section concise. Omit a section if empty. Preserve specific names, num
   } catch (error) {
     log.error({ err: error }, "AI summarization failed, using fallback");
 
-    const summaryText = `[Auto-compacted: ${oldMessages.length} earlier messages from this conversation]`;
+    const summaryText = `${COMPACTION_PREFIX}: ${oldMessages.length} earlier messages from this conversation]`;
 
     const summaryMessage: Message = {
       role: "user",
@@ -269,7 +295,8 @@ export async function compactAndSaveTranscript(
   apiKey: string,
   chatId?: string,
   provider?: SupportedProvider,
-  utilityModel?: string
+  utilityModel?: string,
+  previousSummary?: string | null
 ): Promise<string> {
   const newSessionId = randomUUID();
 
@@ -287,7 +314,14 @@ export async function compactAndSaveTranscript(
     });
   }
 
-  const compactedContext = await compactContext(context, config, apiKey, provider, utilityModel);
+  const compactedContext = await compactContext(
+    context,
+    config,
+    apiKey,
+    provider,
+    utilityModel,
+    previousSummary
+  );
 
   for (const message of compactedContext.messages) {
     appendToTranscript(newSessionId, message);
@@ -298,6 +332,9 @@ export async function compactAndSaveTranscript(
 
 export class CompactionManager {
   private config: CompactionConfig;
+  /** Previous compaction summary — injected into the next summarization
+   *  prompt so that information accumulates instead of being lost. */
+  private previousSummary: string | null = null;
 
   constructor(config: CompactionConfig = DEFAULT_COMPACTION_CONFIG) {
     this.config = config;
@@ -335,9 +372,21 @@ export class CompactionManager {
       apiKey,
       chatId,
       provider,
-      utilityModel
+      utilityModel,
+      this.previousSummary
     );
     log.info(`Compaction complete: ${newSessionId}`);
+
+    // Extract the summary text from the compacted context for iterative reuse.
+    // The first message after compaction is the summary message.
+    const compacted = readTranscript(newSessionId);
+    if (compacted.length > 0) {
+      const firstMsg = compacted[0];
+      const text = typeof firstMsg.content === "string" ? firstMsg.content : null;
+      if (text?.startsWith(COMPACTION_PREFIX)) {
+        this.previousSummary = text;
+      }
+    }
 
     return newSessionId;
   }

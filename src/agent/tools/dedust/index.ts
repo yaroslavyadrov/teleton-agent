@@ -12,9 +12,9 @@ export { dedustPricesTool, dedustPricesExecutor };
 export { dedustTokenInfoTool, dedustTokenInfoExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: dedustSwapTool, executor: dedustSwapExecutor, scope: "dm-only" },
-  { tool: dedustQuoteTool, executor: dedustQuoteExecutor },
-  { tool: dedustPoolsTool, executor: dedustPoolsExecutor },
-  { tool: dedustPricesTool, executor: dedustPricesExecutor },
-  { tool: dedustTokenInfoTool, executor: dedustTokenInfoExecutor },
+  { tool: dedustSwapTool, executor: dedustSwapExecutor, scope: "dm-only", tags: ["finance"] },
+  { tool: dedustQuoteTool, executor: dedustQuoteExecutor, tags: ["finance"] },
+  { tool: dedustPoolsTool, executor: dedustPoolsExecutor, tags: ["finance"] },
+  { tool: dedustPricesTool, executor: dedustPricesExecutor, tags: ["finance"] },
+  { tool: dedustTokenInfoTool, executor: dedustTokenInfoExecutor, tags: ["finance"] },
 ];

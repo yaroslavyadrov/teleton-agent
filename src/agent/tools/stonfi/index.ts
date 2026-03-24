@@ -12,9 +12,9 @@ export { stonfiTrendingTool, stonfiTrendingExecutor };
 export { stonfiPoolsTool, stonfiPoolsExecutor };
 
 export const tools: ToolEntry[] = [
-  { tool: stonfiSwapTool, executor: stonfiSwapExecutor, scope: "dm-only" },
-  { tool: stonfiQuoteTool, executor: stonfiQuoteExecutor },
-  { tool: stonfiSearchTool, executor: stonfiSearchExecutor },
-  { tool: stonfiTrendingTool, executor: stonfiTrendingExecutor },
-  { tool: stonfiPoolsTool, executor: stonfiPoolsExecutor },
+  { tool: stonfiSwapTool, executor: stonfiSwapExecutor, scope: "dm-only", tags: ["finance"] },
+  { tool: stonfiQuoteTool, executor: stonfiQuoteExecutor, tags: ["finance"] },
+  { tool: stonfiSearchTool, executor: stonfiSearchExecutor, tags: ["finance"] },
+  { tool: stonfiTrendingTool, executor: stonfiTrendingExecutor, tags: ["finance"] },
+  { tool: stonfiPoolsTool, executor: stonfiPoolsExecutor, tags: ["finance"] },
 ];

@@ -356,7 +356,7 @@ export function setSchemaVersion(db: Database.Database, version: string): void {
   ).run(version);
 }
 
-export const CURRENT_SCHEMA_VERSION = "1.16.0";
+export const CURRENT_SCHEMA_VERSION = "1.17.0";
 
 export function runMigrations(db: Database.Database): void {
   const currentVersion = getSchemaVersion(db);
@@ -676,6 +676,36 @@ export function runMigrations(db: Database.Database): void {
       log.info("Migration 1.16.0 complete: tg_messages FTS triggers updated");
     } catch (error) {
       log.error({ err: error }, "Migration 1.16.0 failed");
+      throw error;
+    }
+  }
+
+  if (!currentVersion || versionLessThan(currentVersion, "1.17.0")) {
+    log.info(
+      "Running migration 1.17.0: Add importance, access tracking, and lifecycle columns to knowledge"
+    );
+    try {
+      const addColumnIfNotExists = (table: string, column: string, type: string) => {
+        try {
+          db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+        } catch (error: unknown) {
+          if (!(error instanceof Error) || !error.message.includes("duplicate column name")) {
+            throw error;
+          }
+        }
+      };
+
+      addColumnIfNotExists("knowledge", "importance", "REAL DEFAULT 0.5");
+      addColumnIfNotExists("knowledge", "access_count", "INTEGER DEFAULT 0");
+      addColumnIfNotExists("knowledge", "last_accessed_at", "INTEGER");
+      addColumnIfNotExists("knowledge", "status", "TEXT DEFAULT 'active'");
+      addColumnIfNotExists("knowledge", "memory_type", "TEXT DEFAULT 'semantic'");
+
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_knowledge_status ON knowledge(status)`);
+
+      log.info("Migration 1.17.0 complete: importance/access/lifecycle columns added to knowledge");
+    } catch (error) {
+      log.error({ err: error }, "Migration 1.17.0 failed");
       throw error;
     }
   }

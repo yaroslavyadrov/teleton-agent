@@ -7,6 +7,7 @@ import { MAX_WRITE_SIZE } from "../../../constants/limits.js";
 import type { Tool, ToolExecutor, ToolResult } from "../types.js";
 import { validateWritePath, WorkspaceSecurityError } from "../../../workspace/index.js";
 import { getErrorMessage } from "../../../utils/errors.js";
+import { scanMemoryContent } from "../../../utils/memory-guard.js";
 
 interface WorkspaceWriteParams {
   path: string;
@@ -61,6 +62,23 @@ export const workspaceWriteExecutor: ToolExecutor<WorkspaceWriteParams> = async 
     const parentDir = dirname(validated.absolutePath);
     if (createDirs && !existsSync(parentDir)) {
       mkdirSync(parentDir, { recursive: true });
+    }
+
+    // SECURITY: Scan memory-sensitive files for injection attempts
+    const isMemoryFile =
+      validated.relativePath === "MEMORY.md" ||
+      validated.relativePath === "HEARTBEAT.md" ||
+      validated.relativePath === "USER.md" ||
+      validated.relativePath === "IDENTITY.md" ||
+      validated.relativePath.startsWith("memory/");
+    if (isMemoryFile && encoding !== "base64") {
+      const scan = scanMemoryContent(content);
+      if (!scan.safe) {
+        return {
+          success: false,
+          error: `Write blocked: suspicious content detected in ${validated.relativePath} (${scan.threats.join(", ")}).`,
+        };
+      }
     }
 
     // Prepare content
