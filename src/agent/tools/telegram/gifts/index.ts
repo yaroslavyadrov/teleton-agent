@@ -29,6 +29,7 @@ import {
   telegramResolveGiftOfferTool,
   telegramResolveGiftOfferExecutor,
 } from "./resolve-gift-offer.js";
+import { getUserGiftsEntry } from "./get-user-gifts.js";
 import type { ToolEntry } from "../../types.js";
 
 export { telegramGetAvailableGiftsTool, telegramGetAvailableGiftsExecutor };
@@ -131,4 +132,5 @@ export const tools: ToolEntry[] = [
     requiredMode: "user",
     tags: ["finance"],
   },
+  getUserGiftsEntry,
 ];
