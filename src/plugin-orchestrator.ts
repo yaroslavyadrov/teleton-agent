@@ -8,6 +8,7 @@ import { getProviderMetadata, type SupportedProvider } from "./config/providers.
 import { getDatabase } from "./memory/index.js";
 import type { EmbeddingProvider } from "./memory/embeddings/provider.js";
 import { createLogger } from "./utils/logger.js";
+import { getErrorMessage } from "./utils/errors.js";
 
 const log = createLogger("PluginOrchestrator");
 
@@ -53,9 +54,7 @@ export class PluginOrchestrator {
           pluginNames.push(mod.name);
         }
       } catch (error) {
-        log.error(
-          `❌ Plugin "${mod.name}" failed to load: ${error instanceof Error ? error.message : error}`
-        );
+        log.error(`❌ Plugin "${mod.name}" failed to load: ${getErrorMessage(error)}`);
       }
     }
 

@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { api, ToolInfo, ModuleInfo } from '../lib/api';
 import { ToolRow } from '../components/ToolRow';
 import { Select } from '../components/Select';
+import { SearchInput } from '../components/SearchInput';
+import { useToolManager } from '../hooks/useToolManager';
 
 export function Tools() {
   const [modules, setModules] = useState<ModuleInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState<string | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -19,70 +19,17 @@ export function Tools() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : String(err));
+        tm.setError(err instanceof Error ? err.message : String(err));
         setLoading(false);
       });
   };
 
+  const tm = useToolManager(loadTools);
+  const { updating, error, setError, toggleEnabled, updateScope, bulkToggle, bulkScope } = tm;
+
   useEffect(() => {
     loadTools();
   }, []);
-
-  const toggleEnabled = async (toolName: string, currentEnabled: boolean) => {
-    setUpdating(toolName);
-    try {
-      await api.updateToolConfig(toolName, { enabled: !currentEnabled });
-      await loadTools();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const updateScope = async (toolName: string, newScope: ToolInfo['scope']) => {
-    setUpdating(toolName);
-    try {
-      await api.updateToolConfig(toolName, { scope: newScope });
-      await loadTools();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const bulkToggle = async (module: ModuleInfo, enabled: boolean) => {
-    setUpdating(module.name);
-    try {
-      for (const tool of module.tools) {
-        if (tool.enabled !== enabled) {
-          await api.updateToolConfig(tool.name, { enabled });
-        }
-      }
-      await loadTools();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const bulkScope = async (module: ModuleInfo, scope: ToolInfo['scope']) => {
-    setUpdating(module.name);
-    try {
-      for (const tool of module.tools) {
-        if (tool.scope !== scope) {
-          await api.updateToolConfig(tool.name, { scope });
-        }
-      }
-      await loadTools();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
 
   if (loading) return <div className="loading">Loading...</div>;
 
@@ -116,7 +63,7 @@ export function Tools() {
       )}
 
       {/* Stats bar */}
-      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2 }}>
+      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2, borderRadius: 'var(--radius-pill)' }}>
         <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
           <span style={{ color: 'var(--green)', fontWeight: 600 }}>{enabledCount}</span> enabled
         </span>
@@ -125,44 +72,7 @@ export function Tools() {
         </span>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search tools..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setSearch(''); }}
-              style={{
-                padding: '4px 24px 4px 12px',
-                fontSize: '13px',
-                border: '1px solid var(--border)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                width: '180px',
-                outline: 'none',
-              }}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                style={{
-                  position: 'absolute',
-                  right: '4px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '0 2px',
-                  fontSize: '14px',
-                  lineHeight: 1,
-                }}
-              >
-                &#x2715;
-              </button>
-            )}
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search tools..." />
           {trimmedSearch && (
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
               {filtered.length} of {builtIn.length} modules

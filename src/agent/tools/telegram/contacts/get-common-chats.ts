@@ -5,6 +5,7 @@ import { Api } from "telegram";
 import { toLong } from "../../../../utils/gramjs-bigint.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -49,7 +50,7 @@ export const telegramGetCommonChatsExecutor: ToolExecutor<GetCommonChatsParams> 
     const { userId, limit = 50 } = params;
 
     // Get underlying GramJS client
-    const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+    const gramJsClient = getClient(context.bridge);
 
     // Get user entity
     const userEntity = await gramJsClient.getInputEntity(userId);

@@ -21,8 +21,15 @@ export class CallbackQueryHandler {
     this.handlers.set(actionPrefix, handler);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS raw update event shape
-  async handle(event: any): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- peer type varies across GramJS update shapes
+  async handle(event: {
+    queryId: bigint;
+    data?: Buffer;
+    peer?: any;
+    chatInstance?: string;
+    msgId?: number;
+    userId: bigint;
+  }): Promise<void> {
     try {
       const queryId = event.queryId;
       const data = event.data?.toString() || "";
@@ -59,8 +66,7 @@ export class CallbackQueryHandler {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GramJS BigInteger queryId
-  private async answerCallback(queryId: any, message?: string, alert = false): Promise<void> {
+  private async answerCallback(queryId: bigint, message?: string, alert = false): Promise<void> {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- user-only MTProto callback answer
       await (this.bridge.getRawClient() as any)?.answerCallbackQuery?.(queryId, { message, alert });

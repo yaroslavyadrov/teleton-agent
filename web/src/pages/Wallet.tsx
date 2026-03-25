@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api, WalletInfo, WalletTransaction } from '../lib/api';
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatDate } from '../lib/utils';
 
 function truncateAddress(addr: string): string {
   if (addr.length <= 14) return addr;

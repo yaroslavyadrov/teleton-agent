@@ -14,7 +14,7 @@ export function requireBridge(bridge: ITelegramBridge): void {
 
 export function getClient(bridge: ITelegramBridge) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- user-only escape hatch, cast to GramJS client
-  return bridge.getRawClient() as any;
+  return (bridge.getRawClient() as any).getClient();
 }
 
 /** Convert a GramJS message to a SimpleMessage */

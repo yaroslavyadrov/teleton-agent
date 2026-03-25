@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Type } from "@sinclair/typebox";
 import {
   completeSimple,
@@ -15,6 +14,7 @@ import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { validateReadPath, WorkspaceSecurityError } from "../../../../workspace/index.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -158,7 +158,7 @@ export const visionAnalyzeExecutor: ToolExecutor<VisionAnalyzeParams> = async (
       log.info(`Downloading image from message ${messageId}...`);
 
       // Get underlying GramJS client
-      const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+      const gramJsClient = getClient(context.bridge);
 
       // Get the message
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- chatId/messageId guaranteed in this branch

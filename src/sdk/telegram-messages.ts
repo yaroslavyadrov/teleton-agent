@@ -3,6 +3,7 @@ import type { ITelegramBridge } from "../telegram/bridge-interface.js";
 import type { Api } from "telegram";
 import type { PluginLogger, SimpleMessage, MediaSendOptions } from "@teleton-agent/sdk";
 import { PluginSDKError } from "@teleton-agent/sdk";
+import { getErrorMessage } from "../utils/errors.js";
 import {
   requireBridge as requireBridgeUtil,
   getClient as getClientUtil,
@@ -68,7 +69,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to delete message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to delete message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -109,7 +110,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to forward message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to forward message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -137,7 +138,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to ${opts?.unpin ? "unpin" : "pin"} message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to ${opts?.unpin ? "unpin" : "pin"} message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -194,7 +195,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to schedule message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to schedule message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -237,7 +238,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get replies: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get replies: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -265,7 +266,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send photo: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send photo: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -302,7 +303,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send video: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send video: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -332,7 +333,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send voice: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send voice: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -366,7 +367,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send file: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send file: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -390,7 +391,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send GIF: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send GIF: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -410,7 +411,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send sticker: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send sticker: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -447,7 +448,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to download media: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to download media: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -503,7 +504,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to delete scheduled message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to delete scheduled message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -526,7 +527,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send scheduled message now: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send scheduled message now: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -541,7 +542,7 @@ export function createTelegramMessagesSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to set typing: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to set typing: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }

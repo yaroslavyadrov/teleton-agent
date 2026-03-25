@@ -21,6 +21,7 @@ import YAML from "yaml";
 import { TELETON_ROOT } from "../workspace/paths.js";
 import type { Server as HttpServer } from "node:http";
 import { createLogger } from "../utils/logger.js";
+import { getErrorMessage } from "../utils/errors.js";
 
 const log = createLogger("Setup");
 
@@ -153,10 +154,7 @@ export class SetupServer {
 
         return c.json({ success: true, data: { token } });
       } catch (error: unknown) {
-        return c.json(
-          { success: false, error: error instanceof Error ? error.message : String(error) },
-          500
-        );
+        return c.json({ success: false, error: getErrorMessage(error) }, 500);
       }
     });
 

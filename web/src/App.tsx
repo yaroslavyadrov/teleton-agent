@@ -1,23 +1,24 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { Dashboard } from './pages/Dashboard';
-import { Tools } from './pages/Tools';
-import { Plugins } from './pages/Plugins';
-import { Soul } from './pages/Soul';
-import { Memory } from './pages/Memory';
-import { Workspace } from './pages/Workspace';
-import { Tasks } from './pages/Tasks';
-import { Mcp } from './pages/Mcp';
-import { Config } from './pages/Config';
-import { Hooks } from './pages/Hooks';
-import { Conversations } from './pages/Conversations';
-import { Wallet } from './pages/Wallet';
 import { Setup } from './pages/Setup';
 import { SetupLayout } from './components/setup/SetupLayout';
 import { checkAuth, login } from './lib/api';
 import { logStore } from './lib/log-store';
+
+const Dashboard = React.lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Tools = React.lazy(() => import('./pages/Tools').then(m => ({ default: m.Tools })));
+const Plugins = React.lazy(() => import('./pages/Plugins').then(m => ({ default: m.Plugins })));
+const Soul = React.lazy(() => import('./pages/Soul').then(m => ({ default: m.Soul })));
+const Memory = React.lazy(() => import('./pages/Memory').then(m => ({ default: m.Memory })));
+const Workspace = React.lazy(() => import('./pages/Workspace').then(m => ({ default: m.Workspace })));
+const Tasks = React.lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
+const Mcp = React.lazy(() => import('./pages/Mcp').then(m => ({ default: m.Mcp })));
+const Config = React.lazy(() => import('./pages/Config').then(m => ({ default: m.Config })));
+const Hooks = React.lazy(() => import('./pages/Hooks').then(m => ({ default: m.Hooks })));
+const Conversations = React.lazy(() => import('./pages/Conversations').then(m => ({ default: m.Conversations })));
+const Wallet = React.lazy(() => import('./pages/Wallet').then(m => ({ default: m.Wallet })));
 
 function App() {
   // Setup route bypasses auth entirely
@@ -129,23 +130,25 @@ function AuthenticatedApp() {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="tools" element={<Tools />} />
-            <Route path="plugins" element={<Plugins />} />
-            <Route path="soul" element={<Soul />} />
-            <Route path="memory" element={<Memory />} />
-            <Route path="conversations" element={<Conversations />} />
-            <Route path="wallet" element={<Wallet />} />
-            <Route path="workspace" element={<Workspace />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="mcp" element={<Mcp />} />
-            <Route path="config" element={<Config />} />
-            <Route path="hooks" element={<Hooks />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="tools" element={<Tools />} />
+              <Route path="plugins" element={<Plugins />} />
+              <Route path="soul" element={<Soul />} />
+              <Route path="memory" element={<Memory />} />
+              <Route path="conversations" element={<Conversations />} />
+              <Route path="wallet" element={<Wallet />} />
+              <Route path="workspace" element={<Workspace />} />
+              <Route path="tasks" element={<Tasks />} />
+              <Route path="mcp" element={<Mcp />} />
+              <Route path="config" element={<Config />} />
+              <Route path="hooks" element={<Hooks />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </ErrorBoundary>
     </BrowserRouter>
   );

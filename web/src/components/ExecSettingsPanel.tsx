@@ -10,10 +10,9 @@ export function ExecSettingsPanel({ getLocal, saveConfig }: ExecSettingsPanelPro
   const isYolo = getLocal('capabilities.exec.mode') === 'yolo';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-      <span className="section-title" style={{ marginBottom: 0 }}>Coding Agent</span>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span className="section-title" style={{ marginBottom: 0 }}>Coding Agent</span>
         <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="exec-yolo">
           YOLO
           <InfoTip text="Full system access - exec_run, exec_install, exec_service, exec_status. Requires restart." />
@@ -29,28 +28,12 @@ export function ExecSettingsPanel({ getLocal, saveConfig }: ExecSettingsPanelPro
           <span className="toggle-thumb" />
         </label>
       </div>
-
-      {isYolo && (
-        <>
-          <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              Scope
-              <InfoTip text="Who can trigger exec tools. Requires restart." />
-            </label>
-            <Select
-              value={getLocal('capabilities.exec.scope') || 'admin-only'}
-              options={['admin-only', 'allowlist', 'all']}
-              labels={['Admin Only', 'Allowlist', 'Everyone']}
-              onChange={(v) => saveConfig('capabilities.exec.scope', v)}
-            />
-          </div>
-          <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
-          <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-tertiary)' }}>
-            Full system access enabled
-          </span>
-        </>
-      )}
+      <Select
+        value={getLocal('capabilities.exec.scope') || 'admin-only'}
+        options={['admin-only', 'allowlist', 'all']}
+        labels={['Admin Only', 'Allowlist', 'Everyone']}
+        onChange={(v) => saveConfig('capabilities.exec.scope', v)}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { WalletContractV5R1, toNano, internal } from "@ton/ton";
 import { Address, beginCell, SendMode } from "@ton/core";
 import { withTxLock } from "../ton/tx-lock.js";
 import { createHash } from "crypto";
+import { getErrorMessage } from "../utils/errors.js";
 
 interface TonApiDnsAuction {
   domain: string;
@@ -102,7 +103,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
         log.debug("dns.check() failed:", error);
         // On error, return unknown state
         throw new PluginSDKError(
-          `Failed to check domain: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to check domain: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -180,7 +181,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to start auction: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to start auction: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -211,10 +212,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
         return { domain: normalized, bidAmount: amount.toString(), success: true };
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
-        throw new PluginSDKError(
-          `Failed to bid: ${error instanceof Error ? error.message : String(error)}`,
-          "OPERATION_FAILED"
-        );
+        throw new PluginSDKError(`Failed to bid: ${getErrorMessage(error)}`, "OPERATION_FAILED");
       }
     },
 
@@ -257,7 +255,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to link domain: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to link domain: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -288,7 +286,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to unlink domain: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to unlink domain: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -335,7 +333,7 @@ export function createDnsSDK(log: PluginLogger): DnsSDK {
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to set site record: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to set site record: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }

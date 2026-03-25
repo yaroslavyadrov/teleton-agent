@@ -1,4 +1,5 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import {
   writeFileSync,
   mkdirSync,
@@ -39,10 +40,9 @@ interface WorkspaceInfo {
 const MAX_SCAN_DEPTH = 10;
 const MAX_SCAN_ENTRIES = 5000;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono context type
-function errorResponse(c: any, error: unknown, status: number = 500) {
+function errorResponse(c: Context, error: unknown, status: ContentfulStatusCode = 500) {
   const message = getErrorMessage(error);
-  const code = error instanceof WorkspaceSecurityError ? 403 : status;
+  const code: ContentfulStatusCode = error instanceof WorkspaceSecurityError ? 403 : status;
   const response: APIResponse = { success: false, error: message };
   return c.json(response, code);
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Generic inline bot send tool — sends plugin inline results into chats.
  * Replicates the userbot→bot inline query pattern from deal proposals.
@@ -9,6 +8,8 @@ import { Type } from "@sinclair/typebox";
 import { randomLong } from "../../../utils/gramjs-bigint.js";
 import type { Tool, ToolExecutor } from "../types.js";
 import { createLogger } from "../../../utils/logger.js";
+import { getErrorMessage } from "../../../utils/errors.js";
+import { getClient } from "../../../sdk/telegram-utils.js";
 
 const log = createLogger("BotInlineSend");
 
@@ -52,7 +53,7 @@ export const botInlineSendExecutor: ToolExecutor<BotInlineSendParams> = async (p
   }
 
   try {
-    const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+    const gramJsClient = getClient(context.bridge);
 
     // Resolve bot and chat entities
     const bot = await gramJsClient.getInputEntity(botUsername);
@@ -114,7 +115,7 @@ export const botInlineSendExecutor: ToolExecutor<BotInlineSendParams> = async (p
     log.error({ err: error }, `Failed to send inline bot result for plugin "${plugin}"`);
     return {
       success: false,
-      error: `Failed to send inline result: ${error instanceof Error ? error.message : String(error)}`,
+      error: `Failed to send inline result: ${getErrorMessage(error)}`,
     };
   }
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api, ConfigKeyData } from '../lib/api';
+import { api } from '../lib/api';
 import { useConfigState } from '../hooks/useConfigState';
 import { PillBar } from '../components/PillBar';
 import { AgentSettingsPanel } from '../components/AgentSettingsPanel';
@@ -41,9 +41,7 @@ export function Config() {
   const activeTab = searchParams.get('tab') || 'llm';
 
   const config = useConfigState();
-
-  // Raw config keys state for ConfigSection tabs
-  const [configKeys, setConfigKeys] = useState<ConfigKeyData[]>([]);
+  const configKeys = config.configKeys;
 
   // TON Proxy state
   const [proxyLoading, setProxyLoading] = useState(false);
@@ -54,13 +52,6 @@ export function Config() {
     setSearchParams({ tab: id }, { replace: true });
   };
 
-  // Load config keys on mount (needed by ConfigSection in multiple tabs)
-  useEffect(() => {
-    api.getConfigKeys()
-      .then((res) => setConfigKeys(res.data))
-      .catch(() => {});
-  }, []);
-
   // Load proxy status when TON Proxy tab is active
   useEffect(() => {
     if (activeTab !== 'ton-proxy') return;
@@ -69,17 +60,11 @@ export function Config() {
       .catch(() => {});
   }, [activeTab]);
 
-  const loadKeys = () => {
-    api.getConfigKeys()
-      .then((res) => setConfigKeys(res.data))
-      .catch(() => {});
-  };
-
   const handleArraySave = async (key: string, values: string[]) => {
     config.setError(null);
     try {
       await api.setConfigKey(key, values);
-      loadKeys();
+      config.loadData();
     } catch (err) {
       config.setError(err instanceof Error ? err.message : String(err));
     }
@@ -112,6 +97,9 @@ export function Config() {
           <div className="card-header">
             <div className="section-title">Agent</div>
           </div>
+          <InfoBanner>
+            Choose the AI provider and model that powers the agent. Stronger models reason better but cost more per message. The API key is sent only to the selected provider.
+          </InfoBanner>
           <div className="card">
             <AgentSettingsPanel
               getLocal={config.getLocal}
@@ -196,14 +184,14 @@ export function Config() {
             </div>
           </div>
           <InfoBanner>
-            Periodic autonomous wake-up. The agent reads HEARTBEAT.md and acts on its tasks, or stays silent.
+            The agent wakes up on a timer, reads its HEARTBEAT.md checklist, and executes each task autonomously (check feeds, send reports, monitor wallets...). If nothing needs doing, it stays silent. Edit HEARTBEAT.md in the Soul tab to define what the agent should do on each tick.
           </InfoBanner>
           <div className="card">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
               <EditableField
                 label="Interval"
-                description="Time between heartbeat ticks (in minutes). Requires restart to take effect."
+                description="How often the agent wakes up to run its checklist. Lower = more responsive, higher = less resource usage. Restart required."
                 configKey="heartbeat.interval_ms"
                 type="number"
                 value={String(Math.round(Number(config.getLocal('heartbeat.interval_ms') || 1800000) / 60000))}
@@ -215,14 +203,13 @@ export function Config() {
                 max={1440}
                 placeholder="30"
                 hotReload="restart"
-                suffix="min"
                 inline
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>Self-configurable</span>
-                  <InfoTip text="Allow the agent to modify its own heartbeat settings (interval, prompt). When off, only the admin can change these." />
+                  <InfoTip text="When on, the agent can adjust its own wake-up interval and prompt. When off, only you (admin) can change these settings from this dashboard." />
                 </div>
                 <label className="toggle" style={{ margin: 0 }}>
                   <input
@@ -248,6 +235,9 @@ export function Config() {
           <div className="card-header">
             <div className="section-title">API Keys</div>
           </div>
+          <InfoBanner>
+            Secrets used to connect to external services. Keys are stored locally in your config file and never shared. Leave a field empty to disable that integration.
+          </InfoBanner>
           <div className="card">
             <ConfigSection
               keys={API_KEY_KEYS}
@@ -282,7 +272,7 @@ export function Config() {
                         ? await api.startTonProxy()
                         : await api.stopTonProxy();
                       setProxyStatus(res.data);
-                      loadKeys();
+                      config.loadData();
                     } catch (err) {
                       setProxyError(err instanceof Error ? err.message : String(err));
                     } finally {
@@ -315,7 +305,7 @@ export function Config() {
             </div>
           </div>
           <InfoBanner>
-            Tonutils-Proxy gateway for accessing .ton websites. The binary is auto-downloaded from GitHub on first enable.
+            Local HTTP proxy that lets the agent browse .ton websites and TON Sites. The binary is auto-downloaded on first enable, no manual install needed.
           </InfoBanner>
           <div className="card">
             {proxyError && (
@@ -340,7 +330,7 @@ export function Config() {
                       try {
                         const res = await api.uninstallTonProxy();
                         setProxyStatus(res.data);
-                        loadKeys();
+                        config.loadData();
                       } catch (err) {
                         setProxyError(err instanceof Error ? err.message : String(err));
                       } finally {
@@ -407,6 +397,9 @@ export function Config() {
           <div className="card-header">
             <div className="section-title">Advanced</div>
           </div>
+          <InfoBanner>
+            Low-level settings for embeddings, deals, WebUI, and dev mode. Only change these if you know what you're doing, wrong values can break the agent.
+          </InfoBanner>
           <div className="card">
             <ConfigSection
               keys={ADVANCED_KEYS}
@@ -428,7 +421,7 @@ export function Config() {
             <div className="section-title">Sessions</div>
           </div>
           <InfoBanner>
-            Session reset and expiry policies. Configure automatic daily resets and idle timeout behavior.
+            Controls how the agent manages conversation memory. Daily reset clears context at a set hour to keep responses fresh. Idle expiry forgets inactive chats after a timeout, saving tokens.
           </InfoBanner>
           <div className="card">
             <ConfigSection
@@ -462,13 +455,13 @@ export function Config() {
             </div>
           </div>
           <InfoBanner>
-            Semantic tool selection — sends only the most relevant tools to the LLM per message.
+            Instead of sending all {'>'}100 tools to the LLM every time, Tool RAG picks only the most relevant ones per message. Saves tokens and improves accuracy. Disable if the agent misses tools it should use.
           </InfoBanner>
           <div className="card">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-                  Top-K <InfoTip text="Number of most relevant tools to send per message" />
+                  Top-K <InfoTip text="Max tools sent to the LLM per message. Higher = more coverage but more tokens. 20-30 is a good default." />
                 </label>
                 <Select
                   value={String(config.toolRag.topK)}
@@ -479,7 +472,7 @@ export function Config() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }} htmlFor="skip-unlimited">
-                  Skip Unlimited <InfoTip text="Skip RAG filtering for providers with no tool limit" />
+                  Skip Unlimited <InfoTip text="When on, providers that accept unlimited tools (like Anthropic) get all tools directly, no filtering needed." />
                 </label>
                 <label className="toggle">
                   <input
@@ -495,7 +488,7 @@ export function Config() {
             </div>
             <div style={{ marginTop: '12px' }}>
               <label style={{ fontSize: '13px', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
-                Always Include (glob patterns) <InfoTip text="Tool name patterns that are always included regardless of RAG scoring" />
+                Always Include (glob patterns) <InfoTip text="Tools matching these patterns are always sent, even if RAG doesn't pick them. Use for critical tools the agent must always have access to." />
               </label>
               <ArrayInput
                 value={config.toolRag.alwaysInclude ?? []}

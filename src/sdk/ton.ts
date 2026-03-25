@@ -23,6 +23,7 @@ import type {
   TonSender,
 } from "@teleton-agent/sdk";
 import { PluginSDKError } from "@teleton-agent/sdk";
+import { getErrorMessage } from "../utils/errors.js";
 import {
   getWalletAddress,
   getWalletBalance,
@@ -177,7 +178,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send TON: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send TON: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -284,7 +285,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         log.error("ton.verifyPayment() failed:", error);
         return {
           verified: false,
-          error: `Verification failed: ${error instanceof Error ? error.message : String(error)}`,
+          error: `Verification failed: ${getErrorMessage(error)}`,
         };
       }
     },
@@ -508,7 +509,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send jetton: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send jetton: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -619,7 +620,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create transfer: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create transfer: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -770,7 +771,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create jetton transfer: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create jetton transfer: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -841,7 +842,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         return tonToNano(String(amount));
       } catch (error) {
         throw new PluginSDKError(
-          `toNano conversion failed: ${error instanceof Error ? error.message : String(error)}`,
+          `toNano conversion failed: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1039,7 +1040,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get seqno: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get seqno: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1079,7 +1080,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to run get method: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to run get method: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1155,10 +1156,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
           invalidateTonClientCache();
         }
         if (error instanceof PluginSDKError) throw error;
-        throw new PluginSDKError(
-          `Failed to send: ${error instanceof Error ? error.message : String(error)}`,
-          "OPERATION_FAILED"
-        );
+        throw new PluginSDKError(`Failed to send: ${getErrorMessage(error)}`, "OPERATION_FAILED");
       }
     },
 
@@ -1234,7 +1232,7 @@ export function createTonSDK(log: PluginLogger, db: Database.Database | null): T
         }
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send messages: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send messages: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }

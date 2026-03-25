@@ -18,6 +18,7 @@ import {
 import { setTonapiKey } from "../../constants/api-endpoints.js";
 import { setToncenterApiKey, invalidateEndpointCache } from "../../ton/endpoint.js";
 import { invalidateTonClientCache } from "../../ton/wallet-service.js";
+import { getErrorMessage } from "../../utils/errors.js";
 /** Side-effects to run when specific config keys change at runtime. */
 const CONFIG_SIDE_EFFECTS: Record<string, (value: string | undefined) => void> = {
   tonapi_key: (v) => setTonapiKey(v),
@@ -84,7 +85,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );
@@ -180,7 +181,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
         return c.json(
           {
             success: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           } as APIResponse,
           500
         );
@@ -250,7 +251,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );
@@ -315,7 +316,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );
@@ -349,7 +350,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         400
       );
@@ -372,7 +373,7 @@ export function createConfigRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         400
       );

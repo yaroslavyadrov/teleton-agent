@@ -20,6 +20,7 @@ import type { ToolRegistry } from "./registry.js";
 import type { Config } from "../../config/schema.js";
 import type { SDKDependencies } from "../../sdk/index.js";
 import { createLogger } from "../../utils/logger.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const log = createLogger("PluginWatcher");
 
@@ -82,7 +83,7 @@ export class PluginWatcher {
     });
 
     this.watcher.on("error", (err: unknown) => {
-      log.error(`Watcher error: ${err instanceof Error ? err.message : err}`);
+      log.error(`Watcher error: ${getErrorMessage(err)}`);
     });
 
     log.info("Plugin watcher started");
@@ -141,9 +142,7 @@ export class PluginWatcher {
       setTimeout(() => {
         this.reloadTimers.delete(pluginName);
         this.reloadPlugin(pluginName).catch((error: unknown) => {
-          log.error(
-            `Unexpected error reloading "${pluginName}": ${error instanceof Error ? error.message : error}`
-          );
+          log.error(`Unexpected error reloading "${pluginName}": ${getErrorMessage(error)}`);
         });
       }, RELOAD_DEBOUNCE_MS)
     );
@@ -239,9 +238,7 @@ export class PluginWatcher {
             ),
           ]);
         } catch (stopErr: unknown) {
-          log.warn(
-            `Old plugin "${pluginName}" stop() failed: ${stopErr instanceof Error ? stopErr.message : stopErr}`
-          );
+          log.warn(`Old plugin "${pluginName}" stop() failed: ${getErrorMessage(stopErr)}`);
         }
         oldStopped = true;
       }
@@ -273,9 +270,7 @@ export class PluginWatcher {
       log.info(`Plugin "${pluginName}" v${adapted.version} reloaded (${newTools.length} tools)`);
       return true;
     } catch (error: unknown) {
-      log.error(
-        `Failed to reload "${pluginName}": ${error instanceof Error ? error.message : error}`
-      );
+      log.error(`Failed to reload "${pluginName}": ${getErrorMessage(error)}`);
 
       // Rollback: only if we actually stopped the old plugin (steps 1-4 errors
       // don't need rollback — old module is still running)

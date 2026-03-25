@@ -52,6 +52,7 @@ import {
 } from "../../config/providers.js";
 import { TELEGRAM_MAX_MESSAGE_LENGTH } from "../../constants/limits.js";
 import { fetchWithTimeout } from "../../utils/fetch.js";
+import { getErrorMessage } from "../../utils/errors.js";
 import ora from "ora";
 import {
   getClaudeCodeApiKey,
@@ -1137,7 +1138,7 @@ async function runInteractiveOnboarding(
         STEPS[6].value = `Connected${me?.username ? ` (@${me.username})` : ""}`;
       } catch (error) {
         prompter.warn(
-          `Telegram connection failed: ${error instanceof Error ? error.message : String(error)}\n` +
+          `Telegram connection failed: ${getErrorMessage(error)}\n` +
             "You can authenticate later when running: teleton start"
         );
         STEPS[6].value = "Auth on first start";

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Moderation tools: kick, ban, unban users from groups/channels
  */
@@ -8,6 +7,7 @@ import { Api } from "telegram";
 import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -45,7 +45,7 @@ export const telegramKickUserExecutor: ToolExecutor<KickUserParams> = async (
       };
     }
 
-    const client = (context.bridge.getRawClient() as any).getClient();
+    const client = getClient(context.bridge);
 
     // Kick = ban then immediately unban
     await client.invoke(
@@ -142,7 +142,7 @@ export const telegramBanUserExecutor: ToolExecutor<BanUserParams> = async (
       };
     }
 
-    const client = (context.bridge.getRawClient() as any).getClient();
+    const client = getClient(context.bridge);
 
     // Calculate until_date (0 = permanent)
     const untilDate = duration_hours ? Math.floor(Date.now() / 1000) + duration_hours * 3600 : 0;
@@ -236,7 +236,7 @@ export const telegramUnbanUserExecutor: ToolExecutor<UnbanUserParams> = async (
       };
     }
 
-    const client = (context.bridge.getRawClient() as any).getClient();
+    const client = getClient(context.bridge);
 
     await client.invoke(
       new Api.channels.EditBanned({

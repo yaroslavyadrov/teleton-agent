@@ -13,6 +13,7 @@ import { isSilentReply } from "../constants/tokens.js";
 import { telegramTranscribeAudioExecutor } from "../agent/tools/telegram/media/transcribe-audio.js";
 import { TYPING_REFRESH_MS } from "../constants/timeouts.js";
 import { createLogger } from "../utils/logger.js";
+import { getErrorMessage } from "../utils/errors.js";
 
 const log = createLogger("Telegram");
 import type { PluginMessageEvent } from "@teleton-agent/sdk";
@@ -348,7 +349,7 @@ export class MessageHandler {
         hook(event).catch((error) => {
           log.error(
             { err: error instanceof Error ? error : undefined },
-            `Plugin onMessage hook error: ${error instanceof Error ? error.message : error}`
+            `Plugin onMessage hook error: ${getErrorMessage(error)}`
           );
         });
       }

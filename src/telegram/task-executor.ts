@@ -62,7 +62,7 @@ export async function executeScheduledTask(
   task: Task,
   agent: AgentRuntime,
   toolContext: ToolContext,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic tool registry with dynamic execute()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ToolRegistry.execute() takes (ToolCall, ToolContext) but is called here with positional args (name, params, context) — mismatch prevents typing
   toolRegistry: any,
   parentResults?: Array<{ taskId: string; description: string; result: unknown }>
 ): Promise<string> {
@@ -116,13 +116,23 @@ export async function executeScheduledTask(
   return buildAgentPrompt(task, null, parentResults);
 }
 
+type ExecutionData =
+  | null
+  | {
+      toolExecuted: string;
+      toolParams: Record<string, unknown>;
+      toolResult: unknown;
+      condition?: string;
+    }
+  | { toolExecuted: string; toolParams: Record<string, unknown>; toolError: string }
+  | { instructions: string; context?: Record<string, unknown> };
+
 /**
  * Build prompt for agent with task context
  */
 function buildAgentPrompt(
   task: Task,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- polymorphic execution data shape
-  executionData: any,
+  executionData: ExecutionData,
   parentResults?: Array<{ taskId: string; description: string; result: unknown }>
 ): string {
   const timeAgo = formatTimeAgo(task.createdAt);
@@ -159,14 +169,14 @@ function buildAgentPrompt(
     return prompt;
   }
 
-  if (executionData.toolExecuted) {
+  if ("toolExecuted" in executionData) {
     // Tool was executed
     prompt += `TOOL EXECUTED:\n`;
     prompt += `• Name: ${executionData.toolExecuted}\n`;
     prompt += `• Params: ${truncateJson(executionData.toolParams, 2000)}\n`;
     prompt += `\n`;
 
-    if (executionData.toolError) {
+    if ("toolError" in executionData) {
       prompt += `❌ ERROR:\n${executionData.toolError}\n\n`;
       prompt += `→ The tool failed. Decide how to handle this error.\n`;
     } else {
@@ -178,7 +188,7 @@ function buildAgentPrompt(
 
       prompt += `→ Analyze this result and decide what action to take.\n`;
     }
-  } else if (executionData.instructions) {
+  } else if ("instructions" in executionData) {
     // Agent task
     prompt += `INSTRUCTIONS:\n${executionData.instructions}\n\n`;
 

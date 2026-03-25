@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { WebUIServerDeps, APIResponse, MarketplacePlugin } from "../types.js";
 import { MarketplaceService, ConflictError } from "../services/marketplace.js";
 import { writePluginSecret, deletePluginSecret, listPluginSecretKeys } from "../../sdk/secrets.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const VALID_ID = /^[a-z0-9][a-z0-9-]*$/;
 const VALID_KEY = /^[a-zA-Z][a-zA-Z0-9_]*$/;
@@ -28,10 +29,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
       const plugins = await svc.listPlugins(refresh);
       return c.json<APIResponse<MarketplacePlugin[]>>({ success: true, data: plugins });
     } catch (error: unknown) {
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -59,10 +57,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
     } catch (error: unknown) {
       const status = error instanceof ConflictError ? 409 : 500;
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        status
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, status);
     }
   });
 
@@ -90,10 +85,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
     } catch (error: unknown) {
       const status = error instanceof ConflictError ? 409 : 500;
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        status
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, status);
     }
   });
 
@@ -121,10 +113,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
       return c.json<APIResponse<typeof result>>({ success: true, data: result });
     } catch (error: unknown) {
       const status = error instanceof ConflictError ? 409 : 500;
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        status
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, status);
     }
   });
 
@@ -152,10 +141,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
         }>
       >({ success: true, data: { declared, configured } });
     } catch (error: unknown) {
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -184,10 +170,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
         data: { key, set: true },
       });
     } catch (error: unknown) {
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -212,10 +195,7 @@ export function createMarketplaceRoutes(deps: WebUIServerDeps) {
         data: { key, set: false },
       });
     } catch (error: unknown) {
-      return c.json<APIResponse>(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json<APIResponse>({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 

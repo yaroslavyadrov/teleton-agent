@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore, useState } from 'react';
+import { useEffect, useRef, useSyncExternalStore, useState, useCallback } from 'react';
 import { useConfigState } from '../hooks/useConfigState';
 import { AgentSettingsPanel } from '../components/AgentSettingsPanel';
 import { TelegramSettingsPanel } from '../components/TelegramSettingsPanel';
@@ -119,34 +119,76 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* ── Live Logs ──────────────────────────────────────── */}
-      <div className="card dashboard-logs">
-        <div className="dashboard-logs-header">
-          <div className="section-title" style={{ marginBottom: 0 }}>
-            <span className={`status-dot ${connected ? 'connected' : 'disconnected'}`} />
-            Live Logs
-          </div>
-          <button className="btn-ghost btn-sm" onClick={() => logStore.clear()}>Clear</button>
-        </div>
-        <div className="dashboard-logs-scroll">
-          {logs.length === 0 ? (
-            <div className="empty">Waiting for logs...</div>
-          ) : (
-            logs.map((log, i) => (
-              <div key={i} className="log-entry">
-                <span className={`badge ${log.level === 'warn' ? 'warn' : log.level === 'error' ? 'error' : 'info'}`}>
-                  {log.level.toUpperCase()}
-                </span>{' '}
-                <span style={{ color: 'var(--text-tertiary)' }}>
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>{' '}
-                {log.message}
-              </div>
-            ))
+      {/* ── Live Logs (collapsible) ── */}
+      <LogsPanel logs={logs} connected={connected} bottomRef={bottomRef} />
+    </div>
+  );
+}
+
+function LogsPanel({ logs, connected, bottomRef }: {
+  logs: Array<{ level: string; timestamp: number; message: string }>;
+  connected: boolean;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const [open, setOpen] = useState(true);
+  const toggle = useCallback(() => setOpen((v) => !v), []);
+
+  return (
+    <div className="card" style={{ padding: 0, overflow: 'hidden', marginTop: '12px' }}>
+      <button
+        onClick={toggle}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '10px 14px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text-primary)',
+          fontSize: '13px',
+          fontWeight: 600,
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`status-dot ${connected ? 'connected' : 'disconnected'}`} />
+          Live Logs
+          {logs.length > 0 && (
+            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 400 }}>
+              ({logs.length})
+            </span>
           )}
-          <div ref={bottomRef} />
-        </div>
-      </div>
+        </span>
+        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}>
+          &#9660;
+        </span>
+      </button>
+      {open && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 14px 6px' }}>
+            <button className="btn-ghost btn-sm" onClick={() => logStore.clear()}>Clear</button>
+          </div>
+          <div className="dashboard-logs-scroll">
+            {logs.length === 0 ? (
+              <div className="empty">Waiting for logs...</div>
+            ) : (
+              logs.map((log, i) => (
+                <div key={i} className="log-entry">
+                  <span className={`badge ${log.level === 'warn' ? 'warn' : log.level === 'error' ? 'error' : 'info'}`}>
+                    {log.level.toUpperCase()}
+                  </span>{' '}
+                  <span style={{ color: 'var(--text-tertiary)' }}>
+                    {new Date(log.timestamp).toLocaleTimeString()}
+                  </span>{' '}
+                  {log.message}
+                </div>
+              ))
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

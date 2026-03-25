@@ -140,8 +140,8 @@ export class ScheduledTaskHandler {
 
         // Cascade failure to dependents
         await this.dependencyResolver.onTaskFail(taskId);
-      } catch {
-        // Ignore if we can't update task
+      } catch (innerError) {
+        log.debug({ error: getErrorMessage(innerError) }, "Failed to update task status");
       }
     }
   }

@@ -4,6 +4,7 @@ import { getTonProxyManager, setTonProxyManager } from "../../ton-proxy/module.j
 import { TonProxyManager } from "../../ton-proxy/manager.js";
 import { readRawConfig, writeRawConfig, setNestedValue } from "../../config/configurable-keys.js";
 import { createLogger } from "../../utils/logger.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const log = createLogger("TonProxyRoute");
 
@@ -58,7 +59,7 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );
@@ -93,7 +94,7 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );
@@ -136,7 +137,7 @@ export function createTonProxyRoutes(deps: WebUIServerDeps) {
       return c.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         } as APIResponse,
         500
       );

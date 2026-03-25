@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Type } from "@sinclair/typebox";
 import { Api } from "telegram";
 import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -37,7 +37,7 @@ export const telegramBuyResaleGiftExecutor: ToolExecutor<BuyResaleGiftParams> = 
 ): Promise<ToolResult> => {
   try {
     const { slug } = params;
-    const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+    const gramJsClient = getClient(context.bridge);
 
     // Buy for self
     const toId = new Api.InputPeerSelf();

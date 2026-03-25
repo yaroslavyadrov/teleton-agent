@@ -259,9 +259,7 @@ export async function registerMcpTools(
         serverNames.push(conn.serverName);
       }
     } catch (error: unknown) {
-      log.warn(
-        `MCP server "${conn.serverName}" tool discovery failed: ${error instanceof Error ? error.message : error}`
-      );
+      log.warn(`MCP server "${conn.serverName}" tool discovery failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -277,9 +275,7 @@ export async function closeMcpServers(connections: McpConnection[]): Promise<voi
       try {
         await conn.client.close();
       } catch (error: unknown) {
-        log.warn(
-          `MCP server "${conn.serverName}" close failed: ${error instanceof Error ? error.message : error}`
-        );
+        log.warn(`MCP server "${conn.serverName}" close failed: ${getErrorMessage(error)}`);
       }
     })
   );

@@ -136,23 +136,6 @@ export function AgentControl() {
 
   return (
     <div style={{ padding: 0, marginBottom: 0 }}>
-      {/* Status badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-        <span
-          style={{
-            display: 'inline-block',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: config.dot,
-            flexShrink: 0,
-          }}
-        />
-        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.1px' }}>
-          {config.label}
-        </span>
-      </div>
-
       {/* Action button */}
       {showPlay && !retrying && (
         <button

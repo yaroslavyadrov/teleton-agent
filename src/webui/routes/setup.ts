@@ -34,6 +34,7 @@ import { fetchWithTimeout } from "../../utils/fetch.js";
 import { TELEGRAM_MAX_MESSAGE_LENGTH } from "../../constants/limits.js";
 import { TelegramAuthManager } from "../setup-auth.js";
 import { createLogger } from "../../utils/logger.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const log = createLogger("Setup");
 
@@ -81,10 +82,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
         },
       });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -149,10 +147,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
       const error = validateApiKeyFormat(body.provider as SupportedProvider, body.apiKey);
       return c.json({ success: true, data: { valid: !error, error } });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        400
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 400);
     }
   });
 
@@ -191,10 +186,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
         });
       }
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        400
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 400);
     }
   });
 
@@ -224,10 +216,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
         data: { created: !isNewWorkspace(workspace) === false, path: workspace.root },
       });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -249,10 +238,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
         data: { address: wallet.address, mnemonic: wallet.mnemonic },
       });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -270,10 +256,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
       log.info("TON wallet imported via setup UI");
       return c.json({ success: true, data: { address: wallet.address } });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        400
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 400);
     }
   });
 
@@ -456,10 +439,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
       await authManager.cancelSession(body.authSessionId);
       return c.json({ success: true });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -475,10 +455,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
         dimensions: provider.dimensions,
       });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        500
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 500);
     }
   });
 
@@ -615,10 +592,7 @@ export function createSetupRoutes(options?: { keyHash?: string }): Hono {
       log.info(`Configuration saved: ${configPath}`);
       return c.json({ success: true, data: { path: configPath } });
     } catch (error: unknown) {
-      return c.json(
-        { success: false, error: error instanceof Error ? error.message : String(error) },
-        400
-      );
+      return c.json({ success: false, error: getErrorMessage(error) }, 400);
     }
   });
 

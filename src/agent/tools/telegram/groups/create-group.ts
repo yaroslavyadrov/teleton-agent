@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * telegram_create_group - Create a new group chat
  */
@@ -8,6 +7,7 @@ import { Api } from "telegram";
 import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -37,7 +37,7 @@ export const telegramCreateGroupExecutor: ToolExecutor<CreateGroupParams> = asyn
   try {
     const { title, users } = params;
 
-    const client = (context.bridge.getRawClient() as any).getClient();
+    const client = getClient(context.bridge);
 
     // Resolve user entities
     const userEntities: Api.TypeInputUser[] = [];

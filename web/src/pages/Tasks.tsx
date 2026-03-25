@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { api, TaskData } from '../lib/api';
+import { formatDate } from '../lib/utils';
+import { SearchInput } from '../components/SearchInput';
 
 type TaskStatus = TaskData['status'];
 type Task = TaskData;
@@ -37,17 +39,6 @@ function StatusBadge({ status }: { status: TaskStatus }) {
       {STATUS_LABELS[status]}
     </span>
   );
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function PriorityDots({ priority }: { priority: number }) {
@@ -189,7 +180,7 @@ export function Tasks() {
       )}
 
       {/* Stats bar */}
-      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2 }}>
+      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2, borderRadius: 'var(--radius-pill)' }}>
         <span
           onClick={() => setFilter('')}
           style={{
@@ -217,44 +208,7 @@ export function Tasks() {
         ))}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setSearchQuery(''); }}
-              style={{
-                padding: '4px 24px 4px 12px',
-                fontSize: '13px',
-                border: '1px solid var(--border)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                width: '180px',
-                outline: 'none',
-              }}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{
-                  position: 'absolute',
-                  right: '4px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '0 2px',
-                  fontSize: '14px',
-                  lineHeight: 1,
-                }}
-              >
-                &#x2715;
-              </button>
-            )}
-          </div>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search tasks..." />
           {trimmedQuery && (
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
               {filteredTasks.length} of {statusFiltered.length} tasks
@@ -408,11 +362,11 @@ export function Tasks() {
                       >
                         {(task.status === 'pending' || task.status === 'in_progress') && (
                           <button className="icon-button" onClick={() => cancelTask(task.id)} title="Cancel">
-                            &#10006;
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                           </button>
                         )}
                         <button className="icon-button" onClick={() => deleteTask(task.id)} title="Delete">
-                          &#128465;
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                       </td>
                     </tr>

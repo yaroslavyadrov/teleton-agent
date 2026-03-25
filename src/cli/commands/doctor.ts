@@ -8,6 +8,7 @@ import {
   validateApiKeyFormat,
   type SupportedProvider,
 } from "../../config/providers.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 interface CheckResult {
   name: string;
@@ -64,7 +65,7 @@ async function checkConfig(workspaceDir: string): Promise<CheckResult> {
     return {
       name: "Config file",
       status: "error",
-      message: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Parse error: ${getErrorMessage(error)}`,
     };
   }
 }

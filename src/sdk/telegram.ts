@@ -2,6 +2,7 @@
 import type { ITelegramBridge } from "../telegram/bridge-interface.js";
 import type { TelegramSDK, TelegramUser, SimpleMessage, PluginLogger } from "@teleton-agent/sdk";
 import { PluginSDKError } from "@teleton-agent/sdk";
+import { getErrorMessage } from "../utils/errors.js";
 import { requireBridge as requireBridgeUtil } from "./telegram-utils.js";
 import { createTelegramMessagesSDK } from "./telegram-messages.js";
 import { createTelegramSocialSDK } from "./telegram-social.js";
@@ -43,7 +44,7 @@ export function createTelegramSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -62,7 +63,7 @@ export function createTelegramSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to edit message: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to edit message: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -76,7 +77,7 @@ export function createTelegramSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send dice: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send dice: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -89,7 +90,7 @@ export function createTelegramSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send reaction: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send reaction: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }

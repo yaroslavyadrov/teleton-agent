@@ -351,9 +351,7 @@ export async function summarizeWithFallback(params: {
       utilityModel: params.utilityModel,
     });
   } catch (fullError) {
-    log.warn(
-      `Full summarization failed: ${fullError instanceof Error ? fullError.message : String(fullError)}`
-    );
+    log.warn(`Full summarization failed: ${getErrorMessage(fullError)}`);
   }
 
   const smallMessages: Message[] = [];
@@ -394,9 +392,7 @@ export async function summarizeWithFallback(params: {
         chunksProcessed: result.chunksProcessed,
       };
     } catch (partialError) {
-      log.warn(
-        `Partial summarization also failed: ${partialError instanceof Error ? partialError.message : String(partialError)}`
-      );
+      log.warn(`Partial summarization also failed: ${getErrorMessage(partialError)}`);
     }
   }
 

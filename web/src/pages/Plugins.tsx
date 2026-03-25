@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api, ToolInfo, ModuleInfo, PluginManifest, MarketplacePlugin, PluginSecretsInfo, SecretDeclaration } from '../lib/api';
 import { ToolRow } from '../components/ToolRow';
 import { Select } from '../components/Select';
+import { SearchInput } from '../components/SearchInput';
+import { useToolManager } from '../hooks/useToolManager';
 
 type Tab = 'installed' | 'marketplace';
 
@@ -10,13 +12,6 @@ export function Plugins() {
   const [manifests, setManifests] = useState<PluginManifest[]>([]);
   const [pluginModules, setPluginModules] = useState<ModuleInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState<string | null>(null);
-
-  // Plugin priorities state
-  const [priorities, setPriorities] = useState<Record<string, number>>({});
-  const [priorityChanged, setPriorityChanged] = useState(false);
-  const priorityTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Marketplace state
   const [marketplace, setMarketplace] = useState<MarketplacePlugin[]>([]);
@@ -41,15 +36,14 @@ export function Plugins() {
 
   const loadData = () => {
     setLoading(true);
-    return Promise.all([api.getPlugins(), api.getTools(), api.getPluginPriorities()])
-      .then(([pluginsRes, toolsRes, prioritiesRes]) => {
+    return Promise.all([api.getPlugins(), api.getTools()])
+      .then(([pluginsRes, toolsRes]) => {
         setManifests(pluginsRes.data);
         setPluginModules(toolsRes.data.filter((m) => m.isPlugin));
-        setPriorities(prioritiesRes.data ?? {});
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        tm.setError(err.message);
         setLoading(false);
       });
   };
@@ -62,96 +56,17 @@ export function Plugins() {
         setMarketLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        tm.setError(err.message);
         setMarketLoading(false);
       });
   };
 
+  const tm = useToolManager(loadData);
+  const { updating, error, setError, toggleEnabled, updateScope, bulkToggle, bulkScope } = tm;
+
   useEffect(() => {
     loadData();
     loadMarketplace();
-    return () => {
-      // Cleanup debounced priority timers on unmount
-      Object.values(priorityTimers.current).forEach(clearTimeout);
-    };
-  }, []);
-
-  const toggleEnabled = async (toolName: string, currentEnabled: boolean) => {
-    setUpdating(toolName);
-    try {
-      await api.updateToolConfig(toolName, { enabled: !currentEnabled });
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const updateScope = async (toolName: string, newScope: ToolInfo['scope']) => {
-    setUpdating(toolName);
-    try {
-      await api.updateToolConfig(toolName, { scope: newScope });
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const bulkToggle = async (module: ModuleInfo, enabled: boolean) => {
-    setUpdating(module.name);
-    try {
-      for (const tool of module.tools) {
-        if (tool.enabled !== enabled) {
-          await api.updateToolConfig(tool.name, { enabled });
-        }
-      }
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const bulkScope = async (module: ModuleInfo, scope: ToolInfo['scope']) => {
-    setUpdating(module.name);
-    try {
-      for (const tool of module.tools) {
-        if (tool.scope !== scope) {
-          await api.updateToolConfig(tool.name, { scope });
-        }
-      }
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const handlePriorityChange = useCallback((pluginName: string, value: number) => {
-    const clamped = Math.max(-1000, Math.min(1000, Math.round(value)));
-    setPriorities((prev) => ({ ...prev, [pluginName]: clamped }));
-
-    // Debounce the API call
-    if (priorityTimers.current[pluginName]) {
-      clearTimeout(priorityTimers.current[pluginName]);
-    }
-    priorityTimers.current[pluginName] = setTimeout(async () => {
-      try {
-        if (clamped === 0) {
-          await api.resetPluginPriority(pluginName);
-        } else {
-          await api.setPluginPriority(pluginName, clamped);
-        }
-        setPriorityChanged(true);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    }, 500);
   }, []);
 
   const handleInstall = async (id: string) => {
@@ -313,14 +228,8 @@ export function Plugins() {
         </div>
       )}
 
-      {priorityChanged && (
-        <div className="alert" style={{ marginBottom: '14px', fontSize: '13px', color: 'var(--text-secondary)', background: 'var(--accent-dim)', border: '1px solid var(--accent-subtle)' }}>
-          Priority updated - changes take effect on next agent restart
-        </div>
-      )}
-
       {/* Stats bar */}
-      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2 }}>
+      <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible', position: 'relative', zIndex: 2, borderRadius: 'var(--radius-pill)' }}>
         <div className="tabs" style={{ marginBottom: 0, flexShrink: 0, width: 'auto', display: 'inline-flex' }}>
           <button
             className={`tab ${tab === 'installed' ? 'active' : ''}`}
@@ -356,45 +265,7 @@ export function Plugins() {
         )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search plugins..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setSearch(''); }}
-              style={{
-                padding: '4px 24px 4px 12px',
-                fontSize: '13px',
-                border: '1px solid var(--border)',
-                borderRadius: '14px',
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                width: '180px',
-                outline: 'none',
-              }}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                style={{
-                  position: 'absolute',
-                  right: '4px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '0 2px',
-                  fontSize: '14px',
-                  lineHeight: 1,
-                }}
-              >
-                &#x2715;
-              </button>
-            )}
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search plugins..." style={{ borderRadius: '14px' }} />
           {allTags.length > 0 && (
             <Select
               value={tagFilter}
@@ -462,7 +333,6 @@ export function Plugins() {
                   <th style={{ textAlign: 'left', padding: '8px 14px' }}>Plugin</th>
                   <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Tools</th>
                   <th style={{ textAlign: 'center', padding: '8px 10px', width: 60 }}>Version</th>
-                  <th style={{ textAlign: 'center', padding: '8px 10px', width: 90 }} title="Hook execution order: lower values run first">Priority</th>
                   <th style={{ textAlign: 'right', padding: '8px 14px', width: 200 }}>Controls</th>
                 </tr>
               </thead>
@@ -527,45 +397,6 @@ export function Plugins() {
                             <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>v{plugin.version}</span>
                           )}
                         </td>
-                        <td style={{ textAlign: 'center', padding: '8px 10px' }} onClick={(e) => e.stopPropagation()}>
-                          {(() => {
-                            const prio = priorities[plugin.name] ?? 0;
-                            const color = prio < 0 ? 'var(--red)' : prio > 0 ? 'var(--accent-soft)' : 'var(--text-secondary)';
-                            return (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                <input
-                                  type="number"
-                                  value={prio}
-                                  onChange={(e) => handlePriorityChange(plugin.name, Number(e.target.value))}
-                                  min={-1000}
-                                  max={1000}
-                                  step={10}
-                                  title="Hook execution order: lower values run first"
-                                  style={{
-                                    width: '56px',
-                                    padding: '2px 4px',
-                                    fontSize: '12px',
-                                    textAlign: 'center',
-                                    border: '1px solid var(--border)',
-                                    borderRadius: '4px',
-                                    backgroundColor: 'transparent',
-                                    color,
-                                    fontWeight: prio !== 0 ? 600 : 400,
-                                  }}
-                                />
-                                {prio !== 0 && (
-                                  <button
-                                    onClick={() => handlePriorityChange(plugin.name, 0)}
-                                    title="Reset to default"
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: 'var(--text-tertiary)', fontSize: '12px', lineHeight: 1 }}
-                                  >
-                                    &#x2715;
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </td>
                         <td style={{ textAlign: 'right', padding: '8px 14px', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                             {module && module.tools.length > 0 && (
@@ -593,9 +424,8 @@ export function Plugins() {
                               onClick={() => handleUninstall(marketEntry?.id ?? plugin.name)}
                               title="Uninstall"
                               disabled={!!operating}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--red)', opacity: 0.35, transition: 'opacity 0.15s', display: 'flex', alignItems: 'center' }}
-                              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.35'; }}
+                              className="hover-fade"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--red)', display: 'flex', alignItems: 'center' }}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="3 6 5 6 21 6" />
@@ -609,7 +439,7 @@ export function Plugins() {
                       </tr>
                       {isExpanded && (
                         <tr style={{ backgroundColor: 'var(--glass-micro)', borderBottom: '1px solid var(--border)' }}>
-                          <td colSpan={5} style={{ padding: '0 14px 14px 14px' }}>
+                          <td colSpan={4} style={{ padding: '0 14px 14px 14px' }}>
                             {/* Tool rows */}
                             {module && module.tools.length > 0 && (
                               <div style={{ display: 'grid', gap: '6px', paddingTop: '6px' }}>
@@ -848,7 +678,7 @@ export function Plugins() {
                         </tr>
                         {isExpanded && (
                           <tr style={{ backgroundColor: 'var(--glass-micro)', borderBottom: '1px solid var(--border)' }}>
-                            <td colSpan={5} style={{ padding: '0 14px 14px 14px' }}>
+                            <td colSpan={4} style={{ padding: '0 14px 14px 14px' }}>
                               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px 12px', fontSize: '12px', padding: '8px 0' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>Author</span>
                                 <span>{plugin.author}</span>

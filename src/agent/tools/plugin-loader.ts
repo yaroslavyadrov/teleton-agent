@@ -47,6 +47,7 @@ import type {
   PluginCallbackEvent,
 } from "@teleton-agent/sdk";
 import { createLogger } from "../../utils/logger.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const log = createLogger("PluginLoader");
 
@@ -92,9 +93,7 @@ export function adaptPlugin(
     try {
       manifest = validateManifest(raw.manifest);
     } catch (error: unknown) {
-      log.warn(
-        `[${entryName}] invalid manifest, ignoring: ${error instanceof Error ? error.message : error}`
-      );
+      log.warn(`[${entryName}] invalid manifest, ignoring: ${getErrorMessage(error)}`);
     }
   }
 
@@ -217,7 +216,7 @@ export function adaptPlugin(
           }
         }
       } catch (error: unknown) {
-        pluginLog.error(`migrate() failed: ${error instanceof Error ? error.message : error}`);
+        pluginLog.error(`migrate() failed: ${getErrorMessage(error)}`);
         if (pluginDb) {
           try {
             pluginDb.close();
@@ -277,7 +276,7 @@ export function adaptPlugin(
           };
         });
       } catch (error: unknown) {
-        pluginLog.error(`tools() failed: ${error instanceof Error ? error.message : error}`);
+        pluginLog.error(`tools() failed: ${getErrorMessage(error)}`);
         return [];
       }
     },
@@ -295,7 +294,7 @@ export function adaptPlugin(
         };
         await raw.start(enhancedContext);
       } catch (error: unknown) {
-        pluginLog.error(`start() failed: ${error instanceof Error ? error.message : error}`);
+        pluginLog.error(`start() failed: ${getErrorMessage(error)}`);
       }
     },
 
@@ -303,7 +302,7 @@ export function adaptPlugin(
       try {
         await raw.stop?.();
       } catch (error: unknown) {
-        pluginLog.error(`stop() failed: ${error instanceof Error ? error.message : error}`);
+        pluginLog.error(`stop() failed: ${getErrorMessage(error)}`);
       } finally {
         if (pluginDb) {
           try {
@@ -441,9 +440,7 @@ export async function loadEnhancedPlugins(
   // Phase 3: Validate and adapt plugins (sequential for consistency)
   for (const result of loadResults) {
     if (result.status === "rejected") {
-      log.error(
-        `Plugin failed to load: ${result.reason instanceof Error ? result.reason.message : result.reason}`
-      );
+      log.error(`Plugin failed to load: ${getErrorMessage(result.reason)}`);
       continue;
     }
 
@@ -473,9 +470,7 @@ export async function loadEnhancedPlugins(
       loadedNames.add(adapted.name);
       modules.push(adapted);
     } catch (error: unknown) {
-      log.error(
-        `Plugin "${entry}" failed to adapt: ${error instanceof Error ? error.message : error}`
-      );
+      log.error(`Plugin "${entry}" failed to adapt: ${getErrorMessage(error)}`);
     }
   }
 

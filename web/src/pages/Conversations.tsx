@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api, ConversationChat, ConversationMessage } from '../lib/api';
-
-function formatDate(epoch: number): string {
-  return new Date(epoch).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatDate } from '../lib/utils';
 
 export function Conversations() {
   const [filter, setFilter] = useState('');

@@ -53,6 +53,7 @@ import type { ToolContext } from "./tools/types.js";
 import { appendToDailyLog } from "../memory/daily-logs.js";
 import { saveSessionMemory } from "../session/memory-hook.js";
 import { createLogger } from "../utils/logger.js";
+import { getErrorMessage } from "../utils/errors.js";
 import type { createHookRunner } from "../sdk/hooks/runner.js";
 import type { UserHookEvaluator } from "./hooks/user-hook-evaluator.js";
 import type {
@@ -865,7 +866,7 @@ export class AgentRuntime {
                 );
                 execResults[idx] = { result, durationMs: Date.now() - startTime };
               } catch (execErr) {
-                const errMsg = execErr instanceof Error ? execErr.message : String(execErr);
+                const errMsg = getErrorMessage(execErr);
                 const errStack = execErr instanceof Error ? execErr.stack : undefined;
                 execResults[idx] = {
                   result: { success: false, error: errMsg },

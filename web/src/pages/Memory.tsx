@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api, MemorySourceFile, MemoryChunk } from '../lib/api';
-
-function formatDate(epoch: number): string {
-  return new Date(epoch * 1000).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatDate } from '../lib/utils';
 
 export function Memory() {
   const [filter, setFilter] = useState('');
@@ -138,7 +130,7 @@ export function Memory() {
                         {src.entryCount}
                       </td>
                       <td style={{ textAlign: 'right', padding: '6px 14px', color: 'var(--text-secondary)' }}>
-                        {formatDate(src.lastUpdated)}
+                        {formatDate(src.lastUpdated, 1000)}
                       </td>
                     </tr>
                     {isExpanded && (
@@ -164,7 +156,7 @@ export function Memory() {
                                     {chunk.startLine != null && chunk.endLine != null && (
                                       <span>Lines {chunk.startLine}–{chunk.endLine} &middot; </span>
                                     )}
-                                    {formatDate(chunk.updatedAt)}
+                                    {formatDate(chunk.updatedAt, 1000)}
                                   </div>
                                   <pre style={{
                                     margin: 0,

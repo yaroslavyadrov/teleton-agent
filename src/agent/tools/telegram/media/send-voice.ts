@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * telegram_send_voice - Send voice messages with optional TTS
  *
@@ -20,6 +19,7 @@ import {
 import { validateReadPath, WorkspaceSecurityError } from "../../../../workspace/index.js";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -181,7 +181,7 @@ export const telegramSendVoiceExecutor: ToolExecutor<SendVoiceParams> = async (
     }
 
     // Get underlying GramJS client
-    const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+    const gramJsClient = getClient(context.bridge);
 
     // Send voice message using GramJS sendFile with voice attributes
     const attrs: ConstructorParameters<typeof Api.DocumentAttributeAudio>[0] = {

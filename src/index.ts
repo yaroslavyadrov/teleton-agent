@@ -1,6 +1,6 @@
 import type { Api } from "telegram";
 import type { PluginMessageEvent, PluginCallbackEvent } from "@teleton-agent/sdk";
-import { loadConfig, getDefaultConfigPath } from "./config/index.js";
+import { loadConfig, getDefaultConfigPath, type Config } from "./config/index.js";
 import { loadSoul } from "./soul/index.js";
 import { AgentRuntime } from "./agent/runtime.js";
 import type { TelegramMessage } from "./telegram/bridge.js";
@@ -52,7 +52,7 @@ import { PluginOrchestrator } from "./plugin-orchestrator.js";
 const log = createLogger("App");
 
 export class TeletonApp {
-  private config;
+  private config: Config;
   private agent: AgentRuntime;
   private bridge: ITelegramBridge;
   private messageHandler: MessageHandler;
@@ -337,6 +337,46 @@ ${blue}  ┌──────────────────────�
    * Called by lifecycle.start() — do NOT call directly.
    */
   private async startAgent(): Promise<void> {
+    // Reload config from disk (mode switch writes YAML before restart)
+    const freshConfig = loadConfig(this.configPath);
+    const modeChanged = freshConfig.telegram.mode !== this.config.telegram.mode;
+    this.config = freshConfig;
+
+    if (modeChanged) {
+      log.info(`Mode changed to "${this.config.telegram.mode}", recreating bridge & registry`);
+
+      // Recreate bridge for the new mode
+      this.bridge = createBridge(this.config);
+      this.sdkDeps.bridge = this.bridge;
+
+      // Update tool registry mode (filters tools for user vs bot)
+      this.toolRegistry.setMode(this.config.telegram.mode);
+      if (this.config.telegram.allow_from?.length) {
+        this.toolRegistry.setAllowFrom(this.config.telegram.allow_from);
+      }
+
+      // Swap bridge ref in handlers that hold it
+      this.messageHandler.setBridge(this.bridge);
+
+      // Recreate handlers that don't support hot-swap
+      const db = getDatabase().getDb();
+      const modulePermissions = new ModulePermissions(db);
+      this.toolRegistry.setPermissions(modulePermissions);
+      this.adminHandler = new AdminHandler(
+        this.bridge,
+        this.config.telegram,
+        this.agent,
+        modulePermissions,
+        this.toolRegistry
+      );
+      this.heartbeatRunner = new HeartbeatRunner(this.agent, this.bridge, this.config);
+      this.scheduledTaskHandler = new ScheduledTaskHandler(this.agent, this.bridge, this.config);
+
+      // New bridge = new message listeners needed
+      this.messageHandlersRegistered = false;
+      this.callbackHandlerRegistered = false;
+    }
+
     // Truncate stale external plugins from previous run (keep builtins only)
     this.modules.length = this.builtinModuleCount;
 
@@ -765,7 +805,7 @@ ${blue}  ┌──────────────────────�
         log.info(`Owner resolved: ${displayName}${displayUsername}`);
       }
     } catch (error) {
-      log.warn(`Could not resolve owner info: ${error instanceof Error ? error.message : error}`);
+      log.warn(`Could not resolve owner info: ${getErrorMessage(error)}`);
     }
   }
 
@@ -868,9 +908,7 @@ ${blue}  ┌──────────────────────�
             try {
               await withHooks.onMessage(event);
             } catch (error: unknown) {
-              log.error(
-                `❌ [${mod.name}] onMessage error: ${error instanceof Error ? error.message : error}`
-              );
+              log.error(`❌ [${mod.name}] onMessage error: ${getErrorMessage(error)}`);
             }
           }
         }
@@ -924,9 +962,7 @@ ${blue}  ┌──────────────────────�
           try {
             await userBridge.getClient().answerCallbackQuery(queryId, { message: text, alert });
           } catch (error: unknown) {
-            log.error(
-              `❌ Failed to answer callback query: ${error instanceof Error ? error.message : error}`
-            );
+            log.error(`❌ Failed to answer callback query: ${getErrorMessage(error)}`);
           }
         };
 
@@ -946,9 +982,7 @@ ${blue}  ┌──────────────────────�
             try {
               await withHooks.onCallbackQuery(event);
             } catch (error: unknown) {
-              log.error(
-                `❌ [${mod.name}] onCallbackQuery error: ${error instanceof Error ? error.message : error}`
-              );
+              log.error(`❌ [${mod.name}] onCallbackQuery error: ${getErrorMessage(error)}`);
             }
           }
         }
@@ -1095,7 +1129,7 @@ export async function main(configPath?: string): Promise<void> {
   try {
     app = new TeletonApp(configPath);
   } catch (error) {
-    log.error(`Failed to initialize: ${error instanceof Error ? error.message : error}`);
+    log.error(`Failed to initialize: ${getErrorMessage(error)}`);
     process.exit(1);
   }
 

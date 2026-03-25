@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { createLogger } from "../utils/logger.js";
+import { getErrorMessage } from "../utils/errors.js";
 
 const log = createLogger("Lifecycle");
 
@@ -76,7 +77,7 @@ export class AgentLifecycle extends EventEmitter {
         this.runningSince = Date.now();
         this.transition("running");
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = getErrorMessage(error);
         this.error = message;
         this.runningSince = null;
         this.transition("stopped", message);

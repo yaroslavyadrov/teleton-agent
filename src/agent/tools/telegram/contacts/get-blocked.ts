@@ -4,6 +4,7 @@ import type { Tool, ToolExecutor, ToolResult } from "../../types.js";
 import { Api } from "telegram";
 import { getErrorMessage } from "../../../../utils/errors.js";
 import { createLogger } from "../../../../utils/logger.js";
+import { getClient } from "../../../../sdk/telegram-utils.js";
 
 const log = createLogger("Tools");
 
@@ -44,7 +45,7 @@ export const telegramGetBlockedExecutor: ToolExecutor<GetBlockedParams> = async 
     const { limit = 50 } = params;
 
     // Get underlying GramJS client
-    const gramJsClient = (context.bridge.getRawClient() as any).getClient();
+    const gramJsClient = getClient(context.bridge);
 
     // Get blocked users using GramJS
     const result = await gramJsClient.invoke(

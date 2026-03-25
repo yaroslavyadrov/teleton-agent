@@ -1,16 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, FileEntry, WorkspaceInfo } from '../lib/api';
+import { formatDate } from '../lib/utils';
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '-';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico']);
@@ -264,7 +260,7 @@ export function Workspace() {
 
       {/* Dialog */}
       {dialog && (
-        <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="card" style={{ padding: '10px 14px', marginBottom: '14px', display: 'flex', gap: '8px', alignItems: 'center', borderRadius: 'var(--radius-pill)' }}>
           <span style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>
             {dialog.type === 'newFile' ? 'New file:' : dialog.type === 'newFolder' ? 'New folder:' : 'Rename to:'}
           </span>

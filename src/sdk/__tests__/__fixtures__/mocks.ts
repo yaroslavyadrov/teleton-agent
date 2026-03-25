@@ -28,7 +28,7 @@ export function createMocks() {
     isAvailable: vi.fn(() => true),
     getMode: vi.fn(() => "user"),
     getClient: () => mockBridgeClient,
-    getRawClient: () => mockGramJsClient,
+    getRawClient: () => mockBridgeClient,
     sendMessage: vi.fn(),
     editMessage: vi.fn(),
     sendReaction: vi.fn(),

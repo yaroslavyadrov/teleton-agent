@@ -19,6 +19,7 @@ import type {
   GiftOfferOptions,
 } from "@teleton-agent/sdk";
 import { PluginSDKError } from "@teleton-agent/sdk";
+import { getErrorMessage } from "../utils/errors.js";
 import { randomLong, toLong } from "../utils/gramjs-bigint.js";
 import {
   requireBridge as requireBridgeUtil,
@@ -165,7 +166,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get user info: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get user info: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -227,7 +228,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to resolve username: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to resolve username: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -338,7 +339,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create poll: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create poll: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -413,7 +414,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to create quiz: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create quiz: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -448,7 +449,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to ban user: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to ban user: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -473,7 +474,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to unban user: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to unban user: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -499,7 +500,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to mute user: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to mute user: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -524,7 +525,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get stars balance: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get stars balance: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -567,7 +568,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send gift: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send gift: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -601,7 +602,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get available gifts: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get available gifts: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -636,7 +637,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get my gifts: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get my gifts: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -667,7 +668,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to get resale gifts: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to get resale gifts: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -697,7 +698,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to buy resale gift: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to buy resale gift: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -829,7 +830,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to transfer collectible: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to transfer collectible: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -854,7 +855,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to set collectible price: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to set collectible price: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1040,7 +1041,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send gift offer: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send gift offer: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }
@@ -1134,7 +1135,7 @@ export function createTelegramSocialSDK(
       } catch (error) {
         if (error instanceof PluginSDKError) throw error;
         throw new PluginSDKError(
-          `Failed to send story: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to send story: ${getErrorMessage(error)}`,
           "OPERATION_FAILED"
         );
       }

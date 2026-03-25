@@ -356,19 +356,16 @@ export function Hooks() {
                       </label>
                       <button
                         onClick={() => handleDeleteTrigger(t.id)}
+                        className="hover-fade-half"
                         style={{
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
                           padding: '4px',
                           color: 'var(--red)',
-                          opacity: 0.5,
-                          transition: 'opacity 0.15s',
                           height: 'auto',
                           borderRadius: 0,
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }}
                       >
                         &#x2715;
                       </button>

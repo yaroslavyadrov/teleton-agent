@@ -250,7 +250,7 @@ describe("createTelegramSDK — core", () => {
   // ─── getMe ──────────────────────────────────────────────────
   describe("getMe()", () => {
     it("returns user info", () => {
-      mockGramJsClient.getMe.mockReturnValue({
+      mockBridgeClient.getMe.mockReturnValue({
         id: BigInt(123),
         username: "bot",
         firstName: "Bot",
@@ -268,13 +268,13 @@ describe("createTelegramSDK — core", () => {
     });
 
     it("returns null when getMe returns falsy", () => {
-      mockGramJsClient.getMe.mockReturnValue(null);
+      mockBridgeClient.getMe.mockReturnValue(null);
 
       expect(sdk.getMe()).toBeNull();
     });
 
     it("returns null on error", () => {
-      mockGramJsClient.getMe.mockImplementation(() => {
+      mockBridgeClient.getMe.mockImplementation(() => {
         throw new Error("disconnected");
       });
 
@@ -299,7 +299,7 @@ describe("createTelegramSDK — core", () => {
   describe("getRawClient()", () => {
     it("returns GramJS client when bridge is available", () => {
       const result = sdk.getRawClient();
-      expect(result).toBe(mockGramJsClient);
+      expect(result).toBe(mockBridgeClient);
     });
 
     it("returns null when bridge is unavailable", () => {

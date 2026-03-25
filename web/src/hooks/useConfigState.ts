@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { api, StatusData, MemoryStats, ToolRagStatus } from '../lib/api';
+import { api, StatusData, MemoryStats, ToolRagStatus, ConfigKeyData } from '../lib/api';
 
 export interface ProviderMeta {
   needsKey: boolean;
@@ -13,6 +13,7 @@ export function useConfigState() {
   const [status, setStatus] = useState<StatusData | null>(null);
   const [stats, setStats] = useState<MemoryStats | null>(null);
   const [toolRag, setToolRag] = useState<ToolRagStatus | null>(null);
+  const [configKeys, setConfigKeys] = useState<ConfigKeyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modelOptions, setModelOptions] = useState<Array<{ value: string; name: string }>>([]);
@@ -36,6 +37,7 @@ export function useConfigState() {
         setStatus(statusRes.data);
         setStats(statsRes.data);
         setToolRag(ragRes.data);
+        setConfigKeys(configRes.data);
         // Sync both server and local inputs from API values
         const inputs: Record<string, string> = {};
         for (const c of configRes.data) {
@@ -160,7 +162,7 @@ export function useConfigState() {
   };
 
   return {
-    loading, error, setError, status, stats, toolRag,
+    loading, error, setError, status, stats, toolRag, configKeys,
     localInputs, getLocal, getServer, setLocal, cancelLocal, saveConfig, saveToolRag,
     modelOptions, pendingProvider, pendingMeta, pendingApiKey, setPendingApiKey,
     pendingValidating, pendingError, setPendingError,

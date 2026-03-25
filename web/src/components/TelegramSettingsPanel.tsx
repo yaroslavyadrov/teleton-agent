@@ -97,7 +97,7 @@ export function TelegramSettingsPanel({
             <label>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 DM Policy
-                <InfoTip text="Who can message the bot in private" />
+                <InfoTip text="Controls who can DM the agent. 'Open' = anyone, 'Allow Users' = only IDs in the allow list below, 'Admin Only' = only admins." />
               </span>
             </label>
             <Select
@@ -111,7 +111,7 @@ export function TelegramSettingsPanel({
             <label>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 Group Policy
-                <InfoTip text="Which groups the bot can respond in" />
+                <InfoTip text="Controls which group chats the agent responds in. 'Open' = all groups, 'Allow Groups' = only IDs in the allow list, 'Admin Only' = only admin-owned groups." />
               </span>
             </label>
             <Select
@@ -127,7 +127,7 @@ export function TelegramSettingsPanel({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="require-mention">
             Require Mention
-            <InfoTip text="Require @mention in groups to respond" />
+            <InfoTip text="When on, the agent ignores group messages unless it's @mentioned. Keeps it quiet in busy chats." />
           </label>
           <label className="toggle">
             <input
@@ -144,7 +144,7 @@ export function TelegramSettingsPanel({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} htmlFor="typing-sim">
               Typing Simulation
-              <InfoTip text="Simulate typing indicator before sending replies" />
+              <InfoTip text="Shows a 'typing...' bubble in the chat before the agent replies, like a real person." />
             </label>
             <label className="toggle">
               <input
@@ -211,7 +211,7 @@ export function TelegramSettingsPanel({
                   <label>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       Admin IDs
-                      <InfoTip text="Admin user IDs with elevated access" />
+                      <InfoTip text="Telegram user IDs with full control: can use all tools, bypass restrictions, and manage the agent." />
                     </span>
                   </label>
                   <ArrayInput
@@ -225,7 +225,7 @@ export function TelegramSettingsPanel({
                   <label>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       Allowed Users
-                      <InfoTip text="User IDs allowed for DM access" />
+                      <InfoTip text="Telegram user IDs that can DM the agent when DM policy is set to 'Allow Users'." />
                     </span>
                   </label>
                   <ArrayInput
@@ -239,7 +239,7 @@ export function TelegramSettingsPanel({
                   <label>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       Allowed Groups
-                      <InfoTip text="Group IDs allowed for group access" />
+                      <InfoTip text="Group/channel IDs where the agent can respond when group policy is set to 'Allow Groups'." />
                     </span>
                   </label>
                   <ArrayInput
