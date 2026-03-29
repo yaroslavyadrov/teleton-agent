@@ -150,13 +150,9 @@ export class MessageHandler {
   private pendingHistory: PendingHistory;
   private db: Database.Database;
   private chatQueue: ChatQueue = new ChatQueue();
-  private pluginMessageHooks: Array<(e: PluginMessageEvent) => Promise<void>> = [];
+  private pluginMessageHooks: Array<(e: PluginMessageEvent) => Promise<string | void>> = [];
   private recentMessageIds: Set<string> = new Set();
   private static readonly DEDUP_MAX_SIZE = 500;
-  // Per-user DM rate limit: max N messages per minute (prevents free users from burning LLM tokens)
-  private userDmTimestamps: Map<string, number[]> = new Map();
-  private static readonly USER_DM_MAX_PER_MINUTE = 2;
-  private static readonly USER_DM_STUB_MESSAGE = "⏳ Пожалуйста, подождите минуту. Бесплатный лимит: 2 сообщения/мин.\n\nPlease wait a minute. Free limit: 2 messages/min.";
 
   constructor(
     bridge: ITelegramBridge,
@@ -194,7 +190,7 @@ export class MessageHandler {
     this.ownUserId = uid !== undefined ? String(uid) : this.ownUserId;
   }
 
-  setPluginMessageHooks(hooks: Array<(e: PluginMessageEvent) => Promise<void>>): void {
+  setPluginMessageHooks(hooks: Array<(e: PluginMessageEvent) => Promise<string | void>>): void {
     this.pluginMessageHooks = hooks;
   }
 
@@ -337,7 +333,7 @@ export class MessageHandler {
     // 1. Store incoming message to feed FIRST (even if we won't respond)
     await this.storeTelegramMessage(message, false);
 
-    // 1b. Fire plugin onMessage hooks (fire-and-forget, errors caught per plugin)
+    // 1b. Fire plugin onMessage hooks — if a hook returns a string, send it as reply and stop (no LLM call)
     if (this.pluginMessageHooks.length > 0) {
       const event: PluginMessageEvent = {
         chatId: message.chatId,
@@ -350,12 +346,19 @@ export class MessageHandler {
         timestamp: message.timestamp,
       };
       for (const hook of this.pluginMessageHooks) {
-        hook(event).catch((error) => {
+        try {
+          const stubReply = await hook(event);
+          if (typeof stubReply === "string") {
+            log.info(`Plugin hook intercepted message from ${message.senderId}: stub reply`);
+            await this.bridge.sendMessage({ chatId: message.chatId, text: stubReply });
+            return;
+          }
+        } catch (error) {
           log.error(
             { err: error instanceof Error ? error : undefined },
             `Plugin onMessage hook error: ${getErrorMessage(error)}`
           );
-        });
+        }
       }
     }
 
@@ -389,32 +392,6 @@ export class MessageHandler {
     if (message.isGroup && !this.rateLimiter.canSendToGroup(message.chatId)) {
       log.debug(`Group rate limit reached for ${message.chatId}`);
       return;
-    }
-
-    // 3b. Per-user DM rate limit (skip for admins)
-    if (!message.isGroup && !this.config.admin_ids.includes(Number(message.senderId))) {
-      const now = Date.now();
-      const userId = message.senderId;
-      let timestamps = this.userDmTimestamps.get(userId) || [];
-      timestamps = timestamps.filter((t) => t > now - 60_000);
-      if (timestamps.length >= MessageHandler.USER_DM_MAX_PER_MINUTE) {
-        log.info(`User DM rate limit: ${userId} (${timestamps.length} msgs/min)`);
-        try {
-          await this.bridge.sendMessage({
-            chatId: message.chatId,
-            text: MessageHandler.USER_DM_STUB_MESSAGE,
-          });
-        } catch { /* best-effort */ }
-        return;
-      }
-      timestamps.push(now);
-      this.userDmTimestamps.set(userId, timestamps);
-      // Cleanup old users periodically
-      if (this.userDmTimestamps.size > 1000) {
-        for (const [uid, ts] of this.userDmTimestamps) {
-          if (ts.every((t) => t < now - 60_000)) this.userDmTimestamps.delete(uid);
-        }
-      }
     }
 
     // Enqueue for serial processing — messages wait their turn per chat

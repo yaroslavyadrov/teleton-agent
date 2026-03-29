@@ -59,13 +59,13 @@ interface RawPluginExports {
   migrate?: (db: Database.Database) => void;
   start?: (ctx: EnhancedPluginContext) => Promise<void>;
   stop?: () => Promise<void>;
-  onMessage?: (event: PluginMessageEvent) => Promise<void>;
+  onMessage?: (event: PluginMessageEvent) => Promise<string | void>;
   onCallbackQuery?: (event: PluginCallbackEvent) => Promise<void>;
 }
 
 /** Extended PluginModule with event hooks (external plugins only) */
 export interface PluginModuleWithHooks extends PluginModule {
-  onMessage?: (event: PluginMessageEvent) => Promise<void>;
+  onMessage?: (event: PluginMessageEvent) => Promise<string | void>;
   onCallbackQuery?: (event: PluginCallbackEvent) => Promise<void>;
 }
 
