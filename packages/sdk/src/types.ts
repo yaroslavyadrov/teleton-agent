@@ -1855,10 +1855,12 @@ export interface ResponseAfterEvent {
   readonly durationMs: number;
   /** List of tool names called during this response */
   readonly toolsUsed: string[];
-  /** Token usage for this response */
+  /** Token usage for this response (accumulated across all agentic iterations) */
   readonly tokenUsage?: {
     input: number;
     output: number;
+    cacheRead: number;
+    cacheWrite: number;
   };
   /** Metadata passed from response:before */
   readonly metadata: Record<string, unknown>;

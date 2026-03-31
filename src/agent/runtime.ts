@@ -1091,8 +1091,13 @@ export class AgentRuntime {
           durationMs: Date.now() - processStartTime,
           toolsUsed: totalToolCalls.map((tc) => tc.name),
           tokenUsage:
-            accumulatedUsage.input > 0 || accumulatedUsage.output > 0
-              ? { input: accumulatedUsage.input, output: accumulatedUsage.output }
+            accumulatedUsage.input > 0 || accumulatedUsage.output > 0 || accumulatedUsage.cacheRead > 0
+              ? {
+                  input: accumulatedUsage.input,
+                  output: accumulatedUsage.output,
+                  cacheRead: accumulatedUsage.cacheRead,
+                  cacheWrite: accumulatedUsage.cacheWrite,
+                }
               : undefined,
           metadata: responseMetadata,
         };
