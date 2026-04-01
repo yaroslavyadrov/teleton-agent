@@ -13,7 +13,7 @@ import { tools as telegramTools } from "./telegram/index.js";
 // import { tools as dnsTools } from "./dns/index.js";        // Disabled: not needed for HN bot
 // import { tools as stonfiTools } from "./stonfi/index.js";  // Disabled: no DEX swaps
 // import { tools as dedustTools } from "./dedust/index.js";  // Disabled: no DEX swaps
-import { tools as journalTools } from "./journal/index.js";
+// import { tools as journalTools } from "./journal/index.js";  // Disabled: not needed for HN bot
 // import { tools as workspaceTools } from "./workspace/index.js"; // Disabled: no file management
 import { tools as webTools } from "./web/index.js";
 import { tools as botTools } from "./bot/index.js";
@@ -24,7 +24,7 @@ const ALL_CATEGORIES: ToolEntry[][] = [
   // dnsTools,
   // stonfiTools,
   // dedustTools,
-  journalTools,
+  // journalTools,
   // workspaceTools,
   webTools,
   botTools,
