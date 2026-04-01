@@ -443,7 +443,7 @@ export class GrammyBotBridge implements ITelegramBridge {
       senderId: msg.from?.id ?? 0,
       senderUsername: msg.from?.username,
       senderFirstName: msg.from?.first_name,
-      senderLangCode: msg.from?.language_code,
+      senderLangCode: msg.from?.language_code || "en",
       text: msg.text || msg.caption || "",
       isGroup: msg.chat.type === "group" || msg.chat.type === "supergroup",
       isChannel: (msg.chat.type as string) === "channel",
