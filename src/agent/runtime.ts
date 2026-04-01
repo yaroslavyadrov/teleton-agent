@@ -89,6 +89,7 @@ export interface ProcessMessageOptions {
   pendingContext?: string | null;
   toolContext?: Omit<ToolContext, "chatId" | "isGroup">;
   senderUsername?: string;
+  senderLangCode?: string;
   senderRank?: string;
   hasMedia?: boolean;
   mediaType?: string;
@@ -462,6 +463,7 @@ export class AgentRuntime {
         soul: this.soul,
         userName,
         senderUsername,
+        senderLangCode: opts.senderLangCode,
         senderId: toolContext?.senderId,
         ownerName: this.config.telegram.owner_name,
         ownerUsername: this.config.telegram.owner_username,

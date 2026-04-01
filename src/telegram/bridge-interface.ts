@@ -6,6 +6,7 @@ export interface TelegramMessage {
   senderId: number;
   senderUsername?: string;
   senderFirstName?: string;
+  senderLangCode?: string;
   senderRank?: string;
   text: string;
   isGroup: boolean;

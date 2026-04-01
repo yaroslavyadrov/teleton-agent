@@ -188,6 +188,7 @@ export function buildSystemPrompt(options: {
   strategy?: string;
   userName?: string;
   senderUsername?: string;
+  senderLangCode?: string;
   senderId?: number;
   ownerName?: string;
   ownerUsername?: string;
@@ -288,7 +289,8 @@ Use telegram_send_buttons for any interactive choice (pagination, confirmations,
         ? `${primary} (${meta.join(", ")})`
         : primary
       : idTag || "unknown";
-    parts.push(`\n## Current User\nYou are chatting with: ${userLabel}`);
+    const langNote = options.senderLangCode ? ` (language: ${options.senderLangCode})` : "";
+    parts.push(`\n## Current User\nYou are chatting with: ${userLabel}${langNote}`);
   }
 
   if (options.memoryFlushWarning) {
