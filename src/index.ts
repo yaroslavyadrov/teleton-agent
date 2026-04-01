@@ -829,8 +829,11 @@ ${blue}  ┌──────────────────────�
       // Check if this is an admin command
       const adminCmd = this.adminHandler.parseCommand(message.text);
       if (adminCmd && this.adminHandler.isAdmin(message.senderId)) {
-        // /boot passes through to the agent with bootstrap instructions
-        if (adminCmd.command === "boot") {
+        // /start passes through to agent (Telegram deep link: /start <story_id>)
+        if (adminCmd.command === "start") {
+          // Keep original text so agent sees "/start 12345" and can extract the param
+          // Fall through to handleMessage below
+        } else if (adminCmd.command === "boot") {
           const bootstrapContent = this.adminHandler.getBootstrapContent();
           if (bootstrapContent) {
             message.text = bootstrapContent;
