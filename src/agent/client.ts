@@ -266,9 +266,10 @@ export async function chatWithContext(
     cacheRetention: "long",
   };
   // Enable reasoning for reasoning models (e.g. Step 3.5 Flash, DeepSeek R1)
-  // pi-ai reads options.reasoning, maps it to reasoningEffort internally
+  // pi-ai stream() passes options directly to buildParams which checks reasoningEffort
+  // (only streamSimple maps options.reasoning → reasoningEffort)
   if (model.reasoning) {
-    completeOptions.reasoning = "low";
+    completeOptions.reasoningEffort = "low";
   }
   if (isCocoon) {
     const { stripCocoonPayload } = await import("../cocoon/tool-adapter.js");
@@ -369,7 +370,7 @@ export function streamWithContext(config: AgentConfig, options: ChatOptions): St
   };
   // Enable reasoning for reasoning models (e.g. Step 3.5 Flash, DeepSeek R1)
   if (model.reasoning) {
-    streamOptions.reasoning = "low";
+    streamOptions.reasoningEffort = "low";
   }
 
   const eventStream = stream(model, context, streamOptions as ProviderStreamOptions);
