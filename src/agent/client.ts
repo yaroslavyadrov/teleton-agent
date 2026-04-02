@@ -265,6 +265,10 @@ export async function chatWithContext(
     sessionId: options.sessionId,
     cacheRetention: "long",
   };
+  // Enable reasoning for reasoning models (e.g. Step 3.5 Flash, DeepSeek R1)
+  if (model.reasoning) {
+    completeOptions.reasoningEffort = "low";
+  }
   if (isCocoon) {
     const { stripCocoonPayload } = await import("../cocoon/tool-adapter.js");
     completeOptions.onPayload = stripCocoonPayload;
