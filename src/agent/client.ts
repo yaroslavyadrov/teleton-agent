@@ -266,8 +266,9 @@ export async function chatWithContext(
     cacheRetention: "long",
   };
   // Enable reasoning for reasoning models (e.g. Step 3.5 Flash, DeepSeek R1)
+  // pi-ai reads options.reasoning, maps it to reasoningEffort internally
   if (model.reasoning) {
-    completeOptions.reasoningEffort = "low";
+    completeOptions.reasoning = "low";
   }
   if (isCocoon) {
     const { stripCocoonPayload } = await import("../cocoon/tool-adapter.js");
