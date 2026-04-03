@@ -182,7 +182,7 @@ export class AdminHandler {
     const cfg = this.agent.getConfig();
     const valid = ["off", "low", "medium", "high"] as const;
     if (command.args.length === 0) {
-      return `💭 Reasoning effort: **${cfg.agent.reasoning_effort ?? "low"}**\n\nControls thinking depth for reasoning models (o3, R1, etc).\nUsage: /reasoning <${valid.join("|")}>\n• off — no reasoning even if model supports it\n• low/medium/high — thinking depth`;
+      return `💭 Reasoning effort: **${cfg.agent.reasoning_effort ?? "low"}**\n\nControls thinking depth for reasoning models (o3, R1, etc).\nUsage: /reasoning <${valid.join("|")}>\n• off — skip reasoning (may not work with reasoning-only models)\n• low/medium/high — thinking depth`;
     }
     const value = command.args[0].toLowerCase();
     if (!valid.includes(value as typeof valid[number])) {

@@ -55,7 +55,7 @@ export const AgentConfigSchema = z.object({
   reasoning_effort: z
     .enum(["off", "low", "medium", "high"])
     .default("low")
-    .describe("Reasoning effort for thinking models (off = disable reasoning even if model supports it)"),
+    .describe("Reasoning effort for thinking models (off may not work with reasoning-only models like DeepSeek R1)"),
   system_prompt: z.string().nullable().default(null),
   max_agentic_iterations: z
     .number()
