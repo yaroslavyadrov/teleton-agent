@@ -150,7 +150,7 @@ export class MessageHandler {
   private pendingHistory: PendingHistory;
   private db: Database.Database;
   private chatQueue: ChatQueue = new ChatQueue();
-  private pluginMessageHooks: Array<(e: PluginMessageEvent) => Promise<string | void>> = [];
+  private pluginMessageHooks: Array<(e: PluginMessageEvent) => Promise<string | { context: string } | void>> = [];
   private recentMessageIds: Set<string> = new Set();
   private static readonly DEDUP_MAX_SIZE = 500;
 
@@ -190,7 +190,7 @@ export class MessageHandler {
     this.ownUserId = uid !== undefined ? String(uid) : this.ownUserId;
   }
 
-  setPluginMessageHooks(hooks: Array<(e: PluginMessageEvent) => Promise<string | void>>): void {
+  setPluginMessageHooks(hooks: Array<(e: PluginMessageEvent) => Promise<string | { context: string } | void>>): void {
     this.pluginMessageHooks = hooks;
   }
 
@@ -347,11 +347,16 @@ export class MessageHandler {
       };
       for (const hook of this.pluginMessageHooks) {
         try {
-          const stubReply = await hook(event);
-          if (typeof stubReply === "string") {
+          const hookResult = await hook(event);
+          if (typeof hookResult === "string") {
             log.info(`Plugin hook intercepted message from ${message.senderId}: stub reply`);
-            await this.bridge.sendMessage({ chatId: message.chatId, text: stubReply });
+            await this.bridge.sendMessage({ chatId: message.chatId, text: hookResult });
             return;
+          }
+          // Plugin can inject context into the message by returning { context: "..." }
+          if (hookResult && typeof hookResult === "object" && "context" in hookResult) {
+            const ctx = (hookResult as { context: string }).context;
+            if (ctx) message.text = `${message.text}\n\n${ctx}`;
           }
         } catch (error) {
           log.error(
