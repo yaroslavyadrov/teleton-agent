@@ -911,6 +911,7 @@ ${blue}  ┌──────────────────────�
             try {
               const result = await withHooks.onMessage(event);
               if (typeof result === "string") return result;
+              if (result && typeof result === "object" && "context" in result) return result;
             } catch (error: unknown) {
               log.error(`❌ [${mod.name}] onMessage error: ${getErrorMessage(error)}`);
             }
