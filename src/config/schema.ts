@@ -61,6 +61,15 @@ export const AgentConfigSchema = z.object({
     .number()
     .default(5)
     .describe("Maximum number of agentic loop iterations (tool call → result → tool call cycles)"),
+  max_rag_chars: z
+    .number()
+    .int()
+    .min(500)
+    .optional()
+    .describe(
+      "Max characters of RAG context injected per request. " +
+        "Reduces token cost for budget providers. Unset = no limit."
+    ),
   toolset: z
     .string()
     .default("full")

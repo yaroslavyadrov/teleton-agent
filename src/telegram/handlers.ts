@@ -14,6 +14,8 @@ import { telegramTranscribeAudioExecutor } from "../agent/tools/telegram/media/t
 import { TYPING_REFRESH_MS } from "../constants/timeouts.js";
 import { createLogger } from "../utils/logger.js";
 import { getErrorMessage } from "../utils/errors.js";
+import { splitMessageForTelegram } from "./message-splitter.js";
+import { sanitizeMarkdownForTelegram } from "./sanitize-markdown.js";
 
 const log = createLogger("Telegram");
 import type { PluginMessageEvent } from "@teleton-agent/sdk";
@@ -527,36 +529,45 @@ export class MessageHandler {
             response.content &&
             response.content.trim().length > 0
           ) {
-            // Agent returned text but didn't use the send tool - send it manually
-            let responseText = response.content;
+            // Agent returned text but didn't use the send tool - send it manually.
+            // Sanitize markdown (fix unclosed fences, remove empty code blocks) then
+            // split into Telegram-safe parts (≤ max_message_length chars each).
+            const sanitized = sanitizeMarkdownForTelegram(response.content);
+            const parts = splitMessageForTelegram(sanitized, this.config.max_message_length);
 
-            // Truncate if needed
-            if (responseText.length > this.config.max_message_length) {
-              responseText = responseText.slice(0, this.config.max_message_length - 3) + "...";
+            if (parts.length > 1) {
+              log.info(
+                `Response split into ${parts.length} parts for chat ${message.chatId} (original length: ${response.content.length})`
+              );
             }
 
-            const sentMessage = await this.bridge.sendMessage({
-              chatId: message.chatId,
-              text: responseText,
-              replyToId: message.id,
-            });
+            for (let i = 0; i < parts.length; i++) {
+              const part = parts[i];
+              const replyToId = i === 0 ? message.id : undefined;
 
-            // Store agent's response to feed
-            await this.storeTelegramMessage(
-              {
-                id: sentMessage.id,
+              const sentMessage = await this.bridge.sendMessage({
                 chatId: message.chatId,
-                senderId: this.ownUserId ? parseInt(this.ownUserId, 10) : 0,
-                text: responseText,
-                isGroup: message.isGroup,
-                isChannel: message.isChannel,
-                isBot: false,
-                mentionsMe: false,
-                timestamp: new Date(sentMessage.date * 1000),
-                hasMedia: false,
-              },
-              true
-            );
+                text: part,
+                replyToId,
+              });
+
+              // Store each part in the feed
+              await this.storeTelegramMessage(
+                {
+                  id: sentMessage.id,
+                  chatId: message.chatId,
+                  senderId: this.ownUserId ? parseInt(this.ownUserId, 10) : 0,
+                  text: part,
+                  isGroup: message.isGroup,
+                  isChannel: message.isChannel,
+                  isBot: false,
+                  mentionsMe: false,
+                  timestamp: new Date(sentMessage.date * 1000),
+                  hasMedia: false,
+                },
+                true
+              );
+            }
           } else if (
             telegramSendCalled &&
             response.content &&
@@ -598,6 +609,22 @@ export class MessageHandler {
         log.debug(`Processed message ${message.id} in chat ${message.chatId}`);
       } catch (error) {
         log.error({ err: error }, "Error handling message");
+        // Notify the user when the agent hits persistent API rate limits so they
+        // aren't left waiting in silence.
+        if (
+          error instanceof Error &&
+          (error.message.toLowerCase().includes("rate limit") || error.message.includes("429"))
+        ) {
+          try {
+            await this.bridge.sendMessage({
+              chatId: message.chatId,
+              text: "⚠️ The AI service is currently rate limited. Please try again in a moment.",
+              replyToId: message.id,
+            });
+          } catch (sendErr) {
+            log.error({ err: sendErr }, "Failed to send rate-limit error message to user");
+          }
+        }
       }
     });
   }

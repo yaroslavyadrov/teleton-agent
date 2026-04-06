@@ -20,6 +20,7 @@ import {
   getClaudeCodeApiKey,
   refreshClaudeCodeApiKey,
 } from "../providers/claude-code-credentials.js";
+import { LLM_REQUEST_TIMEOUT_MS, LLM_STREAM_TIMEOUT_MS } from "../constants/timeouts.js";
 
 const log = createLogger("LLM");
 
@@ -264,6 +265,7 @@ export async function chatWithContext(
     temperature,
     sessionId: options.sessionId,
     cacheRetention: "long",
+    signal: AbortSignal.timeout(LLM_REQUEST_TIMEOUT_MS),
   };
   // Apply user's reasoning effort preference (pi-ai stream() requires reasoningEffort, not reasoning)
   const reasoningEffort = config.reasoning_effort ?? "low";
@@ -366,6 +368,7 @@ export function streamWithContext(config: AgentConfig, options: ChatOptions): St
     temperature,
     sessionId: options.sessionId,
     cacheRetention: "long",
+    signal: AbortSignal.timeout(LLM_STREAM_TIMEOUT_MS),
   };
   const reasoningEffort = config.reasoning_effort ?? "low";
   if (model.reasoning && reasoningEffort !== "off") {

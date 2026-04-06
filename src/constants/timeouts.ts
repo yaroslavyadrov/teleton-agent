@@ -15,3 +15,7 @@ export const GRAMJS_CONNECT_RETRY_DELAY_MS = 3_000;
 export const TOOL_EXECUTION_TIMEOUT_MS = 90_000;
 export const SHUTDOWN_TIMEOUT_MS = 10_000;
 export const TYPING_REFRESH_MS = 4_000;
+/** Timeout for a single LLM API request; prevents multi-minute hangs on network issues */
+export const LLM_REQUEST_TIMEOUT_MS = 60_000;
+/** Timeout for streaming LLM requests (longer since response generation is incremental) */
+export const LLM_STREAM_TIMEOUT_MS = 180_000;

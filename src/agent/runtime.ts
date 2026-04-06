@@ -10,7 +10,9 @@ import {
   CONTEXT_MAX_RELEVANT_CHUNKS,
   CONTEXT_OVERFLOW_SUMMARY_MESSAGES,
   RATE_LIMIT_MAX_RETRIES,
+  RATE_LIMIT_MAX_BACKOFF_MS,
   SERVER_ERROR_MAX_RETRIES,
+  NETWORK_ERROR_MAX_RETRIES,
   TOOL_CONCURRENCY_LIMIT,
   EMBEDDING_QUERY_MAX_CHARS,
 } from "../constants/limits.js";
@@ -71,6 +73,10 @@ import {
   isContextOverflowError,
   isTrivialMessage,
   extractContextSummary,
+  parseRetryAfterMs,
+  isNetworkError,
+  isNetworkErrorMessage,
+  trimRagContext,
 } from "./runtime-utils.js";
 import { truncateToolResult } from "./tool-result-truncator.js";
 import { accumulateTokenUsage } from "./token-usage.js";
@@ -106,6 +112,34 @@ export interface AgentResponse {
     input: Record<string, unknown>;
   }>;
   streamed?: boolean;
+}
+
+/**
+ * Generate a human-readable summary from tool execution results.
+ * Used as a fallback when the LLM returns no text after tool calls.
+ */
+function generateToolSummary(
+  results: Array<{ toolName: string; result: { success: boolean; data?: unknown; error?: string } }>
+): string {
+  const successes = results.filter((r) => r.result.success);
+  const failures = results.filter((r) => !r.result.success);
+
+  if (failures.length === 0) {
+    const names = successes.map((r) => r.toolName).join(", ");
+    return `✅ Completed ${successes.length} operation${successes.length !== 1 ? "s" : ""} (${names}).`;
+  } else if (successes.length === 0) {
+    const errors = failures
+      .map((r) => `${r.toolName}: ${r.result.error || "unknown error"}`)
+      .join("; ");
+    return `⚠️ ${failures.length} operation${failures.length !== 1 ? "s" : ""} failed: ${errors}`;
+  } else {
+    const errorDetails = failures
+      .map((r) => `${r.toolName}: ${r.result.error || "unknown error"}`)
+      .join("; ");
+    return (
+      `✅ ${successes.length} succeeded, ⚠️ ${failures.length} failed. ` + `Errors: ${errorDetails}`
+    );
+  }
 }
 
 /** Compact summary of tool params for the iteration log line. */
@@ -441,6 +475,15 @@ export class AgentRuntime {
         }
       }
 
+      // Trim RAG context to configured budget to reduce token cost and response latency
+      const maxRagChars = this.config.agent.max_rag_chars;
+      if (maxRagChars !== undefined && relevantContext.length > maxRagChars) {
+        log.info(
+          `RAG context trimmed: ${relevantContext.length} → ${maxRagChars} chars (max_rag_chars limit)`
+        );
+      }
+      relevantContext = trimRagContext(relevantContext, maxRagChars);
+
       const memoryStats = this.getMemoryStats();
       const statsContext = `[Memory Status: ${memoryStats.totalMessages} messages across ${memoryStats.totalChats} chats, ${memoryStats.knowledgeChunks} knowledge chunks]`;
 
@@ -562,8 +605,13 @@ export class AgentRuntime {
       let overflowResets = 0;
       let rateLimitRetries = 0;
       let serverErrorRetries = 0;
+      let networkErrorRetries = 0;
       let finalResponse: ChatResponse | null = null;
       const totalToolCalls: Array<{ name: string; input: Record<string, unknown> }> = [];
+      const allToolExecResults: Array<{
+        toolName: string;
+        result: { success: boolean; data?: unknown; error?: string };
+      }> = [];
       const accumulatedTexts: string[] = [];
       const accumulatedUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalCost: 0 };
       const seenToolSignatures = new Set<string>();
@@ -595,6 +643,21 @@ export class AgentRuntime {
         });
         const maskedContext: Context = { ...context, messages: maskedMessages };
 
+        // For complex tool chains (4+ calls), reinforce the "always respond with text"
+        // instruction since LLMs tend to skip text generation when context is large.
+        let effectiveSystemPrompt = systemPrompt;
+        if (totalToolCalls.length >= 4) {
+          effectiveSystemPrompt +=
+            "\n\n⚠️ IMPORTANT: You MUST generate a human-readable summary now. " +
+            "After all tool executions, always respond with: " +
+            "1) Brief confirmation of what was completed, " +
+            "2) Key results in plain language, " +
+            "3) Any next steps or questions for the user. Never return empty content.";
+          log.debug(
+            `Injecting response reinforcement (${totalToolCalls.length} tool calls so far)`
+          );
+        }
+
         let response: ChatResponse;
         let streamed = false;
 
@@ -604,71 +667,87 @@ export class AgentRuntime {
           streamMode !== undefined &&
           streamMode !== "off";
 
-        if (shouldStream) {
-          const { isBotBridge } = await import("../telegram/bridge-guards.js");
-
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream check
-          const bridge = opts.streamToChat!.bridge;
-          if (isBotBridge(bridge)) {
-            if (streamMode === "replace") {
-              // Reset draft for each iteration (new draft bubble)
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream
-              bridge.resetDraft(opts.streamToChat!.chatId);
-              streamAccumulatedText = "";
-            }
-
-            const { textStream, result } = streamWithContext(this.config.agent, {
-              systemPrompt,
-              context: maskedContext,
-              sessionId: session.sessionId,
-              persistTranscript: true,
-              tools,
-            });
-
-            // "all" mode: prepend accumulated text from previous iterations
-            const prefix = streamMode === "all" ? streamAccumulatedText : "";
-            async function* prefixedStream(): AsyncIterable<string> {
-              let first = true;
-              for await (const chunk of textStream) {
-                if (first && prefix) {
-                  yield prefix + chunk;
-                  first = false;
-                } else {
-                  yield chunk;
-                }
-              }
-            }
+        try {
+          if (shouldStream) {
+            const { isBotBridge } = await import("../telegram/bridge-guards.js");
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream check
-            const draftText = await bridge.streamDraft(opts.streamToChat!.chatId, prefixedStream());
-            if (streamMode === "all") {
-              if (draftText.length === 0 && streamAccumulatedText.length > 0) {
-                // LLM produced only tool calls — clear the stale draft bubble
+            const bridge = opts.streamToChat!.bridge;
+            if (isBotBridge(bridge)) {
+              if (streamMode === "replace") {
+                // Reset draft for each iteration (new draft bubble)
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream
-                await bridge.clearDraft(opts.streamToChat!.chatId);
+                bridge.resetDraft(opts.streamToChat!.chatId);
+                streamAccumulatedText = "";
               }
-              streamAccumulatedText = draftText + "\n\n";
-            }
 
-            response = await result;
+              const { textStream, result } = streamWithContext(this.config.agent, {
+                systemPrompt: effectiveSystemPrompt,
+                context: maskedContext,
+                sessionId: session.sessionId,
+                persistTranscript: true,
+                tools,
+              });
+
+              // "all" mode: prepend accumulated text from previous iterations
+              const prefix = streamMode === "all" ? streamAccumulatedText : "";
+              async function* prefixedStream(): AsyncIterable<string> {
+                let first = true;
+                for await (const chunk of textStream) {
+                  if (first && prefix) {
+                    yield prefix + chunk;
+                    first = false;
+                  } else {
+                    yield chunk;
+                  }
+                }
+              }
+
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream check
+              const draftText = await bridge.streamDraft(opts.streamToChat!.chatId, prefixedStream());
+              if (streamMode === "all") {
+                if (draftText.length === 0 && streamAccumulatedText.length > 0) {
+                  // LLM produced only tool calls — clear the stale draft bubble
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by shouldStream
+                  await bridge.clearDraft(opts.streamToChat!.chatId);
+                }
+                streamAccumulatedText = draftText + "\n\n";
+              }
+
+              response = await result;
+            } else {
+              response = await chatWithContext(this.config.agent, {
+                systemPrompt: effectiveSystemPrompt,
+                context: maskedContext,
+                sessionId: session.sessionId,
+                persistTranscript: true,
+                tools,
+              });
+            }
+            streamed = true;
           } else {
             response = await chatWithContext(this.config.agent, {
-              systemPrompt,
+              systemPrompt: effectiveSystemPrompt,
               context: maskedContext,
               sessionId: session.sessionId,
               persistTranscript: true,
               tools,
             });
           }
-          streamed = true;
-        } else {
-          response = await chatWithContext(this.config.agent, {
-            systemPrompt,
-            context: maskedContext,
-            sessionId: session.sessionId,
-            persistTranscript: true,
-            tools,
-          });
+        } catch (llmError) {
+          // Catch thrown network errors (TimeoutError, AbortError, fetch failures)
+          if (isNetworkError(llmError)) {
+            networkErrorRetries++;
+            if (networkErrorRetries <= NETWORK_ERROR_MAX_RETRIES) {
+              const delay = 2000 * Math.pow(2, networkErrorRetries - 1);
+              log.warn(
+                `Network error (thrown), retrying in ${delay}ms (attempt ${networkErrorRetries}/${NETWORK_ERROR_MAX_RETRIES}): ${llmError instanceof Error ? llmError.message : llmError}`
+              );
+              await new Promise((r) => setTimeout(r, delay));
+              continue;
+            }
+          }
+          throw llmError;
         }
 
         const assistantMsg = response.message;
@@ -732,7 +811,13 @@ export class AgentRuntime {
           } else if (errorMsg.toLowerCase().includes("rate") || errorMsg.includes("429")) {
             rateLimitRetries++;
             if (rateLimitRetries <= RATE_LIMIT_MAX_RETRIES) {
-              const delay = 1000 * Math.pow(2, rateLimitRetries - 1);
+              // Respect Retry-After hint from the API if present
+              const retryAfterMs = parseRetryAfterMs(errorMsg);
+              const backoffDelay = Math.min(
+                1000 * Math.pow(2, rateLimitRetries - 1),
+                RATE_LIMIT_MAX_BACKOFF_MS
+              );
+              const delay = retryAfterMs ?? backoffDelay;
               log.warn(
                 `Rate limited, retrying in ${delay}ms (attempt ${rateLimitRetries}/${RATE_LIMIT_MAX_RETRIES})...`
               );
@@ -742,6 +827,21 @@ export class AgentRuntime {
             log.error(`Rate limited after ${RATE_LIMIT_MAX_RETRIES} retries: ${errorMsg}`);
             throw new Error(
               `API rate limited after ${RATE_LIMIT_MAX_RETRIES} retries. Please try again later.`
+            );
+          } else if (isNetworkErrorMessage(errorMsg)) {
+            // Network error returned as stopReason:"error" (e.g. ZAI provider)
+            networkErrorRetries++;
+            if (networkErrorRetries <= NETWORK_ERROR_MAX_RETRIES) {
+              const delay = 2000 * Math.pow(2, networkErrorRetries - 1);
+              log.warn(
+                `Network error, retrying in ${delay}ms (attempt ${networkErrorRetries}/${NETWORK_ERROR_MAX_RETRIES})...`
+              );
+              await new Promise((r) => setTimeout(r, delay));
+              continue;
+            }
+            log.error(`Network error after ${NETWORK_ERROR_MAX_RETRIES} retries: ${errorMsg}`);
+            throw new Error(
+              `Network error after ${NETWORK_ERROR_MAX_RETRIES} retries. Please check connectivity.`
             );
           } else if (
             errorMsg.includes("500") ||
@@ -929,6 +1029,10 @@ export class AgentRuntime {
             name: block.name,
             input: plan.params,
           });
+          allToolExecResults.push({
+            toolName: block.name,
+            result: { success: exec.result.success, error: exec.result.error },
+          });
 
           const resultText = truncateToolResult(exec.result, MAX_TOOL_RESULT_SIZE);
           if (resultText.includes('"_truncated":true')) {
@@ -1046,16 +1150,16 @@ export class AgentRuntime {
 
       const usedTelegramSendTool = totalToolCalls.some((tc) => TELEGRAM_SEND_TOOLS.has(tc.name));
 
-      if (!content && totalToolCalls.length > 0 && !usedTelegramSendTool) {
-        log.warn("Empty response after tool calls - generating fallback");
-        content =
-          "I executed the requested action but couldn't generate a response. Please try again.";
+      if (!content && accumulatedUsage.input === 0 && accumulatedUsage.output === 0) {
+        log.warn("Empty response with zero tokens - possible API issue");
+        content = "I couldn't process your request. Please try again.";
       } else if (!content && usedTelegramSendTool) {
         log.info("Response sent via Telegram tool - no additional text needed");
         content = "";
-      } else if (!content && accumulatedUsage.input === 0 && accumulatedUsage.output === 0) {
-        log.warn("Empty response with zero tokens - possible API issue");
-        content = "I couldn't process your request. Please try again.";
+      } else if (!content && totalToolCalls.length > 0) {
+        log.warn("Empty response after tool calls - generating fallback");
+        content = generateToolSummary(allToolExecResults);
+        log.info(`Generated fallback summary from ${allToolExecResults.length} tool result(s)`);
       }
 
       // Hook: response:before — plugins can mutate or block the response text

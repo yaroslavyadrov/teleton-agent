@@ -1,5 +1,48 @@
 import type { Context, TextContent, ToolCall } from "@mariozechner/pi-ai";
 
+/**
+ * Extracts the Retry-After value (in milliseconds) from an error message if the
+ * API includes one (e.g. "retry-after: 30" or "Retry-After: 60").
+ * Returns null if no Retry-After hint is present.
+ */
+export function parseRetryAfterMs(errorMessage: string): number | null {
+  const match = errorMessage.match(/retry.after[:\s]+(\d+)/i);
+  return match ? Number(match[1]) * 1000 : null;
+}
+
+/**
+ * Returns true for errors thrown by the provider library that indicate a
+ * transient network-level failure (e.g. "Unhandled stop reason: network_error").
+ * Also handles AbortError/TimeoutError thrown when the LLM request timeout fires.
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  // AbortSignal.timeout() throws a DOMException with name "TimeoutError"
+  if ("name" in error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+    return true;
+  }
+  return isNetworkErrorMessage(error.message);
+}
+
+/**
+ * Returns true if an error message string indicates a transient network-level
+ * failure. Used for both thrown exceptions (isNetworkError) and stopReason:"error"
+ * responses where errorMessage contains network error details.
+ */
+export function isNetworkErrorMessage(message: string): boolean {
+  const msg = message.toLowerCase();
+  return (
+    msg.includes("network_error") ||
+    msg.includes("econnreset") ||
+    msg.includes("econnrefused") ||
+    msg.includes("etimedout") ||
+    msg.includes("fetch failed") ||
+    msg.includes("unhandled stop reason") ||
+    msg.includes("connection error") ||
+    msg.includes("request timed out")
+  );
+}
+
 export function isContextOverflowError(errorMessage?: string): boolean {
   if (!errorMessage) return false;
   const lower = errorMessage.toLowerCase();
@@ -57,4 +100,14 @@ export function extractContextSummary(context: Context, maxMessages: number = 10
   }
 
   return summaryParts.join("\n");
+}
+
+/**
+ * Trims RAG context to `maxChars` to reduce token cost and response latency.
+ * Returns the original string unchanged if `maxChars` is undefined or the
+ * string is already within budget.
+ */
+export function trimRagContext(context: string, maxChars: number | undefined): string {
+  if (maxChars === undefined || context.length <= maxChars) return context;
+  return context.slice(0, maxChars) + "\n...[context trimmed]";
 }

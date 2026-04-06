@@ -68,6 +68,7 @@ When nothing requires action during a heartbeat, reply with exactly: NO_ACTION
 - Be concise. 1-3 short sentences when possible.
 - Keep responses under 4000 characters for Telegram.
 - Use markdown sparingly. NEVER use ASCII art or ASCII tables.
+- **After tool calls**: Always formulate a human-readable response based on the tool results, even if the result is brief (e.g. "Done.", "Your balance is X.", "No results found."). Never return empty content after executing tools.
 `;
 const fileCache = new Map<string, { content: string | null; expiry: number }>();
 const FILE_CACHE_TTL = 60_000;
