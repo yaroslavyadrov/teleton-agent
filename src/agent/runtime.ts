@@ -608,6 +608,7 @@ export class AgentRuntime {
       let serverErrorRetries = 0;
       let networkErrorRetries = 0;
       let emptyResponseRetries = 0;
+      let modelDeprecatedRetried = false;
       let finalResponse: ChatResponse | null = null;
       const totalToolCalls: Array<{ name: string; input: Record<string, unknown> }> = [];
       const allToolExecResults: Array<{
@@ -867,6 +868,22 @@ export class AgentRuntime {
             throw new Error(
               `API server error after ${SERVER_ERROR_MAX_RETRIES} retries. The provider may be experiencing issues.`
             );
+          } else if (
+            errorMsg.includes("404") &&
+            (errorMsg.includes("deprecated") || errorMsg.includes("not found") || errorMsg.includes("does not exist"))
+          ) {
+            // Model deprecated/removed — switch to provider's default model and retry once
+            if (!modelDeprecatedRetried) {
+              modelDeprecatedRetried = true;
+              const fallbackModel = providerMeta.defaultModel;
+              log.warn(
+                `Model deprecated (${this.config.agent.model}), switching to fallback: ${fallbackModel}`
+              );
+              this.config.agent.model = fallbackModel;
+              continue;
+            }
+            log.error(`Fallback model also failed: ${errorMsg}`);
+            throw new Error(`API error: ${errorMsg || "Unknown error"}`);
           } else {
             log.error(`API error: ${errorMsg}`);
             throw new Error(`API error: ${errorMsg || "Unknown error"}`);
