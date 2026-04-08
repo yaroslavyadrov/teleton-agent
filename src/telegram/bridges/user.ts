@@ -104,13 +104,11 @@ export class GramJSUserBridge implements ITelegramBridge {
           rows: options.inlineKeyboard.map(
             (row) =>
               new Api.KeyboardButtonRow({
-                buttons: row.map(
-                  (btn) =>
-                    new Api.KeyboardButtonCallback({
-                      text: btn.text,
-                      data: Buffer.from(btn.callback_data),
-                    })
-                ),
+                buttons: row.map((btn) => {
+                  if (btn.url) return new Api.KeyboardButtonUrl({ text: btn.text, url: btn.url });
+                  if (btn.web_app) return new Api.KeyboardButtonWebView({ text: btn.text, url: btn.web_app.url });
+                  return new Api.KeyboardButtonCallback({ text: btn.text, data: Buffer.from(btn.callback_data || "") });
+                }),
               })
           ),
         });
@@ -157,13 +155,11 @@ export class GramJSUserBridge implements ITelegramBridge {
           rows: options.inlineKeyboard.map(
             (row) =>
               new Api.KeyboardButtonRow({
-                buttons: row.map(
-                  (btn) =>
-                    new Api.KeyboardButtonCallback({
-                      text: btn.text,
-                      data: Buffer.from(btn.callback_data),
-                    })
-                ),
+                buttons: row.map((btn) => {
+                  if (btn.url) return new Api.KeyboardButtonUrl({ text: btn.text, url: btn.url });
+                  if (btn.web_app) return new Api.KeyboardButtonWebView({ text: btn.text, url: btn.web_app.url });
+                  return new Api.KeyboardButtonCallback({ text: btn.text, data: Buffer.from(btn.callback_data || "") });
+                }),
               })
           ),
         });

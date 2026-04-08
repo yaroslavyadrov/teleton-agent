@@ -606,12 +606,16 @@ export interface SDKPaymentVerification {
 
 // ─── Telegram Types ──────────────────────────────────────────────
 
-/** A single inline keyboard button */
+/** A single inline keyboard button. Exactly one of callback_data, url, or web_app must be set. */
 export interface InlineButton {
   /** Button label text */
   text: string;
   /** Callback data sent when button is pressed */
-  callback_data: string;
+  callback_data?: string;
+  /** URL to open when button is pressed */
+  url?: string;
+  /** Mini App to open when button is pressed */
+  web_app?: { url: string };
 }
 
 /** Options for sending a message */

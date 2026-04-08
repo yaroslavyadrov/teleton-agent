@@ -29,6 +29,8 @@ export class GrammyBotBridge implements ITelegramBridge {
   private connected = false;
   private botPromise: Promise<void> | undefined;
   private callbackHandler: ((msg: TelegramMessage) => void) | undefined;
+  private paymentHandler: ((userId: number, payment: import("@grammyjs/types").SuccessfulPayment) => void | Promise<void>) | undefined;
+  private paymentCallbackHandler: ((ctx: Context) => void | Promise<void>) | undefined;
   private activeDraftIds: Map<string, number> = new Map();
 
   constructor(config: GrammyBotBridgeConfig) {
@@ -488,11 +490,44 @@ export class GrammyBotBridge implements ITelegramBridge {
       }
     );
 
+    // Pre-checkout query — must respond within 10s, no async work
+    this.bot.on("pre_checkout_query", async (ctx) => {
+      try {
+        await ctx.answerPreCheckoutQuery(true);
+      } catch (err) {
+        log.error({ err }, "Failed to answer pre_checkout_query");
+      }
+    });
+
+    // Successful payment — dispatch to payment handler if registered
+    this.bot.on("message:successful_payment", async (ctx) => {
+      const payment = ctx.message?.successful_payment;
+      if (!payment) return;
+      if (this.paymentHandler) {
+        try {
+          await this.paymentHandler(ctx.from.id, payment);
+        } catch (err) {
+          log.error({ err }, "Error in payment handler");
+        }
+      }
+    });
+
     // Callback handler — resolves nonces from telegram_send_buttons, reinjects as synthetic messages
     this.bot.on("callback_query:data", async (ctx) => {
       await ctx.answerCallbackQuery();
 
       const data = ctx.callbackQuery.data;
+
+      // Payment callback — buy one answer
+      if (data === "buy_one_answer" && this.paymentCallbackHandler) {
+        try {
+          await this.paymentCallbackHandler(ctx);
+        } catch (err) {
+          log.error({ err }, "Error in payment callback handler");
+        }
+        return;
+      }
+
       if (data?.startsWith("btn:") && this.callbackHandler) {
         const from = ctx.callbackQuery.from;
         const chat = ctx.callbackQuery.message?.chat;
@@ -543,6 +578,21 @@ export class GrammyBotBridge implements ITelegramBridge {
     this.callbackHandler = handler;
   }
 
+  /** Set handler for successful Star payments */
+  setPaymentHandler(handler: (userId: number, payment: import("@grammyjs/types").SuccessfulPayment) => void | Promise<void>): void {
+    this.paymentHandler = handler;
+  }
+
+  /** Set handler for payment-related callback queries (e.g. buy_one_answer) */
+  setPaymentCallbackHandler(handler: (ctx: Context) => void | Promise<void>): void {
+    this.paymentCallbackHandler = handler;
+  }
+
+  /** Get the underlying Grammy Bot instance (for sendInvoice, createInvoiceLink, etc.) */
+  getBot(): Bot {
+    return this.bot;
+  }
+
   /** Sync admin commands to Telegram's slash-command menu via setMyCommands */
   async syncCommands(): Promise<void> {
     const commands = [
@@ -576,7 +626,13 @@ export class GrammyBotBridge implements ITelegramBridge {
     const kb = new InlineKeyboard();
     for (const row of buttons) {
       for (const btn of row) {
-        kb.text(btn.text, btn.callback_data);
+        if (btn.url) {
+          kb.url(btn.text, btn.url);
+        } else if (btn.web_app) {
+          kb.webApp(btn.text, btn.web_app.url);
+        } else if (btn.callback_data) {
+          kb.text(btn.text, btn.callback_data);
+        }
       }
       kb.row();
     }

@@ -23,7 +23,9 @@ export interface TelegramMessage {
 
 export interface InlineButton {
   text: string;
-  callback_data: string;
+  callback_data?: string;
+  url?: string;
+  web_app?: { url: string };
 }
 
 export interface SendMessageOptions {
