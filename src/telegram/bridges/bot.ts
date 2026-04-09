@@ -514,7 +514,7 @@ export class GrammyBotBridge implements ITelegramBridge {
 
     // Callback handler — resolves nonces from telegram_send_buttons, reinjects as synthetic messages
     this.bot.on("callback_query:data", async (ctx) => {
-      await ctx.answerCallbackQuery();
+      try { await ctx.answerCallbackQuery(); } catch { /* query may be expired */ }
 
       const data = ctx.callbackQuery.data;
 
