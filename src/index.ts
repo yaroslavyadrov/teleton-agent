@@ -827,6 +827,98 @@ ${blue}  ┌──────────────────────�
       if (links.basic) process.env.STARS_BASIC_LINK = links.basic;
       if (links.pro) process.env.STARS_PRO_LINK = links.pro;
     });
+
+    // ── PaymentGate: pre-message filter ────────────────────────────
+    // Runs BEFORE debouncer/agent. Returns true to block the message.
+    const FREE_LIMIT = parseInt(process.env.HN_FREE_LIMIT || "3");
+    const FREE_WINDOW_SEC = parseInt(process.env.HN_FREE_WINDOW_SEC || "86400");
+    const adminIds = (process.env.ADMIN_IDS || "").split(",").map(Number).filter(Boolean);
+    const miniAppUrl = process.env.PAYMENT_MINIAPP_URL || `https://t.me/${process.env.SUBSCRIPTION_BOT_USERNAME || "hn_premium_bot"}/pay`;
+
+    bridge.setPreMessageFilter(async (userId, chatId, text) => {
+      // Service deep links — don't rate-limit
+      if (text?.startsWith("/start pay")) return true; // miniapp deep link, silently drop
+
+      // Admins always pass
+      if (adminIds.includes(userId)) return false;
+
+      let db: import("better-sqlite3").Database | null = null;
+      try {
+        const Database = (await import("better-sqlite3")).default;
+        db = new Database(PLUGIN_DB_PATH);
+        const uid = String(userId);
+        const now = Math.floor(Date.now() / 1000);
+
+        // Priority 1: Stars subscription
+        const starsSub = db.prepare(
+          "SELECT daily_limit FROM stars_subscriptions WHERE user_id = ? AND expires_at > ? ORDER BY created_at DESC LIMIT 1",
+        ).get(uid, now) as { daily_limit: number } | undefined;
+        if (starsSub) {
+          const cutoff = now - 86400;
+          const used = (db.prepare("SELECT COUNT(*) as cnt FROM usage_tracking WHERE user_id = ? AND created_at > ?").get(uid, cutoff) as { cnt: number }).cnt;
+          if (used < starsSub.daily_limit) return false; // within limit
+        }
+
+        // Priority 2: Stars credits
+        const credits = (db.prepare("SELECT credits FROM stars_credits WHERE user_id = ?").get(uid) as { credits: number } | undefined)?.credits || 0;
+        if (credits > 0) return false; // has credits, plugin will decrement
+
+        // Priority 3: Free tier
+        const cutoff = now - FREE_WINDOW_SEC;
+        const freeUsed = (db.prepare("SELECT COUNT(*) as cnt FROM usage_tracking WHERE user_id = ? AND created_at > ?").get(uid, cutoff) as { cnt: number }).cnt;
+        if (freeUsed < FREE_LIMIT) return false; // within free tier
+
+        // Over all limits — send paywall and BLOCK
+        // Delete old paywall (anti-spam)
+        const pending = db.prepare("SELECT paywall_message_id FROM pending_messages WHERE user_id = ?").get(uid) as { paywall_message_id: number | null } | undefined;
+        if (pending?.paywall_message_id) {
+          try { await bot.api.deleteMessage(Number(chatId), pending.paywall_message_id); } catch { /* may be deleted */ }
+        }
+
+        // Save pending message
+        const deepLinkParam = (text || "").match(/^\/start\s+(\S+)/)?.[1] || null;
+        db.prepare(
+          "INSERT OR REPLACE INTO pending_messages (user_id, chat_id, message_text, deep_link_param, paywall_message_id, created_at) VALUES (?, ?, ?, ?, NULL, ?)",
+        ).run(uid, chatId, text || "", deepLinkParam, now);
+
+        // Detect language for localized paywall
+        const userLang = (db.prepare("SELECT lang FROM user_lang WHERE user_id = ?").get(uid) as { lang: string } | undefined)?.lang;
+        const paywallText = userLang === "ru"
+          ? "Лимит исчерпан. Оформите подписку или купите один ответ:"
+          : "Daily limit reached. Subscribe or buy a single answer:";
+
+        const links = await getInvoiceLinks();
+        const basicUrl = links.basic || miniAppUrl;
+        const proUrl = links.pro || miniAppUrl;
+
+        // Send paywall via bot.api (guaranteed delivery, no hook issues)
+        const sent = await bot.api.sendMessage(Number(chatId), paywallText, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "⭐ Basic — 10/day (200 ★/mo)", url: basicUrl },
+                { text: "⭐ Pro — 30/day (400 ★/mo)", url: proUrl },
+              ],
+              [
+                { text: "💎 Pay with TON", url: miniAppUrl },
+                { text: "⭐ Buy one answer (5 ★)", callback_data: "buy_one_answer" },
+              ],
+            ],
+          },
+        });
+
+        // Save paywall message ID for delete+send pattern
+        db.prepare("UPDATE pending_messages SET paywall_message_id = ? WHERE user_id = ?").run(sent.message_id, uid);
+
+        log.info(`[PaymentGate] Paywall sent to ${userId}, message blocked`);
+        return true; // BLOCK
+      } catch (err) {
+        log.error({ err }, "[PaymentGate] Error, allowing message through");
+        return false; // fail open
+      } finally {
+        try { db?.close(); } catch { /* */ }
+      }
+    });
   }
 
   /**

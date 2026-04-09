@@ -31,6 +31,7 @@ export class GrammyBotBridge implements ITelegramBridge {
   private callbackHandler: ((msg: TelegramMessage) => void) | undefined;
   private paymentHandler: ((userId: number, payment: import("@grammyjs/types").SuccessfulPayment) => void | Promise<void>) | undefined;
   private paymentCallbackHandler: ((ctx: Context) => void | Promise<void>) | undefined;
+  private preMessageFilter: ((userId: number, chatId: string, text: string, ctx: Context) => Promise<boolean>) | undefined;
   private activeDraftIds: Map<string, number> = new Map();
 
   constructor(config: GrammyBotBridgeConfig) {
@@ -482,6 +483,19 @@ export class GrammyBotBridge implements ITelegramBridge {
 
         if (filters?.chats && !filters.chats.includes(msg.chatId)) return;
 
+        // PaymentGate: block message before it reaches the debouncer/agent
+        if (this.preMessageFilter) {
+          try {
+            const blocked = await this.preMessageFilter(msg.senderId, msg.chatId, msg.text, ctx);
+            if (blocked) {
+              log.info(`[PaymentGate] Blocked message from ${msg.senderId}`);
+              return;
+            }
+          } catch (err) {
+            log.error({ err }, "[PaymentGate] Filter error, allowing message through");
+          }
+        }
+
         try {
           await handler(msg);
         } catch (err) {
@@ -586,6 +600,14 @@ export class GrammyBotBridge implements ITelegramBridge {
   /** Set handler for payment-related callback queries (e.g. buy_one_answer) */
   setPaymentCallbackHandler(handler: (ctx: Context) => void | Promise<void>): void {
     this.paymentCallbackHandler = handler;
+  }
+
+  /**
+   * Set a pre-message filter (PaymentGate). Runs BEFORE the message enters the
+   * debouncer/agent. Return true to block the message (e.g. paywall sent).
+   */
+  setPreMessageFilter(filter: (userId: number, chatId: string, text: string, ctx: Context) => Promise<boolean>): void {
+    this.preMessageFilter = filter;
   }
 
   /** Get the underlying Grammy Bot instance (for sendInvoice, createInvoiceLink, etc.) */
