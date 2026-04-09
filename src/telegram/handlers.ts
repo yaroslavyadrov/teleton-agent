@@ -355,6 +355,11 @@ export class MessageHandler {
             await this.bridge.sendMessage({ chatId: message.chatId, text: hookResult });
             return;
           }
+          // Plugin can silently block a message (e.g. paywall already sent via sdk.telegram)
+          if (hookResult && typeof hookResult === "object" && "block" in hookResult && (hookResult as { block: boolean }).block) {
+            log.info(`Plugin hook blocked message from ${message.senderId}: ${(hookResult as { reason?: string }).reason || "no reason"}`);
+            return;
+          }
           // Plugin can inject context into the message by returning { context: "..." }
           if (hookResult && typeof hookResult === "object" && "context" in hookResult) {
             const ctx = (hookResult as { context: string }).context;
