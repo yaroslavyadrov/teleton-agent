@@ -835,6 +835,22 @@ ${blue}  ┌──────────────────────�
     const adminIds = (process.env.ADMIN_IDS || "").split(",").map(Number).filter(Boolean);
     const miniAppUrl = process.env.PAYMENT_MINIAPP_URL || `https://t.me/${process.env.SUBSCRIPTION_BOT_USERNAME || "hn_premium_bot"}/pay`;
 
+    const paymentApiUrl = process.env.PAYMENT_API_URL || "http://payment_api:3000";
+    const paymentApiKey = process.env.PAYMENT_API_KEY || "";
+
+    async function checkTonBalance(uid: number): Promise<{ hasChannel: boolean; canAfford?: boolean }> {
+      try {
+        const res = await fetch(`${paymentApiUrl}/api/internal/balance/${uid}`, {
+          headers: { "X-API-Key": paymentApiKey },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) return { hasChannel: false };
+        return await res.json() as { hasChannel: boolean; canAfford?: boolean };
+      } catch {
+        return { hasChannel: false };
+      }
+    }
+
     bridge.setPreMessageFilter(async (userId, chatId, text) => {
       // Service deep links — don't rate-limit
       if (text?.startsWith("/start pay")) return true; // miniapp deep link, silently drop
@@ -849,7 +865,7 @@ ${blue}  ┌──────────────────────�
         const uid = String(userId);
         const now = Math.floor(Date.now() / 1000);
 
-        // Priority 1: Stars subscription
+        // Priority 1: Stars subscription (within daily limit)
         const starsSub = db.prepare(
           "SELECT daily_limit FROM stars_subscriptions WHERE user_id = ? AND expires_at > ? ORDER BY created_at DESC LIMIT 1",
         ).get(uid, now) as { daily_limit: number } | undefined;
@@ -857,13 +873,18 @@ ${blue}  ┌──────────────────────�
           const cutoff = now - 86400;
           const used = (db.prepare("SELECT COUNT(*) as cnt FROM usage_tracking WHERE user_id = ? AND created_at > ?").get(uid, cutoff) as { cnt: number }).cnt;
           if (used < starsSub.daily_limit) return false; // within limit
+          // Stars limit exhausted — fall through to TON
         }
 
-        // Priority 2: Stars credits
+        // Priority 2: TON payment channel (fallback for exhausted Stars, or standalone premium)
+        const tonBal = await checkTonBalance(userId);
+        if (tonBal.hasChannel && tonBal.canAfford) return false; // premium, plugin bills in response:after
+
+        // Priority 3: Stars credits
         const credits = (db.prepare("SELECT credits FROM stars_credits WHERE user_id = ?").get(uid) as { credits: number } | undefined)?.credits || 0;
         if (credits > 0) return false; // has credits, plugin will decrement
 
-        // Priority 3: Free tier
+        // Priority 4: Free tier
         const cutoff = now - FREE_WINDOW_SEC;
         const freeUsed = (db.prepare("SELECT COUNT(*) as cnt FROM usage_tracking WHERE user_id = ? AND created_at > ?").get(uid, cutoff) as { cnt: number }).cnt;
         if (freeUsed < FREE_LIMIT) return false; // within free tier
