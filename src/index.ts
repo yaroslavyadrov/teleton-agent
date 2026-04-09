@@ -633,13 +633,13 @@ ${blue}  ┌──────────────────────�
       if (invoiceLinks.basic) return invoiceLinks;
       try {
         invoiceLinks.basic = await bot.api.createInvoiceLink(
-          "Echo Basic", "5 requests per day", "sub_basic", "", "XTR",
-          [{ label: "Monthly", amount: 75 }],
+          "Echo Basic", "10 requests per day", "sub_basic", "", "XTR",
+          [{ label: "Monthly", amount: 200 }],
           { subscription_period: 2592000 },
         );
         invoiceLinks.pro = await bot.api.createInvoiceLink(
-          "Echo Pro", "20 requests per day", "sub_pro", "", "XTR",
-          [{ label: "Monthly", amount: 150 }],
+          "Echo Pro", "30 requests per day", "sub_pro", "", "XTR",
+          [{ label: "Monthly", amount: 400 }],
           { subscription_period: 2592000 },
         );
         log.info(`[stars] Invoice links generated: basic=${invoiceLinks.basic?.slice(0, 40)}...`);
@@ -667,7 +667,7 @@ ${blue}  ┌──────────────────────�
         if (payment.is_first_recurring) {
           // New subscription
           const tier = payload === "sub_pro" ? "pro" : "basic";
-          const dailyLimit = tier === "pro" ? 20 : 5;
+          const dailyLimit = tier === "pro" ? 30 : 10;
           const expiresAt = payment.subscription_expiration_date || (Math.floor(Date.now() / 1000) + 2592000);
 
           // Cancel other active subscriptions for this user
