@@ -1220,28 +1220,25 @@ export class AgentRuntime {
         responseMetadata = responseBeforeEvent.metadata;
       }
 
-      // Hook: response:after — analytics, billing, feedback
-      if (this.hookRunner) {
-        const responseAfterEvent: ResponseAfterEvent = {
-          chatId,
-          sessionId: session.sessionId,
-          isGroup: effectiveIsGroup,
-          text: content,
-          durationMs: Date.now() - processStartTime,
-          toolsUsed: totalToolCalls.map((tc) => tc.name),
-          tokenUsage:
-            accumulatedUsage.input > 0 || accumulatedUsage.output > 0 || accumulatedUsage.cacheRead > 0
-              ? {
-                  input: accumulatedUsage.input,
-                  output: accumulatedUsage.output,
-                  cacheRead: accumulatedUsage.cacheRead,
-                  cacheWrite: accumulatedUsage.cacheWrite,
-                }
-              : undefined,
-          metadata: responseMetadata,
-        };
-        await this.hookRunner.runObservingHook("response:after", responseAfterEvent);
-      }
+      // Build response:after event (run after finalizeDraft so upsell appears after the answer)
+      const responseAfterEvent: ResponseAfterEvent | null = this.hookRunner ? {
+        chatId,
+        sessionId: session.sessionId,
+        isGroup: effectiveIsGroup,
+        text: content,
+        durationMs: Date.now() - processStartTime,
+        toolsUsed: totalToolCalls.map((tc) => tc.name),
+        tokenUsage:
+          accumulatedUsage.input > 0 || accumulatedUsage.output > 0 || accumulatedUsage.cacheRead > 0
+            ? {
+                input: accumulatedUsage.input,
+                output: accumulatedUsage.output,
+                cacheRead: accumulatedUsage.cacheRead,
+                cacheWrite: accumulatedUsage.cacheWrite,
+              }
+            : undefined,
+        metadata: responseMetadata,
+      } : null;
 
       // Finalize streaming draft — clear bubble, send final message only if no send tool was used
       if (wasStreamed && opts.streamToChat) {
@@ -1255,6 +1252,11 @@ export class AgentRuntime {
             await bridge.finalizeDraft(opts.streamToChat.chatId, content);
           }
         }
+      }
+
+      // Hook: response:after — runs AFTER finalizeDraft
+      if (this.hookRunner && responseAfterEvent) {
+        await this.hookRunner.runObservingHook("response:after", responseAfterEvent);
       }
 
       return {
