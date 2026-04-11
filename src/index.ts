@@ -893,8 +893,31 @@ ${blue}  ┌──────────────────────�
         const credits = (db.prepare("SELECT credits FROM stars_credits WHERE user_id = ?").get(uid) as { credits: number } | undefined)?.credits || 0;
         if (credits > 0) return false; // has credits, plugin will decrement
 
-        // Groups: only premium users can interact (no free tier, no paywall spam)
+        // Groups: only premium users can interact
         if (isGroup) {
+          // Notify once per user per 24h, then silently ignore
+          const groupNotifyKey = `group_notify_${uid}`;
+          const lastNotify = db.prepare("SELECT created_at FROM pending_messages WHERE user_id = ? AND chat_id = ?").get(groupNotifyKey, chatId) as { created_at: number } | undefined;
+          if (!lastNotify || (now - lastNotify.created_at) > 86400) {
+            db.prepare("INSERT OR REPLACE INTO pending_messages (user_id, chat_id, message_text, created_at) VALUES (?, ?, '', ?)").run(groupNotifyKey, chatId, now);
+            try {
+              const userLang = (db.prepare("SELECT lang FROM user_lang WHERE user_id = ?").get(uid) as { lang: string } | undefined)?.lang;
+              const notifyText = userLang === "ru"
+                ? "В группах Echo работает только для подписчиков. Напишите мне в личку — 3 запроса бесплатно, или оформите подписку:"
+                : "Echo works in groups for subscribers only. DM me for 3 free requests, or subscribe:";
+              await bot.api.sendMessage(Number(chatId), notifyText, {
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: "💬 Open DM", url: `https://t.me/${process.env.SUBSCRIPTION_BOT_USERNAME || "hn_premium_bot"}` }],
+                    [
+                      { text: "⭐ Basic (200 ★/mo)", url: links.basic || miniAppUrl },
+                      { text: "⭐ Pro (400 ★/mo)", url: links.pro || miniAppUrl },
+                    ],
+                  ],
+                },
+              });
+            } catch { /* best-effort */ }
+          }
           log.info(`[PaymentGate] Blocked non-premium user ${userId} in group ${chatId}`);
           return true;
         }
