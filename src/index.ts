@@ -725,6 +725,8 @@ ${blue}  ┌──────────────────────�
         // Replay pending message
         if (pending) {
           db.prepare("DELETE FROM pending_messages WHERE user_id = ?").run(String(userId));
+          // Reset group notify throttle so next group message shows paywall again
+          db.prepare("DELETE FROM pending_messages WHERE user_id = ?").run(`group_notify_${userId}`);
           const replayText = pending.deep_link_param
             ? `/start ${pending.deep_link_param}`
             : pending.message_text;
