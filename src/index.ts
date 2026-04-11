@@ -733,12 +733,13 @@ ${blue}  ┌──────────────────────�
 
           // Inject as synthetic message into debouncer
           if (this.debouncer) {
+            const isGroupChat = pending.chat_id.startsWith("-");
             const syntheticMsg: TelegramMessage = {
               id: 0,
               text: replayText,
               senderId: userId,
               chatId: pending.chat_id,
-              isGroup: false,
+              isGroup: isGroupChat,
               isChannel: false,
               isBot: false,
               mentionsMe: true,
