@@ -627,6 +627,19 @@ ${blue}  ┌──────────────────────�
   private wireStarsPayments(bridge: import("./telegram/bridges/bot.js").GrammyBotBridge): void {
     const PLUGIN_DB_PATH = `${process.env.TELETON_HOME || "/data"}/plugins/data/hackernews.db`;
     const bot = bridge.getBot();
+    let _dbMigrated = false;
+    function ensureMigration(db: import("better-sqlite3").Database): void {
+      if (_dbMigrated) return;
+      try {
+        const cols = db.prepare("PRAGMA table_info(stars_credits)").all() as { name: string }[];
+        if (!cols.some(c => c.name === "chat_id")) {
+          db.exec("DROP TABLE IF EXISTS stars_credits; CREATE TABLE stars_credits (user_id TEXT NOT NULL, chat_id TEXT NOT NULL DEFAULT '', credits INTEGER NOT NULL DEFAULT 0, last_purchase_at INTEGER, PRIMARY KEY (user_id, chat_id))");
+          db.exec("DROP TABLE IF EXISTS pending_messages; CREATE TABLE pending_messages (user_id TEXT NOT NULL, chat_id TEXT NOT NULL, message_text TEXT NOT NULL DEFAULT '', deep_link_param TEXT, paywall_message_id INTEGER, created_at INTEGER NOT NULL, PRIMARY KEY (user_id, chat_id))");
+          log.info("[PaymentGate] Migrated DB to composite PK");
+        }
+      } catch { /* table may not exist yet — plugin migrate() will create it */ }
+      _dbMigrated = true;
+    }
 
     // Generate invoice links on first call (lazy)
     let invoiceLinks: { basic?: string; pro?: string } = {};
@@ -656,6 +669,7 @@ ${blue}  ┌──────────────────────�
       try {
         const Database = (await import("better-sqlite3")).default;
         db = new Database(PLUGIN_DB_PATH);
+        ensureMigration(db);
       } catch (err) {
         log.error({ err }, "[stars] Cannot open plugin DB");
         return;
@@ -887,6 +901,8 @@ ${blue}  ┌──────────────────────�
       try {
         const Database = (await import("better-sqlite3")).default;
         db = new Database(PLUGIN_DB_PATH);
+        ensureMigration(db);
+
         const uid = String(userId);
         const now = Math.floor(Date.now() / 1000);
 
