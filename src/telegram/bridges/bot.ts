@@ -412,8 +412,12 @@ export class GrammyBotBridge implements ITelegramBridge {
             break;
           }
         } else if (entity.type === "bot_command") {
-          mentionsMe = true;
-          break;
+          // In groups, only match /command@our_bot or /command (without @)
+          const cmdText = (msg.text || "").slice(entity.offset, entity.offset + entity.length);
+          if (!cmdText.includes("@") || cmdText.toLowerCase().includes(`@${botUsername}`)) {
+            mentionsMe = true;
+            break;
+          }
         }
       }
     }
