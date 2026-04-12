@@ -491,8 +491,9 @@ export class MessageHandler {
             ? `🎤 (voice): ${transcriptionText}${message.text ? `\n${message.text}` : ""}`
             : message.text;
           const streamMode = this.fullConfig?.telegram?.stream_mode ?? "all";
+          const isReplay = message.id === -1;
           const streamToChat =
-            this.bridge.getMode() === "bot" && this.bridge.streamResponse && streamMode !== "off"
+            !isReplay && this.bridge.getMode() === "bot" && this.bridge.streamResponse && streamMode !== "off"
               ? {
                   chatId: message.chatId,
                   bridge: this.bridge,
