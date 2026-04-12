@@ -558,7 +558,7 @@ ${blue}  ┌──────────────────────�
       { debounceMs: this.config.telegram.debounce_ms },
       (msg) => {
         if (!msg.isGroup) return false;
-        if (msg.id === -1) return false; // paid replay — process immediately
+        if (msg.id < 0) return false; // paid replay — process immediately
         if (msg.text.startsWith("/")) {
           const adminCmd = this.adminHandler.parseCommand(msg.text);
           if (adminCmd && this.adminHandler.isAdmin(msg.senderId)) return false;
@@ -765,9 +765,9 @@ ${blue}  ┌──────────────────────�
           // Call handleSingleMessage directly — bypass debouncer to avoid
           // group debounce/chatQueue issues with synthetic messages
           const isGroupChat = pending.chat_id.startsWith("-");
-          const isGroupReplay = isGroupChat;
+          const replayId = -(Date.now() % 1000000); // unique negative id for dedup
           const syntheticMsg: TelegramMessage = {
-            id: -1,
+            id: replayId,
             text: replayText,
             senderId: userId,
             chatId: pending.chat_id,
@@ -1232,7 +1232,7 @@ ${blue}  ┌──────────────────────�
    * Handle a single message (extracted for debouncer callback)
    */
   private async handleSingleMessage(message: TelegramMessage): Promise<void> {
-    if (message.id === -1) {
+    if (message.id < 0) {
       log.info(`[Replay] handleSingleMessage entered for ${message.senderId} in ${message.chatId}`);
     }
     this.messagesProcessed++;

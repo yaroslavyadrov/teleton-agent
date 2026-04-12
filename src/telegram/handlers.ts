@@ -407,7 +407,7 @@ export class MessageHandler {
     }
 
     // Enqueue for serial processing — messages wait their turn per chat
-    const isReplayMsg = message.id === -1;
+    const isReplayMsg = message.id < 0;
     if (isReplayMsg) log.info(`[Replay] chatQueue.enqueue for ${message.chatId}`);
     await this.chatQueue.enqueue(message.chatId, async () => {
       if (isReplayMsg) log.info(`[Replay] chatQueue task started for ${message.chatId}`);
@@ -494,7 +494,7 @@ export class MessageHandler {
             ? `🎤 (voice): ${transcriptionText}${message.text ? `\n${message.text}` : ""}`
             : message.text;
           const streamMode = this.fullConfig?.telegram?.stream_mode ?? "all";
-          const isReplay = message.id === -1;
+          const isReplay = message.id < 0;
           const streamToChat =
             !isReplay && this.bridge.getMode() === "bot" && this.bridge.streamResponse && streamMode !== "off"
               ? {
