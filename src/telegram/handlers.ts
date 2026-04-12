@@ -407,7 +407,10 @@ export class MessageHandler {
     }
 
     // Enqueue for serial processing — messages wait their turn per chat
+    const isReplayMsg = message.id === -1;
+    if (isReplayMsg) log.info(`[Replay] chatQueue.enqueue for ${message.chatId}`);
     await this.chatQueue.enqueue(message.chatId, async () => {
+      if (isReplayMsg) log.info(`[Replay] chatQueue task started for ${message.chatId}`);
       try {
         // Re-check offset after queue wait to prevent duplicate processing
         // (GramJS may fire duplicate NewMessage events during reconnection)
@@ -519,6 +522,7 @@ export class MessageHandler {
             streamToChat,
           });
 
+          if (isReplayMsg) log.info(`[Replay] processMessage done, handling response`);
           // 8. Handle response based on whether tools were used
           const hasToolCalls = response.toolCalls && response.toolCalls.length > 0;
 
@@ -527,8 +531,10 @@ export class MessageHandler {
             hasToolCalls && response.toolCalls?.some((tc) => TELEGRAM_SEND_TOOLS.has(tc.name));
 
           if (isSilentReply(response.content)) {
+            if (isReplayMsg) log.info(`[Replay] Silent reply suppressed`);
             log.debug("Silent reply suppressed");
           } else if (response.streamed) {
+            if (isReplayMsg) log.info(`[Replay] Response already streamed`);
             log.debug("Response already streamed to chat");
           } else if (
             !telegramSendCalled &&
@@ -551,10 +557,11 @@ export class MessageHandler {
               const part = parts[i];
               const replyToId = i === 0 ? message.id : undefined;
 
+              if (isReplayMsg) log.info(`[Replay] sendMessage part ${i+1}/${parts.length} to ${message.chatId}`);
               const sentMessage = await this.bridge.sendMessage({
                 chatId: message.chatId,
                 text: part,
-                replyToId,
+                replyToId: isReplayMsg ? undefined : replyToId, // don't reply to id=-1
               });
 
               // Store each part in the feed
@@ -612,8 +619,10 @@ export class MessageHandler {
           if (typingInterval) clearInterval(typingInterval);
         }
 
+        if (isReplayMsg) log.info(`[Replay] chatQueue task completed for ${message.chatId}`);
         log.debug(`Processed message ${message.id} in chat ${message.chatId}`);
       } catch (error) {
+        if (isReplayMsg) log.error({ err: error }, `[Replay] chatQueue task ERROR for ${message.chatId}`);
         log.error({ err: error }, "Error handling message");
         // Notify the user when the agent hits persistent API rate limits so they
         // aren't left waiting in silence.
