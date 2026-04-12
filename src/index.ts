@@ -630,6 +630,9 @@ ${blue}  ┌──────────────────────�
     let _dbMigrated = false;
     function ensureMigration(db: import("better-sqlite3").Database): void {
       if (_dbMigrated) return;
+      // Enable WAL mode + busy timeout to prevent SQLITE_BUSY with concurrent connections
+      try { db.pragma("journal_mode = WAL"); } catch { /* */ }
+      try { db.pragma("busy_timeout = 5000"); } catch { /* */ }
       try {
         const cols = db.prepare("PRAGMA table_info(stars_credits)").all() as { name: string }[];
         if (!cols.some(c => c.name === "chat_id")) {
