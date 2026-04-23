@@ -194,6 +194,16 @@ export function getProviderModel(provider: SupportedProvider, modelId: string): 
       }
     }
 
+    // OpenRouter: if model still not found, create a generic passthrough
+    // OpenRouter API accepts any valid model ID — pi-ai catalog doesn't need to know it
+    if (!model && provider === "openrouter") {
+      const anyKnown = getModel(meta.piAiProvider as any, meta.defaultModel as any);
+      if (anyKnown) {
+        model = { ...anyKnown, id: modelId } as typeof anyKnown;
+        log.info(`Model ${modelId} not in SDK catalog — using generic OpenRouter passthrough`);
+      }
+    }
+
     if (!model) {
       throw new Error(`getModel returned undefined for ${provider}/${modelId}`);
     }
