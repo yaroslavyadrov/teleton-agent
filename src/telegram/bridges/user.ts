@@ -20,6 +20,19 @@ export type { TelegramMessage, InlineButton, SendMessageOptions } from "../bridg
 
 const log = createLogger("Telegram");
 
+// Bot reply routing: when a chatId has a bot reply function, sendMessage routes through the bot
+const _botReplyMap = new Map<string, (text: string, opts?: { inlineKeyboard?: InlineButton[][] }) => Promise<number>>();
+
+/** Route sendMessage for this chatId through the bot instead of MTProto */
+export function setBotReply(chatId: string, fn: (text: string, opts?: { inlineKeyboard?: InlineButton[][] }) => Promise<number>): void {
+  _botReplyMap.set(chatId, fn);
+}
+
+/** Remove bot reply routing for this chatId */
+export function clearBotReply(chatId: string): void {
+  _botReplyMap.delete(chatId);
+}
+
 function toGramJSMarkup(keyboard: InlineButton[][]): Api.ReplyInlineMarkup {
   return new Api.ReplyInlineMarkup({
     rows: keyboard.map(
@@ -109,6 +122,18 @@ export class GramJSUserBridge implements ITelegramBridge {
   async sendMessage(
     options: SendMessageOptions & { _rawPeer?: Api.TypePeer }
   ): Promise<SentMessage> {
+    // Route through bot if this chatId is proxied
+    const botReply = _botReplyMap.get(options.chatId);
+    if (botReply) {
+      try {
+        const msgId = await botReply(options.text, { inlineKeyboard: options.inlineKeyboard });
+        return { id: msgId, date: Math.floor(Date.now() / 1000), chatId: options.chatId };
+      } catch (err) {
+        log.warn(`[bot-proxy] Bot reply failed for ${options.chatId}, falling back to MTProto: ${(err as Error).message}`);
+        // Fall through to MTProto
+      }
+    }
+
     try {
       const peer = options._rawPeer || this.peerCache.get(options.chatId) || options.chatId;
 

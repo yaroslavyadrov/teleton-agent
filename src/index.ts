@@ -6,6 +6,7 @@ import { AgentRuntime } from "./agent/runtime.js";
 import type { TelegramMessage } from "./telegram/bridge.js";
 import type { ITelegramBridge } from "./telegram/bridge-interface.js";
 import { isBotBridge, isUserBridge } from "./telegram/bridge-guards.js";
+import { setBotReply, clearBotReply } from "./telegram/bridges/user.js";
 import { createBridge } from "./telegram/factory.js";
 import { eventBus } from "./events/bus.js";
 import { MessageHandler } from "./telegram/handlers.js";
@@ -1011,6 +1012,33 @@ ${blue}  ┌──────────────────────�
       this.sdkDeps.rateLimiter = rateLimiter;
       inlineRouter.setGramJSBot(activeDealBot.getGramJSBot());
       log.info("Bot SDK: inline router installed");
+
+      // Proxy: bot receives text messages → agent processes → bot replies
+      activeDealBot.setTextMessageHandler(async (msg, bot) => {
+        const chatId = msg.chatId;
+
+        // Route agent responses through bot for this chatId
+        setBotReply(chatId, async (text, opts) => {
+          const sent = await bot.api.sendMessage(Number(chatId), text, {
+            parse_mode: "HTML",
+            reply_markup: opts?.inlineKeyboard?.length
+              ? { inline_keyboard: opts.inlineKeyboard.map(row =>
+                  row.map(btn => btn.url ? { text: btn.text, url: btn.url } : { text: btn.text, callback_data: btn.callback_data || "noop" })
+                ) }
+              : undefined,
+          });
+          return sent.message_id;
+        });
+
+        try {
+          await this.handleSingleMessage(msg);
+        } finally {
+          // Clear after response (allow small delay for streaming/multi-message responses)
+          setTimeout(() => clearBotReply(chatId), 30000);
+        }
+      });
+
+      log.info("Bot proxy: text messages routed through DealBot → agent");
     }
 
     if (firstStart && isUserBridge(this.bridge)) {

@@ -6,6 +6,7 @@
 import { Bot, type MiddlewareFn, type Context } from "grammy";
 import { Api } from "telegram";
 import type Database from "better-sqlite3";
+import type { TelegramMessage } from "../telegram/bridge-interface.js";
 import type { BotConfig, DealContext } from "./types.js";
 import { DEAL_VERIFICATION_WINDOW_SECONDS } from "../constants/limits.js";
 import { decodeCallback } from "./types.js";
@@ -45,6 +46,8 @@ export class DealBot {
   private config: BotConfig;
   private gramjsBot: GramJSBotClient | null = null;
 
+  private onTextMessage: ((msg: TelegramMessage, botApi: Bot) => Promise<void>) | null = null;
+
   constructor(config: BotConfig, db: Database.Database, preMiddleware?: MiddlewareFn<Context>) {
     this.config = config;
     this.db = db;
@@ -60,6 +63,11 @@ export class DealBot {
     }
 
     this.setupHandlers();
+  }
+
+  /** Set handler for proxying text messages to the agent */
+  setTextMessageHandler(handler: (msg: TelegramMessage, botApi: Bot) => Promise<void>): void {
+    this.onTextMessage = handler;
   }
 
   private setupHandlers(): void {
@@ -259,6 +267,31 @@ export class DealBot {
         case "refresh":
           await this.handleRefresh(ctx, deal);
           break;
+      }
+    });
+
+    // Proxy text messages to the agent (user mode: bot receives, agent processes)
+    this.bot.on("message:text", async (ctx) => {
+      if (!this.onTextMessage) return;
+
+      const msg: TelegramMessage = {
+        id: ctx.message.message_id,
+        chatId: String(ctx.chat.id),
+        senderId: ctx.from.id,
+        senderUsername: ctx.from.username,
+        text: ctx.message.text,
+        isGroup: ctx.chat.type !== "private",
+        isChannel: ctx.chat.type === "channel",
+        isBot: false,
+        mentionsMe: true,
+        timestamp: new Date(ctx.message.date * 1000),
+        hasMedia: false,
+      };
+
+      try {
+        await this.onTextMessage(msg, this.bot);
+      } catch (err) {
+        log.error({ err }, `[Bot] Text message proxy failed for user ${ctx.from.id}`);
       }
     });
 
