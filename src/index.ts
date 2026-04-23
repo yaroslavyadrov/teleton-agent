@@ -940,45 +940,9 @@ ${blue}  ┌──────────────────────�
           return false; // not mentioned, skip PaymentGate
         }
 
-        // Groups: only premium users can interact
+        // Groups: free users allowed (free model), same as DM
         if (isGroup) {
-          // Save pending message for replay after payment
-          const deepLinkParam = (text || "").match(/^\/start\s+(\S+)/)?.[1] || null;
-          db.prepare(
-            "INSERT OR REPLACE INTO pending_messages (user_id, chat_id, message_text, deep_link_param, paywall_message_id, created_at) VALUES (?, ?, ?, ?, NULL, ?)",
-          ).run(uid, chatId, text || "", deepLinkParam, now);
-
-          // Notify once per user per 24h, then silently ignore
-          const groupNotifyKey = `group_notify_${uid}`;
-          const lastNotify = db.prepare("SELECT created_at FROM pending_messages WHERE user_id = ? AND chat_id = ?").get(groupNotifyKey, chatId) as { created_at: number } | undefined;
-          if (!lastNotify || (now - lastNotify.created_at) > 86400) {
-            db.prepare("INSERT OR REPLACE INTO pending_messages (user_id, chat_id, message_text, created_at) VALUES (?, ?, '', ?)").run(groupNotifyKey, chatId, now);
-            try {
-              const groupLinks = await getInvoiceLinks();
-              const userLang = (db.prepare("SELECT lang FROM user_lang WHERE user_id = ?").get(uid) as { lang: string } | undefined)?.lang;
-              const notifyText = userLang === "ru"
-                ? "В группах Echo работает только для подписчиков. Оформите подписку:"
-                : "Echo works in groups for subscribers only. Subscribe to use:";
-              const groupPaywall = await bot.api.sendMessage(Number(chatId), notifyText, {
-                reply_markup: {
-                  inline_keyboard: [
-                    [
-                      { text: "⭐ Basic — 10/day (200 ★/mo)", url: groupLinks.basic || miniAppUrl },
-                      { text: "⭐ Pro — 30/day (400 ★/mo)", url: groupLinks.pro || miniAppUrl },
-                    ],
-                    [
-                      { text: "💎 Pay with TON", url: miniAppUrl },
-                      { text: "⭐ Buy one answer (15 ★)", callback_data: "buy_one_answer" },
-                    ],
-                  ],
-                },
-              });
-              // Save paywall message ID so it gets deleted after payment
-              db.prepare("UPDATE pending_messages SET paywall_message_id = ? WHERE user_id = ? AND chat_id = ?").run(groupPaywall.message_id, uid, chatId);
-            } catch { /* best-effort */ }
-          }
-          log.info(`[PaymentGate] Blocked non-premium user ${userId} in group ${chatId}`);
-          return true;
+          return false;
         }
 
         // Priority 4: Free tier (DM only)
@@ -1002,24 +966,16 @@ ${blue}  ┌──────────────────────�
         // Detect language for localized paywall
         const userLang = (db.prepare("SELECT lang FROM user_lang WHERE user_id = ?").get(uid) as { lang: string } | undefined)?.lang;
         const paywallText = userLang === "ru"
-          ? "Лимит исчерпан. Оформите подписку или купите один ответ:"
-          : "Daily limit reached. Subscribe or buy a single answer:";
-
-        const links = await getInvoiceLinks();
-        const basicUrl = links.basic || miniAppUrl;
-        const proUrl = links.pro || miniAppUrl;
+          ? "Для этой функции нужен премиум:"
+          : "This feature requires premium:";
 
         // Send paywall via bot.api (guaranteed delivery, no hook issues)
         const sent = await bot.api.sendMessage(Number(chatId), paywallText, {
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⭐ Basic — 10/day (200 ★/mo)", url: basicUrl },
-                { text: "⭐ Pro — 30/day (400 ★/mo)", url: proUrl },
-              ],
-              [
-                { text: "💎 Pay with TON", url: miniAppUrl },
                 { text: "⭐ Buy one answer (15 ★)", callback_data: "buy_one_answer" },
+                { text: "💎 Pay with TON", url: miniAppUrl },
               ],
             ],
           },
