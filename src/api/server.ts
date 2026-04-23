@@ -18,6 +18,7 @@ import type { ApiServerDeps } from "./deps.js";
 import { createDepsAdapter } from "./deps.js";
 import type { ApiConfig } from "../config/schema.js";
 import type { StateChangeEvent } from "../agent/lifecycle.js";
+import type Database from "better-sqlite3";
 import { createProblem } from "./schemas/common.js";
 
 // Middleware
@@ -398,20 +399,20 @@ export class ApiServer {
           chatId: adminId,
           userMessage: message,
           userName: "system-cron",
-          timestamp: new Date(),
+          timestamp: Date.now(),
           isGroup: false,
           isHeartbeat: true, // skip user hooks, treat as system message
           toolContext: {
-            bridge: this.deps.bridge!,
-            db: (this.deps.memory?.db ?? null) as any,
-            senderId: adminId,
-            config: {} as any,
+            bridge: this.deps.bridge ?? (undefined as never),
+            db: (this.deps.memory?.db ?? null) as unknown as Database.Database,
+            senderId: Number(adminId) || 0,
+            config: {} as never,
           },
         });
         return c.json({ success: true, response: result.content?.slice(0, 200) });
-      } catch (err: any) {
+      } catch (err: unknown) {
         log.error({ err }, "POST /api/message failed");
-        return c.json({ error: err.message }, 500);
+        return c.json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
       }
     });
 

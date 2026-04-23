@@ -68,7 +68,7 @@ export function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Config {
   config.storage.memory_file = expandPath(config.storage.memory_file);
 
   if (env.TELETON_PROVIDER) {
-    config.agent.provider = env.TELETON_PROVIDER;
+    config.agent.provider = env.TELETON_PROVIDER as typeof config.agent.provider;
   }
   if (env.TELETON_MODEL) {
     config.agent.model = env.TELETON_MODEL;

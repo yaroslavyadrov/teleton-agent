@@ -276,11 +276,10 @@ export class DealBot {
 
       const isGroup = ctx.chat.type !== "private";
       const botUsername = this.config.username;
-      const isMentioned = botUsername
-        ? ctx.message.text.includes(`@${botUsername}`)
-        : false;
-      const isReply = !!ctx.message.reply_to_message?.from?.is_bot
-        && ctx.message.reply_to_message?.from?.username === botUsername;
+      const isMentioned = botUsername ? ctx.message.text.includes(`@${botUsername}`) : false;
+      const isReply =
+        !!ctx.message.reply_to_message?.from?.is_bot &&
+        ctx.message.reply_to_message?.from?.username === botUsername;
 
       const msg: TelegramMessage = {
         id: ctx.message.message_id,
@@ -291,7 +290,7 @@ export class DealBot {
         senderLangCode: ctx.from.language_code,
         text: ctx.message.text,
         isGroup,
-        isChannel: ctx.chat.type === "channel",
+        isChannel: false, // bots don't receive messages in channels
         isBot: false,
         mentionsMe: !isGroup || isMentioned || isReply,
         timestamp: new Date(ctx.message.date * 1000),
