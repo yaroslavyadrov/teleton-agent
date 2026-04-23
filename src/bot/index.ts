@@ -274,6 +274,14 @@ export class DealBot {
     this.bot.on("message:text", async (ctx) => {
       if (!this.onTextMessage) return;
 
+      const isGroup = ctx.chat.type !== "private";
+      const botUsername = this.config.username;
+      const isMentioned = botUsername
+        ? ctx.message.text.includes(`@${botUsername}`)
+        : false;
+      const isReply = !!ctx.message.reply_to_message?.from?.is_bot
+        && ctx.message.reply_to_message?.from?.username === botUsername;
+
       const msg: TelegramMessage = {
         id: ctx.message.message_id,
         chatId: String(ctx.chat.id),
@@ -282,12 +290,13 @@ export class DealBot {
         senderFirstName: ctx.from.first_name,
         senderLangCode: ctx.from.language_code,
         text: ctx.message.text,
-        isGroup: ctx.chat.type !== "private",
+        isGroup,
         isChannel: ctx.chat.type === "channel",
         isBot: false,
-        mentionsMe: true,
+        mentionsMe: !isGroup || isMentioned || isReply,
         timestamp: new Date(ctx.message.date * 1000),
         hasMedia: false,
+        replyToId: ctx.message.reply_to_message?.message_id,
       };
 
       try {
