@@ -801,7 +801,7 @@ ${blue}  ┌──────────────────────�
       const chatId = ctx.callbackQuery?.message?.chat.id;
       const userId = ctx.from?.id;
       if (!chatId || !userId) return;
-      const amount = userId && TEST_USER_IDS.has(userId) ? 1 : 5;
+      const amount = userId && TEST_USER_IDS.has(userId) ? 1 : 15;
       try {
         const sent = await bot.api.sendInvoice(
           chatId, "One Answer", "Get an answer to your last question", "single_answer", "XTR",
@@ -968,7 +968,7 @@ ${blue}  ┌──────────────────────�
                     ],
                     [
                       { text: "💎 Pay with TON", url: miniAppUrl },
-                      { text: "⭐ Buy one answer (5 ★)", callback_data: "buy_one_answer" },
+                      { text: "⭐ Buy one answer (15 ★)", callback_data: "buy_one_answer" },
                     ],
                   ],
                 },
@@ -1019,7 +1019,7 @@ ${blue}  ┌──────────────────────�
               ],
               [
                 { text: "💎 Pay with TON", url: miniAppUrl },
-                { text: "⭐ Buy one answer (5 ★)", callback_data: "buy_one_answer" },
+                { text: "⭐ Buy one answer (15 ★)", callback_data: "buy_one_answer" },
               ],
             ],
           },
