@@ -1170,9 +1170,16 @@ ${blue}  ┌──────────────────────�
           return sent.message_id;
         });
 
+        // Send typing indicator while agent processes
+        const typingInterval = setInterval(() => {
+          bot.api.sendChatAction(Number(chatId), "typing").catch(() => {});
+        }, 4000);
+        bot.api.sendChatAction(Number(chatId), "typing").catch(() => {});
+
         try {
           await this.handleSingleMessage(msg);
         } finally {
+          clearInterval(typingInterval);
           clearBotReply(chatId);
         }
       });
