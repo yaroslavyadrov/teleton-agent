@@ -270,6 +270,35 @@ export class DealBot {
       }
     });
 
+    // Handle /start with deep link payload (Grammy filters commands from message:text)
+    this.bot.command("start", async (ctx) => {
+      if (!this.onTextMessage || !ctx.message || !ctx.from) return;
+      const payload = ctx.match; // deep link param after /start
+      const text = payload ? `/start ${payload}` : "/start";
+
+      const msg: TelegramMessage = {
+        id: ctx.message.message_id,
+        chatId: String(ctx.chat.id),
+        senderId: ctx.from.id,
+        senderUsername: ctx.from.username,
+        senderFirstName: ctx.from.first_name,
+        senderLangCode: ctx.from.language_code,
+        text,
+        isGroup: false,
+        isChannel: false,
+        isBot: false,
+        mentionsMe: true,
+        timestamp: new Date(ctx.message.date * 1000),
+        hasMedia: false,
+      };
+
+      try {
+        await this.onTextMessage(msg, this.bot);
+      } catch (err) {
+        log.error({ err }, `[Bot] /start proxy failed for user ${ctx.from.id}`);
+      }
+    });
+
     // Proxy text messages to the agent (user mode: bot receives, agent processes)
     this.bot.on("message:text", async (ctx) => {
       if (!this.onTextMessage) return;
