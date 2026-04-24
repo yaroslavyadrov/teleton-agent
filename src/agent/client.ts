@@ -178,15 +178,19 @@ export function getProviderModel(provider: SupportedProvider, modelId: string): 
     let model = getModel(meta.piAiProvider as any, modelId as any);
 
     // OpenRouter: SDK may only know one variant (:free or paid) — try the other
+
     if (!model && provider === "openrouter") {
       if (!modelId.endsWith(":free")) {
-        const freeVariant = getModel(meta.piAiProvider as any, `${modelId}:free` as any);
+        const freeVariant = getModel(meta.piAiProvider as any, `${modelId}:free` as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         if (freeVariant) {
           model = { ...freeVariant, id: modelId } as typeof freeVariant;
           log.info(`Model ${modelId} resolved via :free variant in SDK`);
         }
       } else {
-        const paidVariant = getModel(meta.piAiProvider as any, modelId.replace(/:free$/, "") as any);
+        const paidVariant = getModel(
+          meta.piAiProvider as any,
+          modelId.replace(/:free$/, "") as any
+        ); // eslint-disable-line @typescript-eslint/no-explicit-any
         if (paidVariant) {
           model = { ...paidVariant, id: modelId } as typeof paidVariant;
           log.info(`Model ${modelId} resolved via paid variant in SDK`);
@@ -197,7 +201,7 @@ export function getProviderModel(provider: SupportedProvider, modelId: string): 
     // OpenRouter: if model still not found, create a generic passthrough
     // OpenRouter API accepts any valid model ID — pi-ai catalog doesn't need to know it
     if (!model && provider === "openrouter") {
-      const anyKnown = getModel(meta.piAiProvider as any, meta.defaultModel as any);
+      const anyKnown = getModel(meta.piAiProvider as any, meta.defaultModel as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       if (anyKnown) {
         model = { ...anyKnown, id: modelId } as typeof anyKnown;
         log.info(`Model ${modelId} not in SDK catalog — using generic OpenRouter passthrough`);
@@ -262,15 +266,19 @@ export async function chatWithContext(
   const provider = (config.provider || "anthropic") as SupportedProvider;
   const model = getProviderModel(provider, config.model);
   const isCocoon = provider === "cocoon";
+  const isQwen = /qwen/i.test(config.model || "");
 
   let tools =
     provider === "google" && options.tools ? sanitizeToolsForGemini(options.tools) : options.tools;
 
-  // Cocoon: disable thinking mode + inject tools into system prompt
+  // Disable thinking mode for Qwen models (prevents COT leaking as markdown text)
   let systemPrompt = options.systemPrompt || options.context.systemPrompt || "";
+  if (isCocoon || isQwen) {
+    systemPrompt = "/no_think\n" + systemPrompt;
+  }
+  // Cocoon: inject tools into system prompt (no native tool API)
   let cocoonAllowedTools: Set<string> | undefined;
   if (isCocoon) {
-    systemPrompt = "/no_think\n" + systemPrompt;
     if (tools && tools.length > 0) {
       cocoonAllowedTools = new Set(tools.map((t) => t.name));
       const { injectToolsIntoSystemPrompt } = await import("../cocoon/tool-adapter.js");
@@ -376,11 +384,15 @@ export interface StreamResult {
 export function streamWithContext(config: AgentConfig, options: ChatOptions): StreamResult {
   const provider = (config.provider || "anthropic") as SupportedProvider;
   const model = getProviderModel(provider, config.model);
+  const isQwen = /qwen/i.test(config.model || "");
 
   const tools =
     provider === "google" && options.tools ? sanitizeToolsForGemini(options.tools) : options.tools;
 
-  const systemPrompt = options.systemPrompt || options.context.systemPrompt || "";
+  let systemPrompt = options.systemPrompt || options.context.systemPrompt || "";
+  if (isQwen) {
+    systemPrompt = "/no_think\n" + systemPrompt;
+  }
 
   const context: Context = {
     ...options.context,
@@ -405,17 +417,49 @@ export function streamWithContext(config: AgentConfig, options: ChatOptions): St
 
   const eventStream = stream(model, context, streamOptions as ProviderStreamOptions);
 
-  // Transform event stream into a simple text delta async iterable
+  // Transform event stream into a simple text delta async iterable,
+  // filtering out <think> blocks that some models (Qwen, DeepSeek) emit
   async function* textDeltas(): AsyncIterable<string> {
+    let insideThink = false;
+    let buf = "";
     for await (const event of eventStream) {
       if (event.type === "text_delta" && event.delta) {
-        yield event.delta;
+        buf += event.delta;
+        // Check for <think> open tag
+        while (buf.length > 0) {
+          if (insideThink) {
+            const closeIdx = buf.indexOf("</think>");
+            if (closeIdx === -1) {
+              buf = "";
+              break;
+            } // still inside, consume all
+            buf = buf.slice(closeIdx + 8); // skip past </think>
+            insideThink = false;
+          } else {
+            const openIdx = buf.indexOf("<think>");
+            if (openIdx === -1) {
+              // No tag found — but keep last 6 chars in case partial "<think" spans chunks
+              if (buf.length > 6) {
+                yield buf.slice(0, -6);
+                buf = buf.slice(-6);
+              }
+              break;
+            }
+            // Yield text before <think>
+            if (openIdx > 0) yield buf.slice(0, openIdx);
+            buf = buf.slice(openIdx + 7); // skip past <think>
+            insideThink = true;
+          }
+        }
       }
       // Stop yielding text when tool calls start — the response needs full processing
       if (event.type === "toolcall_start") {
+        if (!insideThink && buf.length > 0) yield buf;
         return;
       }
     }
+    // Flush remaining buffer
+    if (!insideThink && buf.length > 0) yield buf;
   }
 
   // Result promise: wait for the stream to complete and build ChatResponse
