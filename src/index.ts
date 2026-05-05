@@ -648,6 +648,14 @@ ${blue}  ┌──────────────────────�
       } catch {
         /* table may not exist yet — plugin migrate() will create it */
       }
+      // Invoice tracking for conversion analytics
+      try {
+        db.exec(
+          "CREATE TABLE IF NOT EXISTS invoice_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, chat_id TEXT NOT NULL, event TEXT NOT NULL, amount INTEGER NOT NULL, created_at INTEGER NOT NULL)"
+        );
+      } catch {
+        /* */
+      }
       _dbMigrated = true;
     }
 
@@ -743,6 +751,18 @@ ${blue}  ┌──────────────────────�
         } else {
           // One-off purchase (single answer) — credit goes to the chat where pending is
           log.info(`[stars] Single answer credit for user ${userId}`);
+          try {
+            db.prepare(
+              "INSERT INTO invoice_events (user_id, chat_id, event, amount, created_at) VALUES (?, ?, 'paid', ?, ?)"
+            ).run(
+              String(userId),
+              String(userId),
+              payment.total_amount || 0,
+              Math.floor(Date.now() / 1000)
+            );
+          } catch {
+            /* */
+          }
         }
 
         // Find pending message (may have multiple — DM + group). Use most recent.
@@ -1132,6 +1152,13 @@ ${blue}  ┌──────────────────────�
             chatId: Number(chatId),
             messageId: invoiceSent.message_id,
           });
+          try {
+            db.prepare(
+              "INSERT INTO invoice_events (user_id, chat_id, event, amount, created_at) VALUES (?, ?, 'sent', ?, ?)"
+            ).run(uid, chatId, invoiceAmount, now);
+          } catch {
+            /* */
+          }
         } catch (invoiceErr) {
           log.error({ err: invoiceErr }, "[PaymentGate] Failed to send Stars invoice");
         }
